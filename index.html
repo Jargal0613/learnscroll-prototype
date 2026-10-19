@@ -19,6 +19,7 @@
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   .card {
     height: 100vh;
@@ -27,13 +28,16 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 2rem 1.5rem 5rem;
+    padding: 3.5rem 1.5rem 5rem;
     position: relative;
     background: #0a0a0a;
   }
+  .card.understood {
+    background: #0d1a12;
+  }
   .card-header {
     position: absolute;
-    top: 1.2rem;
+    top: 2.8rem;
     left: 1.5rem;
     right: 1.5rem;
     display: flex;
@@ -91,8 +95,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background 0.15s, transform 0.1s;
   }
-  .action-btn:active { background: rgba(255,255,255,0.2); }
+  .action-btn:active { transform: scale(0.94); }
+  .action-btn.saved { background: #fbbf24; color: #000; }
+  .action-btn.done { background: #22c55e; color: #000; }
   .title-bar {
     position: absolute;
     top: 0;
@@ -102,13 +109,43 @@
     text-align: center;
     font-weight: 600;
     font-size: 0.95rem;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
     pointer-events: none;
+    z-index: 10;
   }
+  .progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: #7dd3fc;
+    width: 0%;
+    transition: width 0.3s ease;
+    z-index: 20;
+  }
+  .resume-banner {
+    position: fixed;
+    top: 3.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(125, 211, 252, 0.15);
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    color: #7dd3fc;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .resume-banner.show { opacity: 1; }
 </style>
 </head>
 <body>
+<div class="progress-bar" id="progressBar"></div>
 <div class="title-bar">LearnScroll — Photosynthesis (sample)</div>
+<div class="resume-banner" id="resumeBanner">Resumed where you left off</div>
 <div id="feed"></div>
 
 <script>
@@ -126,10 +163,30 @@ const cards = [
 ];
 
 const feed = document.getElementById('feed');
+const progressBar = document.getElementById('progressBar');
+const resumeBanner = document.getElementById('resumeBanner');
+
+const STORAGE_KEY = 'learnscroll-progress';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+state.understood = state.understood || {};
+state.saved = state.saved || {};
+state.lastIndex = state.lastIndex || 0;
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function updateProgress(index) {
+  const pct = ((index + 1) / cards.length) * 100;
+  progressBar.style.width = pct + '%';
+  state.lastIndex = index;
+  saveState();
+}
 
 cards.forEach((card, i) => {
   const el = document.createElement('div');
-  el.className = 'card';
+  el.className = 'card' + (state.understood[i] ? ' understood' : '');
+  el.dataset.index = i;
   el.innerHTML = `
     <div class="card-header">
       <span class="progress">${i + 1} / ${cards.length}</span>
@@ -138,16 +195,74 @@ cards.forEach((card, i) => {
     <div class="content">${card.text}</div>
     <div class="hint">Scroll down for next card ↓</div>
     <div class="actions">
-      <button class="action-btn" title="Save">★</button>
-      <button class="action-btn" title="Got it">✓</button>
+      <button class="action-btn ${state.saved[i] ? 'saved' : ''}" title="Save" data-action="save">★</button>
+      <button class="action-btn ${state.understood[i] ? 'done' : ''}" title="Got it" data-action="done">✓</button>
     </div>
   `;
   feed.appendChild(el);
 });
 
-// Hide the "scroll down" hint on the last card
+// Hide hint on last card
 const hints = document.querySelectorAll('.hint');
 if (hints.length) hints[hints.length - 1].style.display = 'none';
+
+// Restore scroll position
+if (state.lastIndex > 0) {
+  const target = feed.children[state.lastIndex];
+  if (target) {
+    setTimeout(() => {
+      target.scrollIntoView({ behavior: 'instant' });
+      updateProgress(state.lastIndex);
+      resumeBanner.classList.add('show');
+      setTimeout(() => resumeBanner.classList.remove('show'), 2200);
+    }, 50);
+  }
+} else {
+  updateProgress(0);
+}
+
+// Track current card on scroll
+let scrollTimeout;
+feed.addEventListener('scroll', () => {
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    const index = Math.round(feed.scrollTop / feed.clientHeight);
+    if (index >= 0 && index < cards.length) updateProgress(index);
+  }, 100);
+});
+
+// Button actions
+feed.addEventListener('click', (e) => {
+  const btn = e.target.closest('.action-btn');
+  if (!btn) return;
+  const card = btn.closest('.card');
+  const index = Number(card.dataset.index);
+  const action = btn.dataset.action;
+
+  if (action === 'done') {
+    state.understood[index] = !state.understood[index];
+    card.classList.toggle('understood', state.understood[index]);
+    btn.classList.toggle('done', state.understood[index]);
+  } else if (action === 'save') {
+    state.saved[index] = !state.saved[index];
+    btn.classList.toggle('saved', state.saved[index]);
+  }
+  saveState();
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  const current = Math.round(feed.scrollTop / feed.clientHeight);
+  if (e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    const next = Math.min(current + 1, cards.length - 1);
+    feed.children[next]?.scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = Math.max(current - 1, 0);
+    feed.children[prev]?.scrollIntoView({ behavior: 'smooth' });
+  }
+});
 </script>
 </body>
 </html>

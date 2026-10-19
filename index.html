@@ -32,23 +32,19 @@
   }
   .card-inner {
     width: 100%;
-    max-width: 680px;
+    max-width: 720px;
     background: #0a0a0a;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.08);
     padding: 2.4rem 2.2rem 2rem;
     position: relative;
-    min-height: 380px;
-    max-height: 85vh;
+    min-height: 360px;
+    max-height: 88vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
-  }
-  .card.article .card-inner {
     justify-content: flex-start;
-    max-height: 88vh;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   }
   .card.understood .card-inner {
     background: #0d1a12;
@@ -63,7 +59,6 @@
     font-size: 0.75rem;
     font-weight: 600;
   }
-  .type-badge.reel { background: rgba(125,211,252,0.18); color: #7dd3fc; }
   .type-badge.post { background: rgba(251,191,36,0.15); color: #fbbf24; }
   .type-badge.article { background: rgba(167,139,250,0.18); color: #c4b5fd; }
   .meta {
@@ -72,8 +67,8 @@
     gap: 0.65rem;
     font-size: 0.9rem;
     color: #bbb;
-    margin-bottom: 0.7rem;
-    margin-top: 1.6rem;
+    margin-bottom: 0.8rem;
+    margin-top: 1.8rem;
   }
   .avatar {
     width: 30px;
@@ -87,13 +82,13 @@
     font-weight: 700;
   }
   .content {
-    font-size: 1.45rem;
-    line-height: 1.5;
-    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 1.2rem;
   }
   .card.article .content {
-    font-size: 1.15rem;
-    line-height: 1.65;
+    font-size: 1.05rem;
+    line-height: 1.7;
   }
   .content strong { color: #fff; }
   .actions {
@@ -180,7 +175,6 @@
 </div>
 <div class="filters" id="filters">
   <button class="filter-btn active" data-filter="all">All</button>
-  <button class="filter-btn" data-filter="reel">Reels</button>
   <button class="filter-btn" data-filter="post">Posts</button>
   <button class="filter-btn" data-filter="article">Articles</button>
 </div>
@@ -188,28 +182,14 @@
 
 <script>
 const allItems = [
-  { type: "reel", text: "Welcome to your lesson on <strong>Photosynthesis</strong>. We'll go through it one small piece at a time. Scroll down whenever you're ready for the next explanation." },
-  { type: "post", text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into tiny scrollable pieces reduces overwhelm and makes it easier to stay consistent." },
-  { type: "reel", text: "Photosynthesis is how plants, algae, and some bacteria convert <strong>light energy</strong> into chemical energy that they can use as food." },
-  { type: "article", text: "<strong>A deeper look at energy in living systems</strong><br><br>Photosynthesis and cellular respiration are two sides of the same coin. One captures energy from sunlight and stores it in chemical bonds; the other releases that stored energy so cells can perform work.<br><br>In photosynthesis, chlorophyll absorbs photons and uses that energy to split water and fix carbon dioxide into glucose. The process is not a single reaction but a coordinated set of light-dependent and light-independent stages. Oxygen is released as a byproduct — the very gas most animals need to survive.<br><br>Cellular respiration then reverses the process. Glucose is broken down, first in the cytoplasm (glycolysis) and later inside mitochondria. The energy released is captured in ATP, the universal energy currency of the cell. Without this constant recycling of energy, complex life as we know it would be impossible.<br><br>Understanding both processes together gives a clearer picture of how ecosystems stay in balance and why protecting plant life is ultimately protecting the foundation of almost every food web on Earth." },
-  { type: "post", text: "<strong>The problem with long articles</strong><br><br>Most people start reading, get distracted, and never finish. A vertical feed forces one idea at a time." },
-  { type: "reel", text: "The overall equation is simple:<br><br>6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂<br><br>Carbon dioxide + water + light → sugar + oxygen." },
-  { type: "post", text: "<strong>Spaced repetition in your pocket</strong><br><br>Seeing the same idea again later (instead of all at once) helps memory stick far better than cramming." },
-  { type: "reel", text: "This process happens mainly in the <strong>chloroplasts</strong> of plant cells. Chloroplasts contain a green pigment called chlorophyll that captures sunlight." },
-  { type: "article", text: "<strong>How to actually finish what you start reading</strong><br><br>The internet is full of excellent long-form articles that almost no one completes. The problem is rarely the quality of the writing; it is the lack of structure that matches how attention works.<br><br>When a piece is presented as one continuous block, the brain treats it as a single large task. Large tasks trigger resistance. Breaking the same material into smaller, clearly bounded segments removes that resistance. Each segment feels finishable, so you keep going.<br><br>This is why short vertical cards can outperform traditional article layouts for many learners, even when the underlying information is identical. The content has not become simpler — only the packaging has changed.<br><br>Articles still have a place. They are better when you need nuance, evidence, and connected argument. The ideal system lets you move between short cards for momentum and longer articles when you want depth, without losing your place in either." },
-  { type: "reel", text: "There are two main stages:<br><br>1. Light-dependent reactions<br>2. Light-independent reactions (Calvin cycle)" },
-  { type: "post", text: "<strong>Attention is the real bottleneck</strong><br><br>You don’t need more information. You need a way to consume the information you already care about without getting lost." },
-  { type: "reel", text: "<strong>Light-dependent reactions</strong> occur in the thylakoid membranes. They use sunlight to split water, release oxygen, and produce energy carriers (ATP and NADPH)." },
-  { type: "reel", text: "The <strong>Calvin cycle</strong> happens in the stroma. It uses the ATP and NADPH to fix carbon dioxide into sugar (glucose). No light is directly required for this stage." },
-  { type: "post", text: "<strong>Micro-learning vs. traditional study</strong><br><br>Traditional study often means long sessions. Micro-learning means frequent, short exposures. Both can work — the second is easier to maintain." },
-  { type: "reel", text: "Why does this matter? Almost all life on Earth depends on photosynthesis — either directly (plants) or indirectly (animals that eat plants)." },
-  { type: "reel", text: "Quick check: What gas do plants release during photosynthesis?<br><br><strong>Answer:</strong> Oxygen (O₂)." },
-  { type: "reel", text: "<strong>Next concept: Cellular Respiration</strong><br><br>While photosynthesis stores energy, cellular respiration releases it so cells can do work." },
-  { type: "reel", text: "The simplified equation for cellular respiration is the reverse of photosynthesis:<br><br>C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP)" },
-  { type: "reel", text: "It happens in three main stages: glycolysis, the Krebs cycle, and the electron transport chain." },
-  { type: "reel", text: "<strong>Glycolysis</strong> takes place in the cytoplasm and breaks glucose into two pyruvate molecules, producing a small amount of ATP." },
-  { type: "reel", text: "Most of the energy is released later in the mitochondria during the Krebs cycle and electron transport chain." },
-  { type: "reel", text: "Together, photosynthesis and cellular respiration form a continuous cycle of energy transformation that powers nearly all life." }
+  { type: "post", text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into smaller scrollable pieces reduces overwhelm and makes it easier to stay consistent. Instead of facing one giant block of text, you meet one idea at a time. Each piece feels finishable, so you keep going instead of abandoning the material halfway through.<br><br>This approach does not make the content simpler. It only changes the packaging so your attention can keep up." },
+  { type: "post", text: "<strong>The problem with traditional long reads</strong><br><br>Most people start an article, get distracted, and never return. The brain treats a long unbroken page as a single large task, and large tasks trigger resistance.<br><br>When the same information is split into clearly bounded segments, that resistance drops. You finish one card, feel a small sense of progress, and naturally continue to the next." },
+  { type: "article", text: "<strong>Energy in living systems: a long-form look</strong><br><br>Photosynthesis and cellular respiration are two sides of the same fundamental process. One captures energy from sunlight and stores it in chemical bonds. The other releases that stored energy so cells can perform work. Together they form the core energy cycle that supports nearly all life on Earth.<br><br>In photosynthesis, chlorophyll inside chloroplasts absorbs photons. That captured light energy is used to split water molecules and to fix carbon dioxide into glucose. The process is not a single reaction. It consists of light-dependent reactions that occur in the thylakoid membranes and light-independent reactions (the Calvin cycle) that take place in the stroma. Oxygen is released as a byproduct — the same gas most animals require for survival.<br><br>Cellular respiration reverses the flow. Glucose is broken down, first through glycolysis in the cytoplasm and later through the Krebs cycle and electron transport chain inside mitochondria. The energy released is captured in ATP, the universal energy currency of the cell. Without continuous production of ATP, complex multicellular life could not exist.<br><br>Viewed together, these two processes explain why ecosystems stay in balance. Plants convert solar energy into chemical energy. Animals and other organisms consume that chemical energy and release carbon dioxide and water, which plants can use again. The cycle is continuous and self-reinforcing.<br><br>Understanding both mechanisms in detail also clarifies why protecting plant life is ultimately protecting the foundation of almost every food web. Disruptions at the level of photosynthesis (through deforestation, ocean acidification, or climate stress) eventually propagate through the entire energy economy of the planet.<br><br>This longer form lets you sit with the connections rather than only the isolated facts. The short cards give you momentum; the article gives you the larger picture." },
+  { type: "post", text: "<strong>Attention is the real bottleneck</strong><br><br>You rarely need more information. What you need is a way to consume the information you already care about without losing the thread.<br><br>A vertical feed with clear boundaries helps because it matches how attention actually works: short focused bursts followed by small moments of completion. Over time those small completions add up to real understanding." },
+  { type: "post", text: "<strong>Spaced repetition in practice</strong><br><br>Seeing the same idea again after a delay strengthens memory far more than reviewing everything in one sitting. The delay forces your brain to retrieve the information instead of simply recognizing it.<br><br>In a scrolling feed this can happen naturally. Cards you have already seen can reappear later at a lower frequency, turning passive scrolling into active recall without requiring a separate study session." },
+  { type: "article", text: "<strong>How packaging changes what you finish</strong><br><br>The internet contains thousands of high-quality long articles that almost no one completes. The writing is often excellent. The problem is structural. A single continuous block of text signals to the brain that the task is large and open-ended. Open-ended tasks are easy to postpone.<br><br>When the identical material is divided into smaller, clearly finished units, the psychological cost of starting drops. Each unit has a visible end. Reaching that end produces a small reward. Those small rewards accumulate and keep you moving.<br><br>This is why a sequence of medium-length posts can outperform a traditional article layout for many learners even when the underlying information is the same. Nothing about the ideas has been simplified. Only the container has changed.<br><br>Extremely long articles still have an important role. They are the right format when you need sustained argument, detailed evidence, historical context, or tightly connected reasoning that would lose force if broken apart. The ideal reading system therefore supports both: medium posts for steady progress and very long articles for depth, with the ability to move between them without losing your place.<br><br>Designing for both lengths also changes how creators work. A writer can publish a core idea as a post and later expand the same idea into a full article. Readers can choose the depth they want on any given day. The system becomes flexible instead of forcing every piece of content into one rigid format.<br><br>Over weeks and months the difference compounds. Readers who finish more of what they start retain more. Creators who offer multiple lengths reach more people. The only requirement is that the packaging respects the limits of attention while still allowing room for genuine depth when it is needed." },
+  { type: "post", text: "<strong>Micro-learning versus traditional study sessions</strong><br><br>Traditional study often means setting aside a long block of time. That works when you have the block. It fails when life gets busy.<br><br>Micro-learning means frequent, shorter exposures. You open the feed for a few minutes, move through several cards, and stop. Because each exposure is small, it is easier to return the next day. Consistency usually beats intensity for long-term retention." },
+  { type: "post", text: "<strong>On uploading your own material</strong><br><br>In a full version of this app you would drop a PDF, a set of notes, or a book chapter and the system would turn it into a sequence of posts and, where appropriate, longer articles.<br><br>The goal is not to replace careful reading. It is to lower the barrier so you actually start, then give you a path to go deeper when you want to." }
 ];
 
 const feed = document.getElementById('feed');
@@ -220,25 +200,19 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 let currentFilter = 'all';
 let visibleItems = [...allItems];
 
-const STORAGE_KEY = 'learnscroll-mixed-v2';
+const STORAGE_KEY = 'learnscroll-mixed-v3';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 state.understood = state.understood || {};
 state.saved = state.saved || {};
-state.lastIndex = state.lastIndex || 0;
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function getItemKey(item, originalIndex) {
-  return originalIndex;
 }
 
 function updateProgress(index) {
   const pct = visibleItems.length ? ((index + 1) / visibleItems.length) * 100 : 0;
   progressBar.style.width = pct + '%';
   counter.textContent = visibleItems.length ? `${index + 1} / ${visibleItems.length}` : '0 / 0';
-  state.lastIndex = index;
   saveState();
 }
 
@@ -248,12 +222,12 @@ function render() {
     ? allItems
     : allItems.filter(item => item.type === currentFilter);
 
-  visibleItems.forEach((item, i) => {
+  visibleItems.forEach((item) => {
     const originalIndex = allItems.indexOf(item);
     const el = document.createElement('div');
     el.className = `card ${item.type}` + (state.understood[originalIndex] ? ' understood' : '');
     el.dataset.index = originalIndex;
-    const badgeText = item.type === 'reel' ? 'Reel' : item.type === 'post' ? 'Post' : 'Article';
+    const badgeText = item.type === 'post' ? 'Post' : 'Article';
     el.innerHTML = `
       <div class="card-inner">
         <div class="type-badge ${item.type}">${badgeText}</div>
@@ -272,7 +246,7 @@ function render() {
   });
 
   updateProgress(0);
-  if (feed.children[0]) feed.scrollTop = 0;
+  feed.scrollTop = 0;
 }
 
 filterBtns.forEach(btn => {

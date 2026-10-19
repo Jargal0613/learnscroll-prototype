@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LearnScroll — Prototype</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  #feed {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .card {
+    height: 100vh;
+    height: 100dvh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 1.5rem 5rem;
+    position: relative;
+    background: #0a0a0a;
+  }
+  .card-header {
+    position: absolute;
+    top: 1.2rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  .progress {
+    font-weight: 600;
+    color: #fff;
+  }
+  .topic {
+    background: rgba(255,255,255,0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+  }
+  .content {
+    font-size: 1.35rem;
+    line-height: 1.55;
+    max-width: 28rem;
+    margin: 0 auto;
+  }
+  .content strong {
+    color: #7dd3fc;
+  }
+  .hint {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+  }
+  .actions {
+    position: absolute;
+    right: 1rem;
+    bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    align-items: center;
+  }
+  .action-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-btn:active { background: rgba(255,255,255,0.2); }
+  .title-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.8rem 1rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="title-bar">LearnScroll — Photosynthesis (sample)</div>
+<div id="feed"></div>
+
+<script>
+const cards = [
+  { text: "Welcome to your lesson on <strong>Photosynthesis</strong>. We'll go through it one small piece at a time. Scroll down whenever you're ready for the next explanation." },
+  { text: "Photosynthesis is how plants, algae, and some bacteria convert <strong>light energy</strong> into chemical energy that they can use as food." },
+  { text: "The overall equation is simple:<br><br>6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂<br><br>Carbon dioxide + water + light → sugar + oxygen." },
+  { text: "This process happens mainly in the <strong>chloroplasts</strong> of plant cells. Chloroplasts contain a green pigment called chlorophyll that captures sunlight." },
+  { text: "There are two main stages:<br><br>1. Light-dependent reactions<br>2. Light-independent reactions (Calvin cycle)" },
+  { text: "<strong>Light-dependent reactions</strong> occur in the thylakoid membranes. They use sunlight to split water, release oxygen, and produce energy carriers (ATP and NADPH)." },
+  { text: "The <strong>Calvin cycle</strong> happens in the stroma. It uses the ATP and NADPH to fix carbon dioxide into sugar (glucose). No light is directly required for this stage." },
+  { text: "Why does this matter? Almost all life on Earth depends on photosynthesis — either directly (plants) or indirectly (animals that eat plants)." },
+  { text: "Quick check: What gas do plants release during photosynthesis?<br><br><strong>Answer:</strong> Oxygen (O₂)." },
+  { text: "You just finished the first short sequence on photosynthesis. In a full version of the app, the next cards would continue with more detail, examples, or the next section of your uploaded material." }
+];
+
+const feed = document.getElementById('feed');
+
+cards.forEach((card, i) => {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.innerHTML = `
+    <div class="card-header">
+      <span class="progress">${i + 1} / ${cards.length}</span>
+      <span class="topic">Science · Lesson 1</span>
+    </div>
+    <div class="content">${card.text}</div>
+    <div class="hint">Scroll down for next card ↓</div>
+    <div class="actions">
+      <button class="action-btn" title="Save">★</button>
+      <button class="action-btn" title="Got it">✓</button>
+    </div>
+  `;
+  feed.appendChild(el);
+});
+
+// Hide the "scroll down" hint on the last card
+const hints = document.querySelectorAll('.hint');
+if (hints.length) hints[hints.length - 1].style.display = 'none';
+</script>
+</body>
+</html>

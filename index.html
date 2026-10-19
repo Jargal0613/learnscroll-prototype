@@ -13,6 +13,50 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden;
   }
+  .screen { display: none; height: 100vh; height: 100dvh; }
+  .screen.active { display: block; }
+
+  /* Home */
+  #home {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: radial-gradient(circle at top, #111 0%, #000 70%);
+  }
+  #home h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, #7dd3fc, #a5f3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  #home p {
+    color: #888;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 22rem;
+  }
+  .choice {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 1.2rem;
+    padding: 1.4rem 1.2rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .choice:active { transform: scale(0.98); }
+  .choice h2 { font-size: 1.25rem; margin-bottom: 0.3rem; }
+  .choice span { color: #aaa; font-size: 0.9rem; }
+
+  /* Feed */
   #feed {
     height: 100vh;
     height: 100dvh;
@@ -32,9 +76,7 @@
     position: relative;
     background: #0a0a0a;
   }
-  .card.understood {
-    background: #0d1a12;
-  }
+  .card.understood { background: #0d1a12; }
   .card-header {
     position: absolute;
     top: 2.8rem;
@@ -46,10 +88,7 @@
     font-size: 0.85rem;
     color: #aaa;
   }
-  .progress {
-    font-weight: 600;
-    color: #fff;
-  }
+  .progress { font-weight: 600; color: #fff; }
   .topic {
     background: rgba(255,255,255,0.1);
     padding: 0.25rem 0.6rem;
@@ -62,14 +101,11 @@
     max-width: 28rem;
     margin: 0 auto;
   }
-  .content strong {
-    color: #7dd3fc;
-  }
+  .content strong { color: #7dd3fc; }
   .hint {
     position: absolute;
     bottom: 1.5rem;
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     text-align: center;
     font-size: 0.8rem;
     color: #666;
@@ -100,28 +136,27 @@
   .action-btn:active { transform: scale(0.94); }
   .action-btn.saved { background: #fbbf24; color: #000; }
   .action-btn.done { background: #22c55e; color: #000; }
-  .title-bar {
+  .back-btn {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 0.8rem 1rem;
-    text-align: center;
-    font-weight: 600;
-    font-size: 0.95rem;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-    pointer-events: none;
-    z-index: 10;
+    top: 0.9rem;
+    left: 1rem;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    z-index: 20;
   }
   .progress-bar {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     height: 3px;
     background: #7dd3fc;
     width: 0%;
     transition: width 0.3s ease;
-    z-index: 20;
+    z-index: 30;
   }
   .resume-banner {
     position: fixed;
@@ -134,7 +169,7 @@
     padding: 0.4rem 0.9rem;
     border-radius: 999px;
     font-size: 0.8rem;
-    z-index: 30;
+    z-index: 40;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
@@ -143,13 +178,33 @@
 </style>
 </head>
 <body>
-<div class="progress-bar" id="progressBar"></div>
-<div class="title-bar">LearnScroll — Photosynthesis (sample)</div>
-<div class="resume-banner" id="resumeBanner">Resumed where you left off</div>
-<div id="feed"></div>
+
+<!-- Home Screen -->
+<div id="home" class="screen active">
+  <h1>LearnScroll</h1>
+  <p>Choose what you want to read</p>
+  <div class="choices">
+    <div class="choice" onclick="openFeed('lesson')">
+      <h2>Lessons</h2>
+      <span>Sequential bite-sized explanations</span>
+    </div>
+    <div class="choice" onclick="openFeed('posts')">
+      <h2>Posts & Articles</h2>
+      <span>Short reads and opinion pieces</span>
+    </div>
+  </div>
+</div>
+
+<!-- Feed Screen -->
+<div id="feedScreen" class="screen">
+  <div class="progress-bar" id="progressBar"></div>
+  <button class="back-btn" onclick="goHome()">← Home</button>
+  <div class="resume-banner" id="resumeBanner">Resumed where you left off</div>
+  <div id="feed"></div>
+</div>
 
 <script>
-const cards = [
+const lessons = [
   { text: "Welcome to your lesson on <strong>Photosynthesis</strong>. We'll go through it one small piece at a time. Scroll down whenever you're ready for the next explanation." },
   { text: "Photosynthesis is how plants, algae, and some bacteria convert <strong>light energy</strong> into chemical energy that they can use as food." },
   { text: "The overall equation is simple:<br><br>6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂<br><br>Carbon dioxide + water + light → sugar + oxygen." },
@@ -162,96 +217,124 @@ const cards = [
   { text: "You just finished the first short sequence on photosynthesis. In a full version of the app, the next cards would continue with more detail, examples, or the next section of your uploaded material." }
 ];
 
+const posts = [
+  { text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into tiny scrollable pieces reduces overwhelm and makes it easier to stay consistent." },
+  { text: "<strong>The problem with long articles</strong><br><br>Most people start reading, get distracted, and never finish. A vertical feed forces one idea at a time." },
+  { text: "<strong>Design note</strong><br><br>This section is a placeholder for posts and articles. In the real app these would come from uploads or your own writing." }
+];
+
 const feed = document.getElementById('feed');
 const progressBar = document.getElementById('progressBar');
 const resumeBanner = document.getElementById('resumeBanner');
+let currentType = null;
+let cards = [];
 
-const STORAGE_KEY = 'learnscroll-progress';
+const STORAGE_KEY = 'learnscroll-progress-v2';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-state.understood = state.understood || {};
-state.saved = state.saved || {};
-state.lastIndex = state.lastIndex || 0;
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function getTypeState(type) {
+  if (!state[type]) state[type] = { understood: {}, saved: {}, lastIndex: 0 };
+  return state[type];
+}
+
+function openFeed(type) {
+  currentType = type;
+  cards = type === 'lesson' ? lessons : posts;
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('feedScreen').classList.add('active');
+  renderFeed();
+}
+
+function goHome() {
+  document.getElementById('feedScreen').classList.remove('active');
+  document.getElementById('home').classList.add('active');
+  feed.innerHTML = '';
+}
+
 function updateProgress(index) {
   const pct = ((index + 1) / cards.length) * 100;
   progressBar.style.width = pct + '%';
-  state.lastIndex = index;
+  const ts = getTypeState(currentType);
+  ts.lastIndex = index;
   saveState();
 }
 
-cards.forEach((card, i) => {
-  const el = document.createElement('div');
-  el.className = 'card' + (state.understood[i] ? ' understood' : '');
-  el.dataset.index = i;
-  el.innerHTML = `
-    <div class="card-header">
-      <span class="progress">${i + 1} / ${cards.length}</span>
-      <span class="topic">Science · Lesson 1</span>
-    </div>
-    <div class="content">${card.text}</div>
-    <div class="hint">Scroll down for next card ↓</div>
-    <div class="actions">
-      <button class="action-btn ${state.saved[i] ? 'saved' : ''}" title="Save" data-action="save">★</button>
-      <button class="action-btn ${state.understood[i] ? 'done' : ''}" title="Got it" data-action="done">✓</button>
-    </div>
-  `;
-  feed.appendChild(el);
-});
+function renderFeed() {
+  feed.innerHTML = '';
+  const ts = getTypeState(currentType);
 
-// Hide hint on last card
-const hints = document.querySelectorAll('.hint');
-if (hints.length) hints[hints.length - 1].style.display = 'none';
+  cards.forEach((card, i) => {
+    const el = document.createElement('div');
+    el.className = 'card' + (ts.understood[i] ? ' understood' : '');
+    el.dataset.index = i;
+    el.innerHTML = `
+      <div class="card-header">
+        <span class="progress">${i + 1} / ${cards.length}</span>
+        <span class="topic">${currentType === 'lesson' ? 'Lesson' : 'Post'}</span>
+      </div>
+      <div class="content">${card.text}</div>
+      <div class="hint">Scroll down for next card ↓</div>
+      <div class="actions">
+        <button class="action-btn ${ts.saved[i] ? 'saved' : ''}" data-action="save">★</button>
+        <button class="action-btn ${ts.understood[i] ? 'done' : ''}" data-action="done">✓</button>
+      </div>
+    `;
+    feed.appendChild(el);
+  });
 
-// Restore scroll position
-if (state.lastIndex > 0) {
-  const target = feed.children[state.lastIndex];
-  if (target) {
+  const hints = feed.querySelectorAll('.hint');
+  if (hints.length) hints[hints.length - 1].style.display = 'none';
+
+  // Restore position
+  if (ts.lastIndex > 0) {
     setTimeout(() => {
-      target.scrollIntoView({ behavior: 'instant' });
-      updateProgress(state.lastIndex);
+      feed.children[ts.lastIndex]?.scrollIntoView({ behavior: 'instant' });
+      updateProgress(ts.lastIndex);
       resumeBanner.classList.add('show');
-      setTimeout(() => resumeBanner.classList.remove('show'), 2200);
+      setTimeout(() => resumeBanner.classList.remove('show'), 2000);
     }, 50);
+  } else {
+    updateProgress(0);
   }
-} else {
-  updateProgress(0);
 }
 
-// Track current card on scroll
+// Scroll tracking
 let scrollTimeout;
 feed.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     const index = Math.round(feed.scrollTop / feed.clientHeight);
     if (index >= 0 && index < cards.length) updateProgress(index);
-  }, 100);
+  }, 80);
 });
 
-// Button actions
+// Buttons
 feed.addEventListener('click', (e) => {
   const btn = e.target.closest('.action-btn');
   if (!btn) return;
   const card = btn.closest('.card');
   const index = Number(card.dataset.index);
   const action = btn.dataset.action;
+  const ts = getTypeState(currentType);
 
   if (action === 'done') {
-    state.understood[index] = !state.understood[index];
-    card.classList.toggle('understood', state.understood[index]);
-    btn.classList.toggle('done', state.understood[index]);
+    ts.understood[index] = !ts.understood[index];
+    card.classList.toggle('understood', ts.understood[index]);
+    btn.classList.toggle('done', ts.understood[index]);
   } else if (action === 'save') {
-    state.saved[index] = !state.saved[index];
-    btn.classList.toggle('saved', state.saved[index]);
+    ts.saved[index] = !ts.saved[index];
+    btn.classList.toggle('saved', ts.saved[index]);
   }
   saveState();
 });
 
-// Keyboard navigation
+// Keyboard
 document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('feedScreen').classList.contains('active')) return;
   const current = Math.round(feed.scrollTop / feed.clientHeight);
   if (e.key === 'ArrowDown' || e.key === ' ') {
     e.preventDefault();

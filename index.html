@@ -19,15 +19,16 @@
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
+    padding-top: 6.5rem;
   }
   .card {
-    height: 100vh;
-    height: 100dvh;
+    height: calc(100vh - 6.5rem);
+    height: calc(100dvh - 6.5rem);
     scroll-snap-align: start;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: 1rem 2rem 2rem;
     background: #111;
   }
   .card-inner {
@@ -36,10 +37,10 @@
     background: #0a0a0a;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.08);
-    padding: 2.4rem 2.2rem 2rem;
+    padding: 2.2rem 2rem 1.8rem;
     position: relative;
-    min-height: 360px;
-    max-height: 88vh;
+    min-height: 340px;
+    max-height: 78vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -52,60 +53,70 @@
   }
   .type-badge {
     position: absolute;
-    top: 1.1rem;
-    left: 1.3rem;
-    padding: 0.3rem 0.75rem;
+    top: 1rem;
+    left: 1.2rem;
+    padding: 0.28rem 0.7rem;
     border-radius: 999px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
   }
   .type-badge.post { background: rgba(251,191,36,0.15); color: #fbbf24; }
   .type-badge.article { background: rgba(167,139,250,0.18); color: #c4b5fd; }
+  .topic-tag {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    font-size: 0.72rem;
+    color: #7dd3fc;
+    background: rgba(125,211,252,0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+  }
   .meta {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: #bbb;
-    margin-bottom: 0.8rem;
-    margin-top: 1.8rem;
+    margin-bottom: 0.7rem;
+    margin-top: 1.6rem;
   }
   .avatar {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
   }
   .content {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     line-height: 1.6;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
   }
   .card.article .content {
-    font-size: 1.05rem;
-    line-height: 1.7;
+    font-size: 1.02rem;
+    line-height: 1.68;
   }
   .content strong { color: #fff; }
   .actions {
     position: absolute;
-    right: 1.1rem;
-    bottom: 1.2rem;
+    right: 1rem;
+    bottom: 1rem;
     display: flex;
-    gap: 0.5rem;
+    gap: 0.45rem;
   }
   .action-btn {
     background: rgba(255,255,255,0.08);
     border: none;
     color: #fff;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -126,45 +137,49 @@
   .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    padding: 0.9rem 1.4rem;
+    padding: 0.75rem 1.4rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(to bottom, rgba(17,17,17,0.9), transparent);
+    background: #111;
     z-index: 50;
-    pointer-events: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   .logo { font-weight: 700; font-size: 1.1rem; }
-  .counter { font-size: 0.85rem; color: #aaa; }
-  .filters {
+  .counter { font-size: 0.82rem; color: #aaa; }
+  .controls {
     position: fixed;
-    top: 3.2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 0.5rem;
-    z-index: 60;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(8px);
-    padding: 0.4rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.08);
+    top: 3.1rem;
+    left: 0; right: 0;
+    z-index: 40;
+    background: #111;
+    padding: 0.5rem 1rem 0.6rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
   }
-  .filter-btn {
-    background: transparent;
+  .row {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+  }
+  .filter-btn, .topic-btn {
+    background: rgba(255,255,255,0.06);
     border: none;
     color: #ccc;
-    padding: 0.4rem 0.9rem;
+    padding: 0.35rem 0.8rem;
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     cursor: pointer;
     font-weight: 500;
   }
-  .filter-btn.active {
+  .filter-btn.active, .topic-btn.active {
     background: #fff;
     color: #000;
   }
-  .filter-btn:hover:not(.active) { background: rgba(255,255,255,0.08); }
+  .filter-btn:hover:not(.active), .topic-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.12);
+  }
 </style>
 </head>
 <body>
@@ -173,34 +188,54 @@
   <div class="logo">LearnScroll</div>
   <div class="counter" id="counter">1 / 0</div>
 </div>
-<div class="filters" id="filters">
-  <button class="filter-btn active" data-filter="all">All</button>
-  <button class="filter-btn" data-filter="post">Posts</button>
-  <button class="filter-btn" data-filter="article">Articles</button>
+<div class="controls">
+  <div class="row" id="typeFilters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="post">Posts</button>
+    <button class="filter-btn" data-filter="article">Articles</button>
+  </div>
+  <div class="row" id="topicFilters">
+    <button class="topic-btn active" data-topic="all">All topics</button>
+    <button class="topic-btn" data-topic="physics">Physics</button>
+    <button class="topic-btn" data-topic="thermodynamics">Thermodynamics</button>
+    <button class="topic-btn" data-topic="fluidmechanics">Fluid Mechanics</button>
+    <button class="topic-btn" data-topic="chemistry">Chemistry</button>
+    <button class="topic-btn" data-topic="biology">Biology</button>
+    <button class="topic-btn" data-topic="calculus">Calculus</button>
+  </div>
 </div>
 <div id="feed"></div>
 
 <script>
 const allItems = [
-  { type: "post", text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into smaller scrollable pieces reduces overwhelm and makes it easier to stay consistent. Instead of facing one giant block of text, you meet one idea at a time. Each piece feels finishable, so you keep going instead of abandoning the material halfway through.<br><br>This approach does not make the content simpler. It only changes the packaging so your attention can keep up." },
-  { type: "post", text: "<strong>The problem with traditional long reads</strong><br><br>Most people start an article, get distracted, and never return. The brain treats a long unbroken page as a single large task, and large tasks trigger resistance.<br><br>When the same information is split into clearly bounded segments, that resistance drops. You finish one card, feel a small sense of progress, and naturally continue to the next." },
-  { type: "article", text: "<strong>Energy in living systems: a long-form look</strong><br><br>Photosynthesis and cellular respiration are two sides of the same fundamental process. One captures energy from sunlight and stores it in chemical bonds. The other releases that stored energy so cells can perform work. Together they form the core energy cycle that supports nearly all life on Earth.<br><br>In photosynthesis, chlorophyll inside chloroplasts absorbs photons. That captured light energy is used to split water molecules and to fix carbon dioxide into glucose. The process is not a single reaction. It consists of light-dependent reactions that occur in the thylakoid membranes and light-independent reactions (the Calvin cycle) that take place in the stroma. Oxygen is released as a byproduct — the same gas most animals require for survival.<br><br>Cellular respiration reverses the flow. Glucose is broken down, first through glycolysis in the cytoplasm and later through the Krebs cycle and electron transport chain inside mitochondria. The energy released is captured in ATP, the universal energy currency of the cell. Without continuous production of ATP, complex multicellular life could not exist.<br><br>Viewed together, these two processes explain why ecosystems stay in balance. Plants convert solar energy into chemical energy. Animals and other organisms consume that chemical energy and release carbon dioxide and water, which plants can use again. The cycle is continuous and self-reinforcing.<br><br>Understanding both mechanisms in detail also clarifies why protecting plant life is ultimately protecting the foundation of almost every food web. Disruptions at the level of photosynthesis (through deforestation, ocean acidification, or climate stress) eventually propagate through the entire energy economy of the planet.<br><br>This longer form lets you sit with the connections rather than only the isolated facts. The short cards give you momentum; the article gives you the larger picture." },
-  { type: "post", text: "<strong>Attention is the real bottleneck</strong><br><br>You rarely need more information. What you need is a way to consume the information you already care about without losing the thread.<br><br>A vertical feed with clear boundaries helps because it matches how attention actually works: short focused bursts followed by small moments of completion. Over time those small completions add up to real understanding." },
-  { type: "post", text: "<strong>Spaced repetition in practice</strong><br><br>Seeing the same idea again after a delay strengthens memory far more than reviewing everything in one sitting. The delay forces your brain to retrieve the information instead of simply recognizing it.<br><br>In a scrolling feed this can happen naturally. Cards you have already seen can reappear later at a lower frequency, turning passive scrolling into active recall without requiring a separate study session." },
-  { type: "article", text: "<strong>How packaging changes what you finish</strong><br><br>The internet contains thousands of high-quality long articles that almost no one completes. The writing is often excellent. The problem is structural. A single continuous block of text signals to the brain that the task is large and open-ended. Open-ended tasks are easy to postpone.<br><br>When the identical material is divided into smaller, clearly finished units, the psychological cost of starting drops. Each unit has a visible end. Reaching that end produces a small reward. Those small rewards accumulate and keep you moving.<br><br>This is why a sequence of medium-length posts can outperform a traditional article layout for many learners even when the underlying information is the same. Nothing about the ideas has been simplified. Only the container has changed.<br><br>Extremely long articles still have an important role. They are the right format when you need sustained argument, detailed evidence, historical context, or tightly connected reasoning that would lose force if broken apart. The ideal reading system therefore supports both: medium posts for steady progress and very long articles for depth, with the ability to move between them without losing your place.<br><br>Designing for both lengths also changes how creators work. A writer can publish a core idea as a post and later expand the same idea into a full article. Readers can choose the depth they want on any given day. The system becomes flexible instead of forcing every piece of content into one rigid format.<br><br>Over weeks and months the difference compounds. Readers who finish more of what they start retain more. Creators who offer multiple lengths reach more people. The only requirement is that the packaging respects the limits of attention while still allowing room for genuine depth when it is needed." },
-  { type: "post", text: "<strong>Micro-learning versus traditional study sessions</strong><br><br>Traditional study often means setting aside a long block of time. That works when you have the block. It fails when life gets busy.<br><br>Micro-learning means frequent, shorter exposures. You open the feed for a few minutes, move through several cards, and stop. Because each exposure is small, it is easier to return the next day. Consistency usually beats intensity for long-term retention." },
-  { type: "post", text: "<strong>On uploading your own material</strong><br><br>In a full version of this app you would drop a PDF, a set of notes, or a book chapter and the system would turn it into a sequence of posts and, where appropriate, longer articles.<br><br>The goal is not to replace careful reading. It is to lower the barrier so you actually start, then give you a path to go deeper when you want to." }
+  { type: "post", topic: "biology", text: "<strong>Why short-form learning works for biology</strong><br><br>Breaking processes like photosynthesis into smaller pieces reduces overwhelm. You meet one idea at a time — light reactions, then the Calvin cycle — instead of facing the whole pathway at once. Each piece feels finishable, so you keep going." },
+  { type: "post", topic: "physics", text: "<strong>Energy is never created or destroyed</strong><br><br>This is the first law of thermodynamics. In every physical process the total energy of an isolated system stays constant. Energy only changes form — from kinetic to potential, from chemical to thermal, from light to chemical bonds." },
+  { type: "article", topic: "biology", text: "<strong>Photosynthesis and cellular respiration in depth</strong><br><br>These two processes form the core energy cycle of life. Photosynthesis captures light energy and stores it in glucose. Cellular respiration releases that stored energy as ATP so cells can do work.<br><br>In photosynthesis, chlorophyll absorbs photons and uses the energy to split water and fix carbon dioxide. Light-dependent reactions occur in the thylakoid membranes; the Calvin cycle occurs in the stroma. Oxygen is released as a byproduct.<br><br>Cellular respiration reverses the flow. Glycolysis in the cytoplasm is followed by the Krebs cycle and electron transport chain in mitochondria. The continuous exchange of carbon dioxide, water, and oxygen between these pathways keeps ecosystems in balance.<br><br>Understanding both mechanisms together shows why protecting plant life protects the foundation of almost every food web." },
+  { type: "post", topic: "thermodynamics", text: "<strong>Entropy always increases</strong><br><br>The second law of thermodynamics states that the entropy of an isolated system never decreases. In practical terms, useful energy tends to spread out and become less concentrated over time. This is why perpetual motion machines are impossible." },
+  { type: "post", topic: "chemistry", text: "<strong>Chemical reactions rearrange atoms</strong><br><br>Atoms are not created or destroyed in ordinary chemical reactions — they are only rearranged. This is why we balance equations. The number of each type of atom on the reactant side must equal the number on the product side." },
+  { type: "article", topic: "thermodynamics", text: "<strong>The laws of thermodynamics and why they matter</strong><br><br>Thermodynamics describes how energy moves and transforms. The first law is conservation of energy: the total energy of an isolated system is constant. Energy can change form but cannot appear from nothing or vanish.<br><br>The second law introduces entropy. In any real process some energy becomes unavailable for useful work. Heat flows spontaneously from hot to cold, never the reverse without external work. This directionality gives time an arrow in physical systems.<br><br>The third law states that the entropy of a perfect crystal approaches zero as temperature approaches absolute zero. While absolute zero is unreachable in practice, the law sets a fundamental reference point.<br><br>These laws constrain every engine, refrigerator, chemical reaction, and biological process. No technology can violate them. Understanding them lets you predict which processes are possible and which are not, regardless of how clever the design." },
+  { type: "post", topic: "fluidmechanics", text: "<strong>Pressure in a fluid acts in all directions</strong><br><br>Unlike solids, fluids cannot sustain shear stress when at rest. Pressure at a point in a fluid is the same in every direction. This is why hydraulic systems can transmit force so effectively through pipes." },
+  { type: "post", topic: "calculus", text: "<strong>Derivatives measure instantaneous rate of change</strong><br><br>The derivative of a function at a point is the slope of the tangent line at that point. It tells you how fast the output is changing with respect to the input at that exact moment — speed if the function is position, acceleration if the function is velocity." },
+  { type: "post", topic: "physics", text: "<strong>Newton’s second law</strong><br><br>Force equals mass times acceleration (F = ma). The greater the force applied to an object, the greater its acceleration. The greater the mass, the smaller the acceleration for the same force." },
+  { type: "article", topic: "fluidmechanics", text: "<strong>Core ideas in fluid mechanics</strong><br><br>Fluid mechanics studies how liquids and gases behave when they are at rest (fluid statics) and when they are moving (fluid dynamics). The key difference from solid mechanics is that fluids continuously deform under shear stress.<br><br>Pascal’s principle states that pressure applied to an enclosed fluid is transmitted undiminished to every part of the fluid. This is the foundation of hydraulic lifts and brakes. Archimedes’ principle explains buoyancy: the upward force on a submerged object equals the weight of the fluid displaced.<br><br>When fluids move, Bernoulli’s principle becomes important. Along a streamline, an increase in speed is accompanied by a decrease in pressure (for incompressible, inviscid flow). This relationship explains lift on airplane wings and the operation of many flow-measurement devices.<br><br>Real fluids also have viscosity — internal friction that resists flow. Viscosity determines whether flow is laminar (smooth layers) or turbulent (chaotic). The Reynolds number is the dimensionless quantity used to predict which regime will occur.<br><br>These principles appear everywhere: blood flow in vessels, air over vehicles, water in pipes, weather systems, and industrial processes. Mastering the basic relations lets you analyze a wide range of practical problems." },
+  { type: "post", topic: "chemistry", text: "<strong>Acids donate protons, bases accept them</strong><br><br>In the Brønsted–Lowry definition, an acid is a proton (H⁺) donor and a base is a proton acceptor. This simple idea explains a huge range of reactions in water and in biological systems." },
+  { type: "post", topic: "calculus", text: "<strong>Integrals accumulate change</strong><br><br>While derivatives tell you the rate, integrals add up all the small changes to give a total. The area under a velocity-time graph is displacement. The area under a force-distance graph is work." },
+  { type: "article", topic: "calculus", text: "<strong>Why calculus is the language of change</strong><br><br>Calculus was developed to describe systems that are continuously changing. The two central ideas are the derivative and the integral, and they are inverses of each other (the fundamental theorem of calculus).<br><br>The derivative answers “how fast?” at a single instant. If you know position as a function of time, the derivative is velocity; the derivative of velocity is acceleration. In any science, whenever a quantity depends on another, the derivative gives the sensitivity of that relationship.<br><br>The integral answers “how much in total?” It sums infinitely many infinitesimal contributions. This is why it appears in calculations of work, area, volume, probability, and accumulated growth.<br><br>Together these tools let you move from a local description (what is happening right now) to a global one (what has happened overall), and vice versa. Physics, engineering, economics, biology, and machine learning all rely on this ability. Once the basic rules of differentiation and integration become automatic, a large class of real-world problems becomes approachable." },
+  { type: "post", topic: "biology", text: "<strong>Cells are the basic unit of life</strong><br><br>Every living organism is made of one or more cells. Cells carry out all the functions of life: taking in nutrients, producing energy, responding to the environment, and reproducing." },
+  { type: "post", topic: "thermodynamics", text: "<strong>Heat engines convert thermal energy into work</strong><br><br>No heat engine can be 100% efficient. The maximum possible efficiency is set by the Carnot limit, which depends only on the temperatures of the hot and cold reservoirs." }
 ];
 
 const feed = document.getElementById('feed');
 const progressBar = document.getElementById('progressBar');
 const counter = document.getElementById('counter');
-const filterBtns = document.querySelectorAll('.filter-btn');
+const typeBtns = document.querySelectorAll('.filter-btn');
+const topicBtns = document.querySelectorAll('.topic-btn');
 
-let currentFilter = 'all';
+let currentType = 'all';
+let currentTopic = 'all';
 let visibleItems = [...allItems];
 
-const STORAGE_KEY = 'learnscroll-mixed-v3';
+const STORAGE_KEY = 'learnscroll-topics-v1';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 state.understood = state.understood || {};
 state.saved = state.saved || {};
@@ -218,9 +253,17 @@ function updateProgress(index) {
 
 function render() {
   feed.innerHTML = '';
-  visibleItems = currentFilter === 'all'
-    ? allItems
-    : allItems.filter(item => item.type === currentFilter);
+  visibleItems = allItems.filter(item => {
+    const typeOk = currentType === 'all' || item.type === currentType;
+    const topicOk = currentTopic === 'all' || item.topic === currentTopic;
+    return typeOk && topicOk;
+  });
+
+  if (visibleItems.length === 0) {
+    feed.innerHTML = '<div class="card"><div class="card-inner"><div class="content">No content for this combination yet.</div></div></div>';
+    updateProgress(0);
+    return;
+  }
 
   visibleItems.forEach((item) => {
     const originalIndex = allItems.indexOf(item);
@@ -228,9 +271,11 @@ function render() {
     el.className = `card ${item.type}` + (state.understood[originalIndex] ? ' understood' : '');
     el.dataset.index = originalIndex;
     const badgeText = item.type === 'post' ? 'Post' : 'Article';
+    const topicLabel = item.topic.charAt(0).toUpperCase() + item.topic.slice(1);
     el.innerHTML = `
       <div class="card-inner">
         <div class="type-badge ${item.type}">${badgeText}</div>
+        <div class="topic-tag">${topicLabel}</div>
         <div class="meta">
           <div class="avatar">LS</div>
           <div>learnscroll</div>
@@ -249,11 +294,20 @@ function render() {
   feed.scrollTop = 0;
 }
 
-filterBtns.forEach(btn => {
+typeBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    filterBtns.forEach(b => b.classList.remove('active'));
+    typeBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
+    currentType = btn.dataset.filter;
+    render();
+  });
+});
+
+topicBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    topicBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTopic = btn.dataset.topic;
     render();
   });
 });
@@ -264,7 +318,7 @@ let scrollTimeout;
 feed.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
-    const index = Math.round(feed.scrollTop / feed.clientHeight);
+    const index = Math.round(feed.scrollTop / (feed.clientHeight || 1));
     if (index >= 0 && index < visibleItems.length) updateProgress(index);
   }, 60);
 });
@@ -288,7 +342,7 @@ feed.addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  const current = Math.round(feed.scrollTop / feed.clientHeight);
+  const current = Math.round(feed.scrollTop / (feed.clientHeight || 1));
   if (e.key === 'ArrowDown' || e.key === ' ') {
     e.preventDefault();
     const next = Math.min(current + 1, visibleItems.length - 1);

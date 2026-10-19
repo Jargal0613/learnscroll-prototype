@@ -2,103 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LearnScroll</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%;
-    background: #000;
+    background: #111;
     color: #fff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden;
-    -webkit-tap-highlight-color: transparent;
   }
   #feed {
     height: 100vh;
     height: 100dvh;
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
   .card {
     height: 100vh;
     height: 100dvh;
     scroll-snap-align: start;
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #111;
+  }
+  .card-inner {
+    width: 100%;
+    max-width: 640px;
     background: #0a0a0a;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2.5rem 2.2rem 2rem;
+    position: relative;
+    min-height: 420px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 1.5rem 1.2rem 5.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   }
-  .card.understood {
-    background: linear-gradient(to bottom, #0a0a0a 60%, #0d1a12);
+  .card.understood .card-inner {
+    background: #0d1a12;
+    border-color: rgba(34,197,94,0.25);
   }
   .type-badge {
     position: absolute;
     top: 1.2rem;
-    left: 1.2rem;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(8px);
-    padding: 0.3rem 0.7rem;
+    left: 1.4rem;
+    padding: 0.35rem 0.8rem;
     border-radius: 999px;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 600;
-    letter-spacing: 0.3px;
   }
-  .type-badge.lesson { background: rgba(125,211,252,0.2); color: #7dd3fc; }
+  .type-badge.lesson { background: rgba(125,211,252,0.18); color: #7dd3fc; }
   .type-badge.post { background: rgba(251,191,36,0.15); color: #fbbf24; }
-  .content {
-    font-size: 1.4rem;
-    line-height: 1.5;
-    max-width: 26rem;
-    margin-bottom: 1rem;
-  }
-  .content strong { color: #fff; font-weight: 650; }
   .meta {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 0.85rem;
-    color: #ccc;
-    margin-bottom: 0.4rem;
+    gap: 0.65rem;
+    font-size: 0.9rem;
+    color: #bbb;
+    margin-bottom: 0.8rem;
   }
   .avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
   }
+  .content {
+    font-size: 1.55rem;
+    line-height: 1.5;
+    margin-bottom: 1.2rem;
+  }
+  .content strong { color: #fff; }
   .actions {
     position: absolute;
-    right: 0.8rem;
-    bottom: 7rem;
+    right: 1.2rem;
+    bottom: 1.4rem;
     display: flex;
-    flex-direction: column;
-    gap: 1.1rem;
-    align-items: center;
+    gap: 0.6rem;
   }
   .action-btn {
-    background: rgba(0,0,0,0.45);
+    background: rgba(255,255,255,0.08);
     border: none;
     color: #fff;
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
   }
+  .action-btn:hover { background: rgba(255,255,255,0.16); }
   .action-btn.saved { background: #fbbf24; color: #000; }
   .action-btn.done { background: #22c55e; color: #000; }
   .progress-bar {
@@ -113,22 +119,31 @@
   .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    padding: 0.9rem 1rem 0.6rem;
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+    background: linear-gradient(to bottom, rgba(17,17,17,0.85), transparent);
     z-index: 50;
     pointer-events: none;
   }
   .logo {
     font-weight: 700;
-    font-size: 1.1rem;
-    letter-spacing: -0.3px;
+    font-size: 1.15rem;
   }
   .counter {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #aaa;
+  }
+  @media (max-width: 700px) {
+    .card-inner {
+      max-width: 100%;
+      border-radius: 0;
+      border: none;
+      min-height: 100%;
+      padding: 4rem 1.4rem 2rem;
+    }
+    .card { padding: 0; }
   }
 </style>
 </head>
@@ -197,21 +212,22 @@ items.forEach((item, i) => {
   const badgeClass = item.type === 'lesson' ? 'lesson' : 'post';
   const badgeText = item.type === 'lesson' ? 'Lesson' : 'Post';
   el.innerHTML = `
-    <div class="type-badge ${badgeClass}">${badgeText}</div>
-    <div class="meta">
-      <div class="avatar">LS</div>
-      <div>learnscroll</div>
-    </div>
-    <div class="content">${item.text}</div>
-    <div class="actions">
-      <button class="action-btn ${state.saved[i] ? 'saved' : ''}" data-action="save">★</button>
-      <button class="action-btn ${state.understood[i] ? 'done' : ''}" data-action="done">✓</button>
+    <div class="card-inner">
+      <div class="type-badge ${badgeClass}">${badgeText}</div>
+      <div class="meta">
+        <div class="avatar">LS</div>
+        <div>learnscroll</div>
+      </div>
+      <div class="content">${item.text}</div>
+      <div class="actions">
+        <button class="action-btn ${state.saved[i] ? 'saved' : ''}" data-action="save">★</button>
+        <button class="action-btn ${state.understood[i] ? 'done' : ''}" data-action="done">✓</button>
+      </div>
     </div>
   `;
   feed.appendChild(el);
 });
 
-// Restore position
 if (state.lastIndex > 0) {
   setTimeout(() => {
     feed.children[state.lastIndex]?.scrollIntoView({ behavior: 'instant' });

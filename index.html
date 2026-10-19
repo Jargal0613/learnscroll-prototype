@@ -19,21 +19,22 @@
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
-    padding-top: 5.2rem;
+    padding-top: 4.2rem;
+    padding-right: 5.5rem;
   }
   .card {
-    height: calc(100vh - 5.2rem);
-    height: calc(100dvh - 5.2rem);
+    height: calc(100vh - 4.2rem);
+    height: calc(100dvh - 4.2rem);
     scroll-snap-align: start;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 2rem 2rem;
+    padding: 1rem 1.5rem 2rem;
     background: #111;
   }
   .card-inner {
     width: 100%;
-    max-width: 720px;
+    max-width: 680px;
     background: #0a0a0a;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.08);
@@ -137,11 +138,12 @@
   .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 5.2rem;
-    padding: 0.6rem 1.4rem 0.5rem;
+    height: 4.2rem;
+    padding: 0.5rem 1.4rem;
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    justify-content: center;
+    gap: 0.4rem;
     background: #111;
     z-index: 50;
     border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -152,38 +154,64 @@
     align-items: center;
   }
   .logo { font-weight: 700; font-size: 1.1rem; }
-  .right-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
   .counter { font-size: 0.82rem; color: #aaa; }
-  .type-filters {
-    display: flex;
-    gap: 0.35rem;
-  }
   .topic-row {
     display: flex;
     gap: 0.4rem;
     justify-content: center;
     flex-wrap: wrap;
   }
-  .filter-btn, .topic-btn {
+  .topic-btn {
     background: rgba(255,255,255,0.06);
     border: none;
     color: #ccc;
-    padding: 0.32rem 0.75rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 999px;
-    font-size: 0.76rem;
+    font-size: 0.75rem;
     cursor: pointer;
     font-weight: 500;
   }
-  .filter-btn.active, .topic-btn.active {
+  .topic-btn.active {
     background: #fff;
     color: #000;
   }
-  .filter-btn:hover:not(.active), .topic-btn:hover:not(.active) {
+  .topic-btn:hover:not(.active) {
     background: rgba(255,255,255,0.12);
+  }
+  /* Vertical type filters on the right */
+  .type-sidebar {
+    position: fixed;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 40;
+  }
+  .filter-btn {
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: #ccc;
+    padding: 0.7rem 0.45rem;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 0.5px;
+    min-height: 5.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .filter-btn.active {
+    background: #fff;
+    color: #000;
+  }
+  .filter-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.16);
   }
 </style>
 </head>
@@ -192,14 +220,7 @@
 <div class="top-bar">
   <div class="top-row">
     <div class="logo">LearnScroll</div>
-    <div class="right-controls">
-      <div class="type-filters" id="typeFilters">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="post">Posts</button>
-        <button class="filter-btn" data-filter="article">Articles</button>
-      </div>
-      <div class="counter" id="counter">1 / 0</div>
-    </div>
+    <div class="counter" id="counter">1 / 0</div>
   </div>
   <div class="topic-row" id="topicFilters">
     <button class="topic-btn active" data-topic="all">All topics</button>
@@ -210,6 +231,11 @@
     <button class="topic-btn" data-topic="biology">Biology</button>
     <button class="topic-btn" data-topic="calculus">Calculus</button>
   </div>
+</div>
+<div class="type-sidebar" id="typeFilters">
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="post">Posts</button>
+  <button class="filter-btn" data-filter="article">Articles</button>
 </div>
 <div id="feed"></div>
 

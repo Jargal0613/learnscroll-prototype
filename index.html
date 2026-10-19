@@ -99,9 +99,10 @@
     margin-left: auto;
   }
   .content {
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     line-height: 1.6;
     margin-bottom: 1rem;
+    white-space: pre-wrap;
   }
   .card.article .content {
     font-size: 1.02rem;
@@ -235,18 +236,16 @@
 
 <script>
 const allItems = [
-  { type: "post", topic: "calculus", source: "X · @martinmrmar", text: "<strong>If you want to practice your limits... here you go!</strong><br><br>(From Calculus by Louis Leithold 5th edition)." },
-  { type: "post", topic: "fluidmechanics", source: "X · @SciencesKL", text: "<strong>5 Equations Behind Fluid Mechanics</strong><br><br>#physics" },
-  { type: "post", topic: "physics", source: "X · @SmartScience", text: "<strong>Nobel Prize-winning physicist Roger Penrose</strong> has spent decades investigating one of science’s biggest mysteries: whether consciousness can be fully explained by the physical processes occurring inside the brain.<br><br>Penrose, who received the 2020 Nobel Prize in Physics for his work on black holes, has proposed that consciousness may involve quantum processes that conventional neuroscience does not yet fully explain." },
-  { type: "post", topic: "physics", source: "X · @0x_fokki", text: "<strong>Love this! This is how I wish someone had explained physics to me.</strong><br><br>I've been exploring the same idea with Claude! A skill for making everyday machines you can play with." },
-  { type: "post", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis in 60 seconds</strong><br><br>Plants take in CO₂ + water + light → make glucose + release oxygen. That’s the whole energy engine of life in one reaction." },
-  { type: "post", topic: "thermodynamics", source: "Instagram", text: "<strong>You can’t win, you can’t break even, you can’t get out of the game</strong><br><br>The three laws of thermodynamics, summarized. Energy is conserved, entropy increases, and absolute zero is unreachable." },
-  { type: "article", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis and cellular respiration explained</strong><br><br>These two processes are the energy cycle of life. Photosynthesis stores sunlight as chemical energy in glucose. Cellular respiration releases that energy as ATP so cells can work.<br><br>In photosynthesis, light reactions in the thylakoids split water and generate ATP + NADPH. The Calvin cycle in the stroma then fixes CO₂ into sugar. Oxygen is the waste product we breathe.<br><br>Respiration reverses it: glycolysis, Krebs cycle, and the electron transport chain turn glucose back into CO₂, water, and usable ATP." },
-  { type: "post", topic: "chemistry", source: "X", text: "<strong>Balancing equations is just atom accounting</strong><br><br>Atoms aren’t created or destroyed in chemical reactions — they’re only rearranged. Count them on both sides." },
-  { type: "post", topic: "calculus", source: "YouTube", text: "<strong>Derivative = how fast right now</strong><br><br>Slope of the tangent line at one point. Position → velocity. Velocity → acceleration." },
-  { type: "article", topic: "thermodynamics", source: "YouTube", text: "<strong>The laws of thermodynamics — full breakdown</strong><br><br>First law: energy is conserved. It changes form but the total stays the same in an isolated system.<br><br>Second law: entropy of an isolated system never decreases. Useful energy spreads out. This is why heat engines can never be 100% efficient.<br><br>Third law: entropy approaches a minimum as temperature approaches absolute zero. Absolute zero itself is unreachable." },
-  { type: "post", topic: "physics", source: "Instagram", text: "<strong>Energy only changes form</strong><br><br>Kinetic ↔ potential. Chemical → thermal. Light → chemical bonds in plants. The total never appears or disappears." },
-  { type: "post", topic: "biology", source: "X", text: "<strong>Cells are the unit of life</strong><br><br>Every organism is made of one or more cells. They take in nutrients, make energy, respond to the environment, and reproduce." }
+  { type: "post", topic: "calculus", source: "X · @martinmrmar", text: "If you want to practice your limits... here you go! (From Calculus by Louis Leithold 5th edition)." },
+  { type: "post", topic: "fluidmechanics", source: "X · @SciencesKL", text: "5 Equations Behind Fluid Mechanics\n#physics" },
+  { type: "post", topic: "physics", source: "X · @SciencesKL", text: "The Three Titans of Statistical Mechanics\n#physics" },
+  { type: "post", topic: "physics", source: "X · @SciencesKL", text: "The Minds Behind Modern Physics: Werner Heisenberg (1901–1976)\n#physics" },
+  { type: "post", topic: "biology", source: "X · @Treasure_Mome", text: "DID YOU KNOW HOW AMAZING TREES ARE?\n\nTrees are among nature’s greatest treasures!\n\nThey absorb carbon dioxide and release oxygen through photosynthesis.\nThey provide homes for birds and many other animals.\nTheir roots help protect soil from erosion.\nTheir shade helps keep our surroundings cooler.\nMany trees provide fruits, medicine, and materials that people use every day.\n\nImagine a world without trees. Our environment would be very different!\n\nPlanting and protecting trees is one way we can help care for our planet." },
+  { type: "post", topic: "calculus", source: "X · @Sam_Axiom", text: "What Is a Derivative, Really?  | Calculus Explained Visually\n\nWhat does a derivative actually mean? Why do mathematicians use ? And how can we calculate the exact rate at which something changes at a single point?" },
+  { type: "post", topic: "physics", source: "X · @SmartScience", text: "Nobel Prize-winning physicist Roger Penrose has spent decades investigating one of science’s biggest mysteries: whether consciousness can be fully explained by the physical processes occurring inside the brain.\n\nPenrose, who received the 2020 Nobel Prize in Physics for his work on black holes, has proposed that consciousness may involve quantum processes that conventional neuroscience does not yet fully explain.\n\nTogether with anesthesiologist Stuart Hameroff, he developed the Orch-OR theory, which suggests that quantum events inside microscopic structures called microtubules could contribute to conscious experience." },
+  { type: "post", topic: "thermodynamics", source: "X", text: "Morning Queen, now I gotta get ready for class, a 2 hour lecture of the laws of thermodynamics" },
+  { type: "article", topic: "biology", source: "LearnScroll", text: "<strong>Photosynthesis and cellular respiration</strong><br><br>These two processes form the energy cycle of life. Photosynthesis captures light energy and stores it in glucose. Cellular respiration releases that stored energy as ATP.<br><br>Light-dependent reactions occur in the thylakoid membranes. The Calvin cycle happens in the stroma and fixes carbon dioxide into sugar. Oxygen is released as a byproduct.<br><br>Cellular respiration reverses the process through glycolysis, the Krebs cycle, and the electron transport chain." },
+  { type: "article", topic: "thermodynamics", source: "LearnScroll", text: "<strong>The laws of thermodynamics</strong><br><br>First law: energy is conserved. It changes form but the total energy of an isolated system stays constant.<br><br>Second law: the entropy of an isolated system never decreases. Useful energy tends to spread out. This is why no heat engine can be 100% efficient.<br><br>Third law: the entropy of a perfect crystal approaches a minimum as temperature approaches absolute zero. Absolute zero itself cannot be reached." }
 ];
 
 const feed = document.getElementById('feed');
@@ -259,7 +258,7 @@ let currentType = 'all';
 let currentTopic = 'all';
 let visibleItems = [...allItems];
 
-const STORAGE_KEY = 'learnscroll-topics-v3';
+const STORAGE_KEY = 'learnscroll-topics-v4';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 state.understood = state.understood || {};
 state.saved = state.saved || {};

@@ -235,20 +235,18 @@
 
 <script>
 const allItems = [
-  { type: "post", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis in 60 seconds</strong><br><br>Plants take in CO₂ + water + light → make glucose + release oxygen. That’s the whole energy engine of life in one reaction. Scroll for the details." },
-  { type: "post", topic: "physics", source: "X", text: "<strong>F = ma is undefeated</strong><br><br>Double the force, double the acceleration. Double the mass, half the acceleration. Every rocket, car, and falling apple still obeys this." },
+  { type: "post", topic: "calculus", source: "X · @martinmrmar", text: "<strong>If you want to practice your limits... here you go!</strong><br><br>(From Calculus by Louis Leithold 5th edition)." },
+  { type: "post", topic: "fluidmechanics", source: "X · @SciencesKL", text: "<strong>5 Equations Behind Fluid Mechanics</strong><br><br>#physics" },
+  { type: "post", topic: "physics", source: "X · @SmartScience", text: "<strong>Nobel Prize-winning physicist Roger Penrose</strong> has spent decades investigating one of science’s biggest mysteries: whether consciousness can be fully explained by the physical processes occurring inside the brain.<br><br>Penrose, who received the 2020 Nobel Prize in Physics for his work on black holes, has proposed that consciousness may involve quantum processes that conventional neuroscience does not yet fully explain." },
+  { type: "post", topic: "physics", source: "X · @0x_fokki", text: "<strong>Love this! This is how I wish someone had explained physics to me.</strong><br><br>I've been exploring the same idea with Claude! A skill for making everyday machines you can play with." },
+  { type: "post", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis in 60 seconds</strong><br><br>Plants take in CO₂ + water + light → make glucose + release oxygen. That’s the whole energy engine of life in one reaction." },
   { type: "post", topic: "thermodynamics", source: "Instagram", text: "<strong>You can’t win, you can’t break even, you can’t get out of the game</strong><br><br>The three laws of thermodynamics, summarized. Energy is conserved, entropy increases, and absolute zero is unreachable." },
-  { type: "article", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis and cellular respiration explained</strong><br><br>These two processes are the energy cycle of life. Photosynthesis stores sunlight as chemical energy in glucose. Cellular respiration releases that energy as ATP so cells can work.<br><br>In photosynthesis, light reactions in the thylakoids split water and generate ATP + NADPH. The Calvin cycle in the stroma then fixes CO₂ into sugar. Oxygen is the waste product we breathe.<br><br>Respiration reverses it: glycolysis, Krebs cycle, and the electron transport chain turn glucose back into CO₂, water, and usable ATP. Together they keep ecosystems running.<br><br>This is why protecting plants protects the base of almost every food chain." },
-  { type: "post", topic: "chemistry", source: "X", text: "<strong>Balancing equations is just atom accounting</strong><br><br>Atoms aren’t created or destroyed in chemical reactions — they’re only rearranged. Count them on both sides. That’s the whole rule." },
-  { type: "post", topic: "fluidmechanics", source: "Instagram", text: "<strong>Why planes fly</strong><br><br>Faster air over the curved top of a wing = lower pressure. Higher pressure underneath pushes the wing up. Bernoulli in one sentence." },
-  { type: "post", topic: "calculus", source: "YouTube", text: "<strong>Derivative = how fast right now</strong><br><br>Slope of the tangent line at one point. Position → velocity. Velocity → acceleration. That’s the entire idea." },
-  { type: "article", topic: "thermodynamics", source: "YouTube", text: "<strong>The laws of thermodynamics — full breakdown</strong><br><br>First law: energy is conserved. It changes form but the total stays the same in an isolated system.<br><br>Second law: entropy of an isolated system never decreases. Useful energy spreads out. This is why heat engines can never be 100% efficient and why time has a direction.<br><br>Third law: entropy approaches a minimum (often taken as zero for a perfect crystal) as temperature approaches absolute zero. Absolute zero itself is unreachable.<br><br>These three statements limit every engine, refrigerator, chemical reaction, and living cell. No design can break them." },
+  { type: "article", topic: "biology", source: "YouTube", text: "<strong>Photosynthesis and cellular respiration explained</strong><br><br>These two processes are the energy cycle of life. Photosynthesis stores sunlight as chemical energy in glucose. Cellular respiration releases that energy as ATP so cells can work.<br><br>In photosynthesis, light reactions in the thylakoids split water and generate ATP + NADPH. The Calvin cycle in the stroma then fixes CO₂ into sugar. Oxygen is the waste product we breathe.<br><br>Respiration reverses it: glycolysis, Krebs cycle, and the electron transport chain turn glucose back into CO₂, water, and usable ATP." },
+  { type: "post", topic: "chemistry", source: "X", text: "<strong>Balancing equations is just atom accounting</strong><br><br>Atoms aren’t created or destroyed in chemical reactions — they’re only rearranged. Count them on both sides." },
+  { type: "post", topic: "calculus", source: "YouTube", text: "<strong>Derivative = how fast right now</strong><br><br>Slope of the tangent line at one point. Position → velocity. Velocity → acceleration." },
+  { type: "article", topic: "thermodynamics", source: "YouTube", text: "<strong>The laws of thermodynamics — full breakdown</strong><br><br>First law: energy is conserved. It changes form but the total stays the same in an isolated system.<br><br>Second law: entropy of an isolated system never decreases. Useful energy spreads out. This is why heat engines can never be 100% efficient.<br><br>Third law: entropy approaches a minimum as temperature approaches absolute zero. Absolute zero itself is unreachable." },
   { type: "post", topic: "physics", source: "Instagram", text: "<strong>Energy only changes form</strong><br><br>Kinetic ↔ potential. Chemical → thermal. Light → chemical bonds in plants. The total never appears or disappears." },
-  { type: "post", topic: "biology", source: "X", text: "<strong>Cells are the unit of life</strong><br><br>Every organism is made of one or more cells. They take in nutrients, make energy, respond to the environment, and reproduce. That’s the definition." },
-  { type: "article", topic: "fluidmechanics", source: "YouTube", text: "<strong>Fluid mechanics essentials</strong><br><br>Fluids (liquids and gases) cannot resist shear stress when at rest — they flow. Pressure at a point acts equally in all directions (Pascal).<br><br>Archimedes: buoyant force equals the weight of the displaced fluid. Bernoulli: faster flow means lower pressure along a streamline (for ideal cases). Viscosity creates internal friction and decides laminar vs turbulent flow via the Reynolds number.<br><br>These ideas explain blood flow, airplane lift, pipe networks, weather, and hydraulics. Master the basics and a huge range of problems become solvable." },
-  { type: "post", topic: "calculus", source: "X", text: "<strong>Integral = total change</strong><br><br>Add up all the tiny pieces. Area under velocity-time = displacement. Area under force-distance = work. That’s accumulation." },
-  { type: "post", topic: "thermodynamics", source: "Instagram", text: "<strong>No heat engine is 100% efficient</strong><br><br>Carnot limit depends only on the hot and cold temperatures. Everything real is less efficient than that ideal." },
-  { type: "post", topic: "chemistry", source: "YouTube", text: "<strong>Acids donate H⁺, bases accept them</strong><br><br>Brønsted–Lowry in one line. Explains reactions in water and inside living cells." }
+  { type: "post", topic: "biology", source: "X", text: "<strong>Cells are the unit of life</strong><br><br>Every organism is made of one or more cells. They take in nutrients, make energy, respond to the environment, and reproduce." }
 ];
 
 const feed = document.getElementById('feed');
@@ -261,7 +259,7 @@ let currentType = 'all';
 let currentTopic = 'all';
 let visibleItems = [...allItems];
 
-const STORAGE_KEY = 'learnscroll-topics-v2';
+const STORAGE_KEY = 'learnscroll-topics-v3';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 state.understood = state.understood || {};
 state.saved = state.saved || {};
@@ -306,7 +304,7 @@ function render() {
         <div class="meta">
           <div class="avatar">LS</div>
           <div>learnscroll</div>
-          <div class="source">via ${source}</div>
+          <div class="source">${source}</div>
         </div>
         <div class="content">${item.text}</div>
         <div class="actions">

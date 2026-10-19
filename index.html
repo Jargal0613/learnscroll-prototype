@@ -19,11 +19,11 @@
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
-    padding-top: 6.5rem;
+    padding-top: 5.2rem;
   }
   .card {
-    height: calc(100vh - 6.5rem);
-    height: calc(100dvh - 6.5rem);
+    height: calc(100vh - 5.2rem);
+    height: calc(100dvh - 5.2rem);
     scroll-snap-align: start;
     display: flex;
     align-items: center;
@@ -137,39 +137,44 @@
   .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    padding: 0.75rem 1.4rem;
+    height: 5.2rem;
+    padding: 0.6rem 1.4rem 0.5rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.45rem;
     background: #111;
     z-index: 50;
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .logo { font-weight: 700; font-size: 1.1rem; }
-  .counter { font-size: 0.82rem; color: #aaa; }
-  .controls {
-    position: fixed;
-    top: 3.1rem;
-    left: 0; right: 0;
-    z-index: 40;
-    background: #111;
-    padding: 0.5rem 1rem 0.6rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
-  .row {
+  .logo { font-weight: 700; font-size: 1.1rem; }
+  .right-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .counter { font-size: 0.82rem; color: #aaa; }
+  .type-filters {
+    display: flex;
+    gap: 0.35rem;
+  }
+  .topic-row {
     display: flex;
     gap: 0.4rem;
     justify-content: center;
     flex-wrap: wrap;
-    margin-bottom: 0.35rem;
   }
   .filter-btn, .topic-btn {
     background: rgba(255,255,255,0.06);
     border: none;
     color: #ccc;
-    padding: 0.35rem 0.8rem;
+    padding: 0.32rem 0.75rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     cursor: pointer;
     font-weight: 500;
   }
@@ -185,16 +190,18 @@
 <body>
 <div class="progress-bar" id="progressBar"></div>
 <div class="top-bar">
-  <div class="logo">LearnScroll</div>
-  <div class="counter" id="counter">1 / 0</div>
-</div>
-<div class="controls">
-  <div class="row" id="typeFilters">
-    <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="post">Posts</button>
-    <button class="filter-btn" data-filter="article">Articles</button>
+  <div class="top-row">
+    <div class="logo">LearnScroll</div>
+    <div class="right-controls">
+      <div class="type-filters" id="typeFilters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="post">Posts</button>
+        <button class="filter-btn" data-filter="article">Articles</button>
+      </div>
+      <div class="counter" id="counter">1 / 0</div>
+    </div>
   </div>
-  <div class="row" id="topicFilters">
+  <div class="topic-row" id="topicFilters">
     <button class="topic-btn active" data-topic="all">All topics</button>
     <button class="topic-btn" data-topic="physics">Physics</button>
     <button class="topic-btn" data-topic="thermodynamics">Thermodynamics</button>

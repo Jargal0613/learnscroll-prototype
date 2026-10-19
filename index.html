@@ -17,7 +17,6 @@
   .screen { display: none; height: 100vh; height: 100dvh; }
   .screen.active { display: block; }
 
-  /* Home */
   #home {
     display: flex;
     flex-direction: column;
@@ -51,16 +50,18 @@
     border-radius: 1.2rem;
     padding: 1.4rem 1.2rem;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    text-align: left;
+    color: #fff;
+    font-family: inherit;
+    width: 100%;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
   }
   .choice:active { transform: scale(0.97); background: rgba(255,255,255,0.12); }
-  .choice h2 { font-size: 1.25rem; margin-bottom: 0.3rem; pointer-events: none; }
-  .choice span { color: #aaa; font-size: 0.9rem; pointer-events: none; }
+  .choice h2 { font-size: 1.25rem; margin-bottom: 0.3rem; }
+  .choice span { color: #aaa; font-size: 0.9rem; display: block; }
 
-  /* Feed */
   #feed {
     height: 100vh;
     height: 100dvh;
@@ -135,9 +136,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, transform 0.1s;
   }
-  .action-btn:active { transform: scale(0.94); }
   .action-btn.saved { background: #fbbf24; color: #000; }
   .action-btn.done { background: #22c55e; color: #000; }
   .back-btn {
@@ -183,23 +182,21 @@
 </head>
 <body>
 
-<!-- Home Screen -->
 <div id="home" class="screen active">
   <h1>LearnScroll</h1>
   <p>Choose what you want to read</p>
   <div class="choices">
-    <div class="choice" data-type="lesson">
+    <button class="choice" data-type="lesson">
       <h2>Lessons</h2>
       <span>Sequential bite-sized explanations</span>
-    </div>
-    <div class="choice" data-type="posts">
+    </button>
+    <button class="choice" data-type="posts">
       <h2>Posts & Articles</h2>
       <span>Short reads and opinion pieces</span>
-    </div>
+    </button>
   </div>
 </div>
 
-<!-- Feed Screen -->
 <div id="feedScreen" class="screen">
   <div class="progress-bar" id="progressBar"></div>
   <button class="back-btn" id="backBtn">← Home</button>
@@ -250,7 +247,6 @@ let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-
 function getTypeState(type) {
   if (!state[type]) state[type] = { understood: {}, saved: {}, lastIndex: 0 };
   return state[type];
@@ -261,6 +257,7 @@ function openFeed(type) {
   cards = type === 'lesson' ? lessons : posts;
   document.getElementById('home').classList.remove('active');
   document.getElementById('feedScreen').classList.add('active');
+  location.hash = type;
   renderFeed();
 }
 
@@ -268,6 +265,7 @@ function goHome() {
   document.getElementById('feedScreen').classList.remove('active');
   document.getElementById('home').classList.add('active');
   feed.innerHTML = '';
+  location.hash = '';
 }
 
 function updateProgress(index) {
@@ -281,7 +279,6 @@ function updateProgress(index) {
 function renderFeed() {
   feed.innerHTML = '';
   const ts = getTypeState(currentType);
-
   cards.forEach((card, i) => {
     const el = document.createElement('div');
     el.className = 'card' + (ts.understood[i] ? ' understood' : '');
@@ -300,10 +297,8 @@ function renderFeed() {
     `;
     feed.appendChild(el);
   });
-
   const hints = feed.querySelectorAll('.hint');
   if (hints.length) hints[hints.length - 1].style.display = 'none';
-
   if (ts.lastIndex > 0) {
     setTimeout(() => {
       feed.children[ts.lastIndex]?.scrollIntoView({ behavior: 'instant' });
@@ -316,16 +311,19 @@ function renderFeed() {
   }
 }
 
-// Reliable choice handlers
-document.querySelectorAll('.choice').forEach(el => {
-  el.addEventListener('click', () => openFeed(el.dataset.type));
-  el.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    openFeed(el.dataset.type);
-  });
+// Attach listeners
+document.querySelectorAll('.choice').forEach(btn => {
+  btn.addEventListener('click', () => openFeed(btn.dataset.type));
 });
-
 document.getElementById('backBtn').addEventListener('click', goHome);
+
+// Hash support so direct links work
+function checkHash() {
+  const h = location.hash.replace('#', '');
+  if (h === 'lesson' || h === 'posts') openFeed(h);
+}
+window.addEventListener('hashchange', checkHash);
+checkHash();
 
 let scrollTimeout;
 feed.addEventListener('scroll', () => {
@@ -343,7 +341,6 @@ feed.addEventListener('click', (e) => {
   const index = Number(card.dataset.index);
   const action = btn.dataset.action;
   const ts = getTypeState(currentType);
-
   if (action === 'done') {
     ts.understood[index] = !ts.understood[index];
     card.classList.toggle('understood', ts.understood[index]);

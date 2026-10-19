@@ -32,17 +32,23 @@
   }
   .card-inner {
     width: 100%;
-    max-width: 640px;
+    max-width: 680px;
     background: #0a0a0a;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.08);
-    padding: 2.5rem 2.2rem 2rem;
+    padding: 2.4rem 2.2rem 2rem;
     position: relative;
-    min-height: 420px;
+    min-height: 380px;
+    max-height: 85vh;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  }
+  .card.article .card-inner {
+    justify-content: flex-start;
+    max-height: 88vh;
   }
   .card.understood .card-inner {
     background: #0d1a12;
@@ -50,55 +56,61 @@
   }
   .type-badge {
     position: absolute;
-    top: 1.2rem;
-    left: 1.4rem;
-    padding: 0.35rem 0.8rem;
+    top: 1.1rem;
+    left: 1.3rem;
+    padding: 0.3rem 0.75rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 600;
   }
-  .type-badge.lesson { background: rgba(125,211,252,0.18); color: #7dd3fc; }
+  .type-badge.reel { background: rgba(125,211,252,0.18); color: #7dd3fc; }
   .type-badge.post { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .type-badge.article { background: rgba(167,139,250,0.18); color: #c4b5fd; }
   .meta {
     display: flex;
     align-items: center;
     gap: 0.65rem;
     font-size: 0.9rem;
     color: #bbb;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.7rem;
+    margin-top: 1.6rem;
   }
   .avatar {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: linear-gradient(135deg, #7dd3fc, #a78bfa);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
   }
   .content {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
     line-height: 1.5;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .card.article .content {
+    font-size: 1.15rem;
+    line-height: 1.65;
   }
   .content strong { color: #fff; }
   .actions {
     position: absolute;
-    right: 1.2rem;
-    bottom: 1.4rem;
+    right: 1.1rem;
+    bottom: 1.2rem;
     display: flex;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
   .action-btn {
     background: rgba(255,255,255,0.08);
     border: none;
     color: #fff;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -119,75 +131,96 @@
   .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    padding: 1rem 1.5rem;
+    padding: 0.9rem 1.4rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(to bottom, rgba(17,17,17,0.85), transparent);
+    background: linear-gradient(to bottom, rgba(17,17,17,0.9), transparent);
     z-index: 50;
     pointer-events: none;
   }
-  .logo {
-    font-weight: 700;
-    font-size: 1.15rem;
+  .logo { font-weight: 700; font-size: 1.1rem; }
+  .counter { font-size: 0.85rem; color: #aaa; }
+  .filters {
+    position: fixed;
+    top: 3.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 60;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    padding: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.08);
   }
-  .counter {
-    font-size: 0.85rem;
-    color: #aaa;
+  .filter-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    font-weight: 500;
   }
-  @media (max-width: 700px) {
-    .card-inner {
-      max-width: 100%;
-      border-radius: 0;
-      border: none;
-      min-height: 100%;
-      padding: 4rem 1.4rem 2rem;
-    }
-    .card { padding: 0; }
+  .filter-btn.active {
+    background: #fff;
+    color: #000;
   }
+  .filter-btn:hover:not(.active) { background: rgba(255,255,255,0.08); }
 </style>
 </head>
 <body>
 <div class="progress-bar" id="progressBar"></div>
 <div class="top-bar">
   <div class="logo">LearnScroll</div>
-  <div class="counter" id="counter">1 / 24</div>
+  <div class="counter" id="counter">1 / 0</div>
+</div>
+<div class="filters" id="filters">
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="reel">Reels</button>
+  <button class="filter-btn" data-filter="post">Posts</button>
+  <button class="filter-btn" data-filter="article">Articles</button>
 </div>
 <div id="feed"></div>
 
 <script>
-const items = [
-  { type: "lesson", text: "Welcome to your lesson on <strong>Photosynthesis</strong>. We'll go through it one small piece at a time. Scroll down whenever you're ready for the next explanation." },
+const allItems = [
+  { type: "reel", text: "Welcome to your lesson on <strong>Photosynthesis</strong>. We'll go through it one small piece at a time. Scroll down whenever you're ready for the next explanation." },
   { type: "post", text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into tiny scrollable pieces reduces overwhelm and makes it easier to stay consistent." },
-  { type: "lesson", text: "Photosynthesis is how plants, algae, and some bacteria convert <strong>light energy</strong> into chemical energy that they can use as food." },
+  { type: "reel", text: "Photosynthesis is how plants, algae, and some bacteria convert <strong>light energy</strong> into chemical energy that they can use as food." },
+  { type: "article", text: "<strong>A deeper look at energy in living systems</strong><br><br>Photosynthesis and cellular respiration are two sides of the same coin. One captures energy from sunlight and stores it in chemical bonds; the other releases that stored energy so cells can perform work.<br><br>In photosynthesis, chlorophyll absorbs photons and uses that energy to split water and fix carbon dioxide into glucose. The process is not a single reaction but a coordinated set of light-dependent and light-independent stages. Oxygen is released as a byproduct — the very gas most animals need to survive.<br><br>Cellular respiration then reverses the process. Glucose is broken down, first in the cytoplasm (glycolysis) and later inside mitochondria. The energy released is captured in ATP, the universal energy currency of the cell. Without this constant recycling of energy, complex life as we know it would be impossible.<br><br>Understanding both processes together gives a clearer picture of how ecosystems stay in balance and why protecting plant life is ultimately protecting the foundation of almost every food web on Earth." },
   { type: "post", text: "<strong>The problem with long articles</strong><br><br>Most people start reading, get distracted, and never finish. A vertical feed forces one idea at a time." },
-  { type: "lesson", text: "The overall equation is simple:<br><br>6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂<br><br>Carbon dioxide + water + light → sugar + oxygen." },
+  { type: "reel", text: "The overall equation is simple:<br><br>6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂<br><br>Carbon dioxide + water + light → sugar + oxygen." },
   { type: "post", text: "<strong>Spaced repetition in your pocket</strong><br><br>Seeing the same idea again later (instead of all at once) helps memory stick far better than cramming." },
-  { type: "lesson", text: "This process happens mainly in the <strong>chloroplasts</strong> of plant cells. Chloroplasts contain a green pigment called chlorophyll that captures sunlight." },
+  { type: "reel", text: "This process happens mainly in the <strong>chloroplasts</strong> of plant cells. Chloroplasts contain a green pigment called chlorophyll that captures sunlight." },
+  { type: "article", text: "<strong>How to actually finish what you start reading</strong><br><br>The internet is full of excellent long-form articles that almost no one completes. The problem is rarely the quality of the writing; it is the lack of structure that matches how attention works.<br><br>When a piece is presented as one continuous block, the brain treats it as a single large task. Large tasks trigger resistance. Breaking the same material into smaller, clearly bounded segments removes that resistance. Each segment feels finishable, so you keep going.<br><br>This is why short vertical cards can outperform traditional article layouts for many learners, even when the underlying information is identical. The content has not become simpler — only the packaging has changed.<br><br>Articles still have a place. They are better when you need nuance, evidence, and connected argument. The ideal system lets you move between short cards for momentum and longer articles when you want depth, without losing your place in either." },
+  { type: "reel", text: "There are two main stages:<br><br>1. Light-dependent reactions<br>2. Light-independent reactions (Calvin cycle)" },
   { type: "post", text: "<strong>Attention is the real bottleneck</strong><br><br>You don’t need more information. You need a way to consume the information you already care about without getting lost." },
-  { type: "lesson", text: "There are two main stages:<br><br>1. Light-dependent reactions<br>2. Light-independent reactions (Calvin cycle)" },
+  { type: "reel", text: "<strong>Light-dependent reactions</strong> occur in the thylakoid membranes. They use sunlight to split water, release oxygen, and produce energy carriers (ATP and NADPH)." },
+  { type: "reel", text: "The <strong>Calvin cycle</strong> happens in the stroma. It uses the ATP and NADPH to fix carbon dioxide into sugar (glucose). No light is directly required for this stage." },
   { type: "post", text: "<strong>Micro-learning vs. traditional study</strong><br><br>Traditional study often means long sessions. Micro-learning means frequent, short exposures. Both can work — the second is easier to maintain." },
-  { type: "lesson", text: "<strong>Light-dependent reactions</strong> occur in the thylakoid membranes. They use sunlight to split water, release oxygen, and produce energy carriers (ATP and NADPH)." },
-  { type: "post", text: "<strong>How to use this feed</strong><br><br>Scroll when you have a minute. Mark cards as understood. Come back later and pick up exactly where you left off." },
-  { type: "lesson", text: "The <strong>Calvin cycle</strong> happens in the stroma. It uses the ATP and NADPH to fix carbon dioxide into sugar (glucose). No light is directly required for this stage." },
-  { type: "post", text: "<strong>On uploading your own material</strong><br><br>In the full version you would drop a PDF, notes, or a book chapter and the app would turn it into a sequence of cards like these." },
-  { type: "lesson", text: "Why does this matter? Almost all life on Earth depends on photosynthesis — either directly (plants) or indirectly (animals that eat plants)." },
-  { type: "post", text: "<strong>Final thought</strong><br><br>The goal is not to replace deep reading. It’s to make the first steps of learning lighter so you actually start." },
-  { type: "lesson", text: "Quick check: What gas do plants release during photosynthesis?<br><br><strong>Answer:</strong> Oxygen (O₂)." },
-  { type: "lesson", text: "<strong>Next concept: Cellular Respiration</strong><br><br>While photosynthesis stores energy, cellular respiration releases it so cells can do work." },
-  { type: "lesson", text: "The simplified equation for cellular respiration is the reverse of photosynthesis:<br><br>C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP)" },
-  { type: "lesson", text: "It happens in three main stages: glycolysis, the Krebs cycle, and the electron transport chain." },
-  { type: "lesson", text: "<strong>Glycolysis</strong> takes place in the cytoplasm and breaks glucose into two pyruvate molecules, producing a small amount of ATP." },
-  { type: "lesson", text: "Most of the energy is released later in the mitochondria during the Krebs cycle and electron transport chain." },
-  { type: "lesson", text: "Together, photosynthesis and cellular respiration form a continuous cycle of energy transformation that powers nearly all life." },
-  { type: "lesson", text: "You just finished this sequence. Keep scrolling — more mixed content will appear as the app grows." }
+  { type: "reel", text: "Why does this matter? Almost all life on Earth depends on photosynthesis — either directly (plants) or indirectly (animals that eat plants)." },
+  { type: "reel", text: "Quick check: What gas do plants release during photosynthesis?<br><br><strong>Answer:</strong> Oxygen (O₂)." },
+  { type: "reel", text: "<strong>Next concept: Cellular Respiration</strong><br><br>While photosynthesis stores energy, cellular respiration releases it so cells can do work." },
+  { type: "reel", text: "The simplified equation for cellular respiration is the reverse of photosynthesis:<br><br>C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP)" },
+  { type: "reel", text: "It happens in three main stages: glycolysis, the Krebs cycle, and the electron transport chain." },
+  { type: "reel", text: "<strong>Glycolysis</strong> takes place in the cytoplasm and breaks glucose into two pyruvate molecules, producing a small amount of ATP." },
+  { type: "reel", text: "Most of the energy is released later in the mitochondria during the Krebs cycle and electron transport chain." },
+  { type: "reel", text: "Together, photosynthesis and cellular respiration form a continuous cycle of energy transformation that powers nearly all life." }
 ];
 
 const feed = document.getElementById('feed');
 const progressBar = document.getElementById('progressBar');
 const counter = document.getElementById('counter');
+const filterBtns = document.querySelectorAll('.filter-btn');
 
-const STORAGE_KEY = 'learnscroll-mixed-v1';
+let currentFilter = 'all';
+let visibleItems = [...allItems];
+
+const STORAGE_KEY = 'learnscroll-mixed-v2';
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 state.understood = state.understood || {};
 state.saved = state.saved || {};
@@ -197,52 +230,68 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function getItemKey(item, originalIndex) {
+  return originalIndex;
+}
+
 function updateProgress(index) {
-  const pct = ((index + 1) / items.length) * 100;
+  const pct = visibleItems.length ? ((index + 1) / visibleItems.length) * 100 : 0;
   progressBar.style.width = pct + '%';
-  counter.textContent = `${index + 1} / ${items.length}`;
+  counter.textContent = visibleItems.length ? `${index + 1} / ${visibleItems.length}` : '0 / 0';
   state.lastIndex = index;
   saveState();
 }
 
-items.forEach((item, i) => {
-  const el = document.createElement('div');
-  el.className = 'card' + (state.understood[i] ? ' understood' : '');
-  el.dataset.index = i;
-  const badgeClass = item.type === 'lesson' ? 'lesson' : 'post';
-  const badgeText = item.type === 'lesson' ? 'Lesson' : 'Post';
-  el.innerHTML = `
-    <div class="card-inner">
-      <div class="type-badge ${badgeClass}">${badgeText}</div>
-      <div class="meta">
-        <div class="avatar">LS</div>
-        <div>learnscroll</div>
+function render() {
+  feed.innerHTML = '';
+  visibleItems = currentFilter === 'all'
+    ? allItems
+    : allItems.filter(item => item.type === currentFilter);
+
+  visibleItems.forEach((item, i) => {
+    const originalIndex = allItems.indexOf(item);
+    const el = document.createElement('div');
+    el.className = `card ${item.type}` + (state.understood[originalIndex] ? ' understood' : '');
+    el.dataset.index = originalIndex;
+    const badgeText = item.type === 'reel' ? 'Reel' : item.type === 'post' ? 'Post' : 'Article';
+    el.innerHTML = `
+      <div class="card-inner">
+        <div class="type-badge ${item.type}">${badgeText}</div>
+        <div class="meta">
+          <div class="avatar">LS</div>
+          <div>learnscroll</div>
+        </div>
+        <div class="content">${item.text}</div>
+        <div class="actions">
+          <button class="action-btn ${state.saved[originalIndex] ? 'saved' : ''}" data-action="save">★</button>
+          <button class="action-btn ${state.understood[originalIndex] ? 'done' : ''}" data-action="done">✓</button>
+        </div>
       </div>
-      <div class="content">${item.text}</div>
-      <div class="actions">
-        <button class="action-btn ${state.saved[i] ? 'saved' : ''}" data-action="save">★</button>
-        <button class="action-btn ${state.understood[i] ? 'done' : ''}" data-action="done">✓</button>
-      </div>
-    </div>
-  `;
-  feed.appendChild(el);
+    `;
+    feed.appendChild(el);
+  });
+
+  updateProgress(0);
+  if (feed.children[0]) feed.scrollTop = 0;
+}
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    render();
+  });
 });
 
-if (state.lastIndex > 0) {
-  setTimeout(() => {
-    feed.children[state.lastIndex]?.scrollIntoView({ behavior: 'instant' });
-    updateProgress(state.lastIndex);
-  }, 40);
-} else {
-  updateProgress(0);
-}
+render();
 
 let scrollTimeout;
 feed.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
   scrollTimeout = setTimeout(() => {
     const index = Math.round(feed.scrollTop / feed.clientHeight);
-    if (index >= 0 && index < items.length) updateProgress(index);
+    if (index >= 0 && index < visibleItems.length) updateProgress(index);
   }, 60);
 });
 
@@ -250,16 +299,16 @@ feed.addEventListener('click', (e) => {
   const btn = e.target.closest('.action-btn');
   if (!btn) return;
   const card = btn.closest('.card');
-  const index = Number(card.dataset.index);
+  const originalIndex = Number(card.dataset.index);
   const action = btn.dataset.action;
 
   if (action === 'done') {
-    state.understood[index] = !state.understood[index];
-    card.classList.toggle('understood', state.understood[index]);
-    btn.classList.toggle('done', state.understood[index]);
+    state.understood[originalIndex] = !state.understood[originalIndex];
+    card.classList.toggle('understood', state.understood[originalIndex]);
+    btn.classList.toggle('done', state.understood[originalIndex]);
   } else if (action === 'save') {
-    state.saved[index] = !state.saved[index];
-    btn.classList.toggle('saved', state.saved[index]);
+    state.saved[originalIndex] = !state.saved[originalIndex];
+    btn.classList.toggle('saved', state.saved[originalIndex]);
   }
   saveState();
 });
@@ -268,7 +317,7 @@ document.addEventListener('keydown', (e) => {
   const current = Math.round(feed.scrollTop / feed.clientHeight);
   if (e.key === 'ArrowDown' || e.key === ' ') {
     e.preventDefault();
-    const next = Math.min(current + 1, items.length - 1);
+    const next = Math.min(current + 1, visibleItems.length - 1);
     feed.children[next]?.scrollIntoView({ behavior: 'smooth' });
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();

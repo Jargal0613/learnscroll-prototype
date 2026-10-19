@@ -214,13 +214,24 @@ const lessons = [
   { text: "The <strong>Calvin cycle</strong> happens in the stroma. It uses the ATP and NADPH to fix carbon dioxide into sugar (glucose). No light is directly required for this stage." },
   { text: "Why does this matter? Almost all life on Earth depends on photosynthesis — either directly (plants) or indirectly (animals that eat plants)." },
   { text: "Quick check: What gas do plants release during photosynthesis?<br><br><strong>Answer:</strong> Oxygen (O₂)." },
-  { text: "You just finished the first short sequence on photosynthesis. In a full version of the app, the next cards would continue with more detail, examples, or the next section of your uploaded material." }
+  { text: "You just finished the first short sequence on photosynthesis. In a full version of the app, the next cards would continue with more detail, examples, or the next section of your uploaded material." },
+  { text: "<strong>Next concept: Cellular Respiration</strong><br><br>While photosynthesis stores energy, cellular respiration releases it so cells can do work." },
+  { text: "The simplified equation for cellular respiration is the reverse of photosynthesis:<br><br>C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energy (ATP)" },
+  { text: "It happens in three main stages: glycolysis, the Krebs cycle, and the electron transport chain." },
+  { text: "<strong>Glycolysis</strong> takes place in the cytoplasm and breaks glucose into two pyruvate molecules, producing a small amount of ATP." },
+  { text: "Most of the energy is released later in the mitochondria during the Krebs cycle and electron transport chain." },
+  { text: "Together, photosynthesis and cellular respiration form a continuous cycle of energy transformation that powers nearly all life." }
 ];
 
 const posts = [
   { text: "<strong>Why short-form learning works</strong><br><br>Breaking big topics into tiny scrollable pieces reduces overwhelm and makes it easier to stay consistent." },
   { text: "<strong>The problem with long articles</strong><br><br>Most people start reading, get distracted, and never finish. A vertical feed forces one idea at a time." },
-  { text: "<strong>Design note</strong><br><br>This section is a placeholder for posts and articles. In the real app these would come from uploads or your own writing." }
+  { text: "<strong>Spaced repetition in your pocket</strong><br><br>Seeing the same idea again later (instead of all at once) helps memory stick far better than cramming." },
+  { text: "<strong>Attention is the real bottleneck</strong><br><br>You don’t need more information. You need a way to consume the information you already care about without getting lost." },
+  { text: "<strong>Micro-learning vs. traditional study</strong><br><br>Traditional study often means long sessions. Micro-learning means frequent, short exposures. Both can work — the second is easier to maintain." },
+  { text: "<strong>How to use this feed</strong><br><br>Scroll when you have a minute. Mark cards as understood. Come back later and pick up exactly where you left off." },
+  { text: "<strong>On uploading your own material</strong><br><br>In the full version you would drop a PDF, notes, or a book chapter and the app would turn it into a sequence of cards like these." },
+  { text: "<strong>Final thought</strong><br><br>The goal is not to replace deep reading. It’s to make the first steps of learning lighter so you actually start." }
 ];
 
 const feed = document.getElementById('feed');
@@ -289,7 +300,6 @@ function renderFeed() {
   const hints = feed.querySelectorAll('.hint');
   if (hints.length) hints[hints.length - 1].style.display = 'none';
 
-  // Restore position
   if (ts.lastIndex > 0) {
     setTimeout(() => {
       feed.children[ts.lastIndex]?.scrollIntoView({ behavior: 'instant' });
@@ -302,7 +312,6 @@ function renderFeed() {
   }
 }
 
-// Scroll tracking
 let scrollTimeout;
 feed.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
@@ -312,7 +321,6 @@ feed.addEventListener('scroll', () => {
   }, 80);
 });
 
-// Buttons
 feed.addEventListener('click', (e) => {
   const btn = e.target.closest('.action-btn');
   if (!btn) return;
@@ -332,7 +340,6 @@ feed.addEventListener('click', (e) => {
   saveState();
 });
 
-// Keyboard
 document.addEventListener('keydown', (e) => {
   if (!document.getElementById('feedScreen').classList.contains('active')) return;
   const current = Math.round(feed.scrollTop / feed.clientHeight);

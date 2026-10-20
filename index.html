@@ -208,6 +208,174 @@
   }
   .filter-btn.active { background: #fff; color: #000; }
   .filter-btn:hover:not(.active) { background: rgba(255,255,255,0.16); }
+  .type-badge.quiz { background: rgba(52,211,153,0.15); color: #6ee7b7; }
+  .review-badge {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(248,113,113,0.16);
+    color: #fca5a5;
+  }
+  .part-label { font-size: 0.75rem; color: #888; margin-bottom: 0.5rem; }
+  .recall {
+    margin-top: auto;
+    padding-top: 0.6rem;
+    padding-right: 8.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    min-height: 38px;
+  }
+  .recall-label { font-size: 0.74rem; color: #888; margin-right: 0.25rem; }
+  .rate-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #ccc;
+    border-radius: 999px;
+    padding: 0.28rem 0.65rem;
+    font-size: 0.74rem;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .rate-btn small { color: #777; margin-left: 0.3rem; font-size: 0.68rem; }
+  .rate-btn:hover { background: rgba(255,255,255,0.14); }
+  .rate-btn.chosen[data-grade="0"] { background: rgba(248,113,113,0.2); color: #fca5a5; border-color: rgba(248,113,113,0.35); }
+  .rate-btn.chosen[data-grade="1"] { background: rgba(251,191,36,0.18); color: #fbbf24; border-color: rgba(251,191,36,0.35); }
+  .rate-btn.chosen[data-grade="2"] { background: rgba(34,197,94,0.18); color: #86efac; border-color: rgba(34,197,94,0.35); }
+  .rate-btn.chosen[data-grade="3"] { background: rgba(125,211,252,0.18); color: #7dd3fc; border-color: rgba(125,211,252,0.35); }
+  .quiz-q { font-size: 1.15rem; line-height: 1.5; font-weight: 600; margin-bottom: 1rem; }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.8rem; }
+  .quiz-opt {
+    text-align: left;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ddd;
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .quiz-opt:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-opt.correct { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.5); color: #bbf7d0; }
+  .quiz-opt.wrong { background: rgba(248,113,113,0.16); border-color: rgba(248,113,113,0.5); color: #fecaca; }
+  .quiz-feedback { font-size: 0.9rem; line-height: 1.45; color: #bbb; min-height: 1.3rem; }
+  .quiz-feedback b.ok { color: #86efac; }
+  .quiz-feedback b.bad { color: #fca5a5; }
+  .card.quiz .recall.hidden { visibility: hidden; }
+  .tools { display: flex; align-items: center; gap: 0.45rem; }
+  .tool-btn {
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: #ccc;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .tool-btn:hover { background: rgba(255,255,255,0.14); }
+  .tool-btn.primary { background: #7dd3fc; color: #000; }
+  .tool-btn.primary:hover { background: #a5e4fd; }
+  .counter { margin-left: 0.4rem; }
+  .topic-btn.custom { border: 1px dashed rgba(125,211,252,0.35); }
+  .filter-btn .count { font-weight: 700; color: #fca5a5; }
+  .filter-btn.active .count { color: #b91c1c; }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .panel {
+    width: 600px;
+    max-width: calc(100vw - 2rem);
+    max-height: 86vh;
+    overflow-y: auto;
+    background: #0a0a0a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .overlay.drawer { justify-content: flex-start; align-items: stretch; }
+  .overlay.drawer .panel { width: 400px; max-height: none; border-radius: 0 16px 16px 0; }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .panel-head h2 { font-size: 1.05rem; }
+  .close-btn { background: none; border: none; color: #aaa; font-size: 1.3rem; cursor: pointer; }
+  .close-btn:hover { color: #fff; }
+  .field { margin-bottom: 0.9rem; }
+  .field > label { display: block; font-size: 0.75rem; color: #999; margin-bottom: 0.35rem; font-weight: 600; }
+  .panel input[type=text], .panel textarea, .panel select {
+    width: 100%;
+    background: #151515;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #fff;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.88rem;
+    font-family: inherit;
+  }
+  .panel textarea { min-height: 170px; resize: vertical; line-height: 1.5; }
+  .panel input:focus, .panel textarea:focus, .panel select:focus { outline: none; border-color: #7dd3fc; }
+  .row { display: flex; gap: 0.6rem; align-items: center; }
+  .row > * { flex: 1; }
+  .seg { display: flex; gap: 0.4rem; }
+  .seg button { flex: 0 0 auto; }
+  .seg button.active { background: #fff; color: #000; }
+  .hint { font-size: 0.75rem; color: #888; line-height: 1.45; }
+  .panel-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 0.6rem; }
+  .list { display: flex; flex-direction: column; gap: 0.4rem; }
+  .list-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .list-item .name { flex: 1; }
+  .list-item .muted { color: #777; font-size: 0.75rem; }
+  .list-item .confirm-box { flex-basis: 100%; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; font-size: 0.8rem; color: #fca5a5; padding-top: 0.3rem; }
+  .list-item .confirm-box select { width: auto; flex: 1; padding: 0.3rem 0.5rem; }
+  .tool-btn.danger { color: #fca5a5; }
+  .tool-btn.danger.solid { background: #ef4444; color: #fff; }
+  .section-title { font-size: 0.75rem; color: #999; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 1.2rem 0 0.5rem; }
+  .stat-topic { padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .stat-topic h3 { font-size: 0.9rem; margin-bottom: 0.45rem; display: flex; justify-content: space-between; }
+  .stat-topic h3 span { font-size: 0.75rem; color: #888; font-weight: 500; }
+  .stat-line { display: grid; grid-template-columns: 74px 1fr 64px; align-items: center; gap: 0.5rem; font-size: 0.74rem; color: #aaa; margin-bottom: 0.3rem; }
+  .stat-line .val { text-align: right; color: #ddd; }
+  .bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 999px; }
+  .bar i.seen { background: #7dd3fc; }
+  .bar i.mastered { background: #22c55e; }
+  .bar i.due { background: #f87171; }
+  .bar i.acc { background: #fbbf24; }
+  .totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.6rem; }
+  .total-box { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 0.55rem; text-align: center; }
+  .total-box b { display: block; font-size: 1.15rem; }
+  .total-box span { font-size: 0.68rem; color: #888; }
+  .toast {
+    position: fixed; bottom: 1.4rem; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #fff; color: #000;
+    padding: 0.55rem 1rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600;
+    opacity: 0; pointer-events: none;
+    transition: all 0.25s ease; z-index: 300;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -215,24 +383,94 @@
 <div class="top-bar">
   <div class="top-row">
     <div class="logo">LearnScroll</div>
-    <div class="counter" id="counter">1 / 0</div>
+    <div class="tools">
+      <button class="tool-btn primary" id="openUpload">+ Add material</button>
+      <button class="tool-btn" id="openTopics">Topics</button>
+      <button class="tool-btn" id="openProgress">Progress</button>
+      <div class="counter" id="counter">1 / 0</div>
+    </div>
   </div>
-  <div class="topic-row" id="topicFilters">
-    <button class="topic-btn active" data-topic="all">All topics</button>
-    <button class="topic-btn" data-topic="physics">Physics</button>
-    <button class="topic-btn" data-topic="thermodynamics">Thermodynamics</button>
-    <button class="topic-btn" data-topic="fluidmechanics">Fluid Mechanics</button>
-    <button class="topic-btn" data-topic="chemistry">Chemistry</button>
-    <button class="topic-btn" data-topic="biology">Biology</button>
-    <button class="topic-btn" data-topic="calculus">Calculus</button>
-  </div>
+  <div class="topic-row" id="topicFilters"></div>
 </div>
 <div class="type-sidebar" id="typeFilters">
   <button class="filter-btn active" data-filter="all">All</button>
   <button class="filter-btn" data-filter="post">Posts</button>
   <button class="filter-btn" data-filter="article">Articles</button>
+  <button class="filter-btn" data-filter="quiz">Quizzes</button>
+  <button class="filter-btn" data-filter="due">Due · <span class="count" id="dueCount">0</span></button>
 </div>
 <div id="feed"></div>
+
+<!-- Add material -->
+<div class="overlay" id="uploadPanel">
+  <div class="panel" role="dialog" aria-label="Add material">
+    <div class="panel-head"><h2>Add material</h2><button class="close-btn" data-close>×</button></div>
+    <div class="field">
+      <label>Paste your notes or pick a file (.txt, .md, .pdf)</label>
+      <textarea id="upText" placeholder="Paste lecture notes, a chapter, or a summary here. Markdown headings (#, ##) start new cards; otherwise paragraphs are grouped into bite-sized cards."></textarea>
+      <div class="row" style="margin-top:0.5rem">
+        <input type="file" id="upFile" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" style="font-size:0.78rem;color:#aaa">
+        <div class="hint" id="upFileStatus" style="text-align:right"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="upTitle" placeholder="e.g. Lecture 3 – Bernoulli's equation" maxlength="80">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Topic</label>
+        <select id="upTopic"></select>
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <div class="seg" id="upType">
+          <button class="tool-btn active" data-type="post">Post</button>
+          <button class="tool-btn" data-type="article">Article</button>
+        </div>
+      </div>
+    </div>
+    <div class="field" id="upNewTopicField" style="display:none">
+      <label>New topic name</label>
+      <input type="text" id="upNewTopic" placeholder="e.g. Heat Transfer" maxlength="40">
+    </div>
+    <div class="panel-foot">
+      <div class="hint" id="upPreview">Paste some text to see how many cards it makes.</div>
+      <button class="tool-btn primary" id="upCreate">Create cards</button>
+    </div>
+    <div class="section-title">Your materials</div>
+    <div class="list" id="materialList"></div>
+  </div>
+</div>
+
+<!-- Topics -->
+<div class="overlay" id="topicsPanel">
+  <div class="panel" role="dialog" aria-label="Topics">
+    <div class="panel-head"><h2>Topics</h2><button class="close-btn" data-close>×</button></div>
+    <div class="row">
+      <input type="text" id="newTopicName" placeholder="New topic name" maxlength="40">
+      <button class="tool-btn primary" id="addTopic" style="flex:0 0 auto">Add topic</button>
+    </div>
+    <div class="section-title">Your topics</div>
+    <div class="list" id="customTopicList"></div>
+    <div class="section-title">Built-in topics</div>
+    <div class="list" id="builtinTopicList"></div>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="overlay drawer" id="progressPanel">
+  <div class="panel" role="dialog" aria-label="Progress">
+    <div class="panel-head"><h2>Progress</h2><button class="close-btn" data-close>×</button></div>
+    <div id="progressBody"></div>
+    <div class="panel-foot">
+      <div class="hint">Mastered = rated Good/Easy with a review interval of 3+ days.</div>
+      <button class="tool-btn danger" id="resetProgress" style="flex:0 0 auto">Reset progress</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const allItems = [
@@ -247,127 +485,387 @@ const allItems = [
   { type: "article", topic: "biology", source: "LearnScroll", text: "<strong>Photosynthesis and cellular respiration</strong><br><br>These two processes form the energy cycle of life. Photosynthesis captures light energy and stores it in glucose. Cellular respiration releases that stored energy as ATP.<br><br>Light-dependent reactions occur in the thylakoid membranes. The Calvin cycle happens in the stroma and fixes carbon dioxide into sugar. Oxygen is released as a byproduct.<br><br>Cellular respiration reverses the process through glycolysis, the Krebs cycle, and the electron transport chain." },
   { type: "article", topic: "thermodynamics", source: "LearnScroll", text: "<strong>The laws of thermodynamics</strong><br><br>First law: energy is conserved. It changes form but the total energy of an isolated system stays constant.<br><br>Second law: the entropy of an isolated system never decreases. Useful energy tends to spread out. This is why no heat engine can be 100% efficient.<br><br>Third law: the entropy of a perfect crystal approaches a minimum as temperature approaches absolute zero. Absolute zero itself cannot be reached." }
 ];
+allItems.forEach((item, i) => { item.id = 'b' + i; });
+
+const BUILTIN_TOPICS = [
+  { id: 'physics', name: 'Physics' },
+  { id: 'thermodynamics', name: 'Thermodynamics' },
+  { id: 'fluidmechanics', name: 'Fluid Mechanics' },
+  { id: 'chemistry', name: 'Chemistry' },
+  { id: 'biology', name: 'Biology' },
+  { id: 'calculus', name: 'Calculus' }
+];
+
+// Quick-check questions tied to the sample content (about = id of the card they test).
+const QUIZZES = [
+  { id: 'q-calc-1', topic: 'calculus', about: 'b0', q: 'The limit practice problems in the post come from which textbook?', options: ["Stewart's Calculus", 'Calculus by Louis Leithold (5th ed.)', "Spivak's Calculus", "Apostol's Calculus"], answer: 1, explain: 'The post credits Calculus by Louis Leithold, 5th edition.' },
+  { id: 'q-calc-2', topic: 'calculus', about: 'b5', q: 'What does a derivative tell you?', options: ['The area under a curve', 'The average value of a function', 'The exact rate of change at a single point', 'Where a function crosses zero'], answer: 2, explain: 'A derivative is the instantaneous rate of change of a function at one point.' },
+  { id: 'q-fluid-1', topic: 'fluidmechanics', about: 'b1', q: 'How many core equations does the fluid mechanics post highlight?', options: ['3', '4', '5', '7'], answer: 2, explain: 'The post is titled "5 Equations Behind Fluid Mechanics".' },
+  { id: 'q-phys-1', topic: 'physics', about: 'b3', q: 'Which years did Werner Heisenberg live?', options: ['1879–1955', '1901–1976', '1858–1947', '1918–1988'], answer: 1, explain: 'Heisenberg lived from 1901 to 1976 (1879–1955 is Einstein).' },
+  { id: 'q-phys-2', topic: 'physics', about: 'b6', q: "Roger Penrose's 2020 Nobel Prize in Physics was for work on…", options: ['Quantum entanglement', 'Black holes', 'Superconductivity', 'Gravitational waves'], answer: 1, explain: 'Penrose received the 2020 Nobel Prize for his work on black holes.' },
+  { id: 'q-phys-3', topic: 'physics', about: 'b6', q: 'In the Orch-OR theory, quantum events happen inside which structures?', options: ['Mitochondria', 'Synaptic vesicles', 'Microtubules', 'Myelin sheaths'], answer: 2, explain: 'Penrose and Hameroff propose quantum events inside microtubules contribute to consciousness.' },
+  { id: 'q-phys-4', topic: 'physics', about: 'b2', q: 'Statistical mechanics explains bulk properties like temperature and pressure using…', options: ['The statistics of huge numbers of particles', 'Only Newton’s laws for single objects', 'Fluid flow equations', 'Chemical bonding rules'], answer: 0, explain: 'It links microscopic particle behaviour to macroscopic quantities via probability.' },
+  { id: 'q-bio-1', topic: 'biology', about: 'b4', q: 'According to the post, how do tree roots help the environment?', options: ['They release oxygen', 'They protect soil from erosion', 'They produce fruit', 'They cool the air'], answer: 1, explain: 'Roots hold soil in place, protecting it from erosion.' },
+  { id: 'q-bio-2', topic: 'biology', about: 'b8', q: 'Where does the Calvin cycle take place?', options: ['Thylakoid membranes', 'Mitochondrial matrix', 'Stroma of the chloroplast', 'Cytoplasm'], answer: 2, explain: 'The Calvin cycle fixes CO₂ into sugar in the stroma.' },
+  { id: 'q-bio-3', topic: 'biology', about: 'b8', q: 'Cellular respiration releases stored energy in the form of…', options: ['Glucose', 'ATP', 'Oxygen', 'Chlorophyll'], answer: 1, explain: 'Glycolysis, the Krebs cycle and the electron transport chain produce ATP.' },
+  { id: 'q-thermo-1', topic: 'thermodynamics', about: 'b9', q: 'Why can no heat engine be 100% efficient?', options: ['Energy is not conserved', 'The entropy of an isolated system never decreases', 'Absolute zero can be reached', 'Heat always flows from cold to hot'], answer: 1, explain: 'The second law: entropy never decreases, so some energy always spreads out as waste heat.' },
+  { id: 'q-thermo-2', topic: 'thermodynamics', about: 'b9', q: 'What does the third law say about absolute zero?', options: ['It can be reached with enough cooling', 'Entropy becomes infinite there', 'It cannot be reached', 'Energy is destroyed there'], answer: 2, explain: 'Entropy of a perfect crystal approaches a minimum, but absolute zero itself cannot be reached.' },
+  { id: 'q-thermo-3', topic: 'thermodynamics', about: 'b7', q: 'The first law of thermodynamics is a statement of…', options: ['Conservation of energy', 'Increasing entropy', 'Conservation of momentum', 'Zero entropy at 0 K'], answer: 0, explain: 'Energy changes form, but the total energy of an isolated system stays constant.' }
+];
 
 const feed = document.getElementById('feed');
 const progressBar = document.getElementById('progressBar');
 const counter = document.getElementById('counter');
-const typeBtns = document.querySelectorAll('.filter-btn');
-const topicBtns = document.querySelectorAll('.topic-btn');
+const typeFiltersEl = document.getElementById('typeFilters');
+const topicFiltersEl = document.getElementById('topicFilters');
 
 let currentType = 'all';
 let currentTopic = 'all';
-let visibleItems = [...allItems];
+let visibleItems = [];
 
-const STORAGE_KEY = 'learnscroll-topics-v4';
-let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-state.understood = state.understood || {};
-state.saved = state.saved || {};
+// ---------- State (versioned, migrates v4) ----------
+const STORAGE_KEY = 'learnscroll-v5';
+const LEGACY_KEY = 'learnscroll-topics-v4';
+const MIN = 60 * 1000, DAY = 24 * 60 * MIN;
+
+function readJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+}
+const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+
+function loadState() {
+  let s = readJSON(STORAGE_KEY);
+  if (!isObj(s) || s.version !== 5) {
+    s = { version: 5 };
+    const old = readJSON(LEGACY_KEY);
+    if (isObj(old)) {
+      s.understood = {}; s.saved = {};
+      // v4 keyed progress by array index; built-in items keep that order as ids b0, b1, ...
+      for (const k in (isObj(old.understood) ? old.understood : {})) if (old.understood[k]) s.understood['b' + k] = true;
+      for (const k in (isObj(old.saved) ? old.saved : {})) if (old.saved[k]) s.saved['b' + k] = true;
+    }
+  }
+  for (const k of ['understood', 'saved', 'seen', 'srs', 'quiz']) if (!isObj(s[k])) s[k] = {};
+  if (!Array.isArray(s.topics)) s.topics = [];
+  if (!Array.isArray(s.materials)) s.materials = [];
+  s.topics = s.topics.filter(t => isObj(t) && t.id && t.name);
+  s.materials = s.materials.filter(m => isObj(m) && m.id && Array.isArray(m.parts));
+  return s;
+}
+let state = loadState();
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('Could not save: browser storage is full'); }
+}
+
+// ---------- Helpers ----------
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function allTopics() { return [...BUILTIN_TOPICS, ...state.topics]; }
+function topicName(id) {
+  const t = allTopics().find(t => t.id === id);
+  return t ? t.name : id.charAt(0).toUpperCase() + id.slice(1);
+}
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+function fmtInterval(ms) {
+  if (ms < DAY) return Math.max(1, Math.round(ms / MIN)) + 'm';
+  const d = Math.round(ms / DAY);
+  return d >= 60 ? Math.round(d / 30) + 'mo' : d + 'd';
+}
+
+function materialItems() {
+  return state.materials.slice().reverse().flatMap(m => m.parts.map((p, i) => ({
+    id: `m${m.id}-${i}`, type: m.type, topic: m.topic, source: 'Your material', user: true,
+    matId: m.id, title: m.title, part: i + 1, of: m.parts.length, heading: p.heading, body: p.body
+  })));
+}
+function contentItems() { return [...materialItems(), ...allItems]; }
+function allQuizzes() {
+  const mq = state.materials.flatMap(m => (m.quizzes || []).map(q => ({ ...q, topic: m.topic })));
+  return [...mq, ...QUIZZES];
+}
+
+// ---------- Spaced repetition (SM-2-like) ----------
+const GRADES = ['Again', 'Hard', 'Good', 'Easy'];
+function nextSchedule(prev, grade, now) {
+  const r = { reps: 0, interval: 0, ease: 2.5, lapses: 0, ...(prev || {}) };
+  if (grade === 0) {
+    r.reps = 0; r.lapses += 1; r.interval = 0; r.ease = Math.max(1.3, r.ease - 0.2);
+    r.due = now + 10 * MIN;
+  } else {
+    if (grade === 1) r.ease = Math.max(1.3, r.ease - 0.15);
+    if (grade === 3) r.ease = r.ease + 0.15;
+    let iv;
+    if (r.reps === 0) iv = [0, 1, 1, 4][grade];
+    else if (r.reps === 1) iv = [0, 3, 6, 8][grade];
+    else iv = Math.max(r.interval + 1, Math.round(r.interval * (grade === 1 ? 1.2 : grade === 2 ? r.ease : r.ease * 1.3)));
+    r.reps += 1; r.interval = iv; r.due = now + iv * DAY;
+  }
+  r.last = grade; r.lastAt = now;
+  return r;
+}
+function rate(id, grade) {
+  state.srs[id] = nextSchedule(state.srs[id], grade, Date.now());
+  state.seen[id] = state.seen[id] || Date.now();
+  saveState();
+  return state.srs[id];
+}
+function isDue(id, now = Date.now()) { const r = state.srs[id]; return !!(r && r.due && r.due <= now); }
+function isMastered(id) { const r = state.srs[id]; return !!(r && r.last >= 2 && r.interval >= 3); }
+
+function recallHTML(id, hidden) {
+  const now = Date.now();
+  const r = state.srs[id];
+  let label = 'Recall?';
+  if (r) label = isDue(id, now) ? 'Due now' : `Next review in ${fmtInterval(r.due - now)}`;
+  const btns = GRADES.map((g, i) => {
+    const preview = nextSchedule(r, i, now);
+    return `<button class="rate-btn${r && r.lastAt && r.last === i && !isDue(id, now) ? ' chosen' : ''}" data-grade="${i}" title="${g} (key ${i + 1})">${g}<small>${fmtInterval(preview.due - now)}</small></button>`;
+  }).join('');
+  return `<div class="recall${hidden ? ' hidden' : ''}"><span class="recall-label">${label}</span>${btns}</div>`;
+}
+
+// ---------- Rendering ----------
+function contentCardHTML(item, review) {
+  const badgeText = item.type === 'post' ? 'Post' : 'Article';
+  const source = item.source || 'LearnScroll';
+  const text = item.user
+    ? (item.heading ? `<strong>${esc(item.heading)}</strong>\n\n` : '') + esc(item.body)
+    : item.text;
+  const part = item.user ? `<div class="part-label">Part ${item.part}/${item.of} · ${esc(item.title)}</div>` : '';
+  const del = item.user ? `<button class="action-btn" data-action="delete" title="Delete this material">🗑</button>` : '';
+  return `
+      <div class="card-inner">
+        <div class="type-badge ${item.type}">${badgeText}</div>
+        ${review ? '<div class="review-badge">Review</div>' : ''}
+        <div class="topic-tag">${esc(topicName(item.topic))}</div>
+        <div class="meta">
+          <div class="avatar">LS</div>
+          <div>learnscroll</div>
+          <div class="source">${esc(source)}</div>
+        </div>
+        ${part}
+        <div class="content">${text}</div>
+        ${recallHTML(item.id)}
+        <div class="actions">
+          ${del}
+          <button class="action-btn ${state.saved[item.id] ? 'saved' : ''}" data-action="save">★</button>
+          <button class="action-btn ${state.understood[item.id] ? 'done' : ''}" data-action="done">✓</button>
+        </div>
+      </div>`;
+}
+
+function quizCardHTML(q, review) {
+  const st = state.quiz[q.id];
+  const last = st && st.total ? `Quick check · ${st.right}/${st.total} correct so far` : 'Quick check';
+  const opts = q.options.map((o, i) => `<button class="quiz-opt" data-opt="${i}">${String.fromCharCode(65 + i)}. ${esc(o)}</button>`).join('');
+  return `
+      <div class="card-inner">
+        <div class="type-badge quiz">Quiz</div>
+        ${review ? '<div class="review-badge">Review</div>' : ''}
+        <div class="topic-tag">${esc(topicName(q.topic))}</div>
+        <div class="meta">
+          <div class="avatar">LS</div>
+          <div>learnscroll</div>
+          <div class="source">${esc(last)}</div>
+        </div>
+        <div class="quiz-q">${esc(q.q)}</div>
+        <div class="quiz-options">${opts}</div>
+        <div class="quiz-feedback"></div>
+        ${recallHTML(q.id, true)}
+      </div>`;
+}
+
+function buildList() {
+  const now = Date.now();
+  const topicOk = it => currentTopic === 'all' || it.topic === currentTopic;
+  const content = contentItems().filter(topicOk);
+  const quizzes = allQuizzes().filter(topicOk);
+  if (currentType === 'due') return [...content, ...quizzes].filter(it => isDue(it.id, now)).map(it => ({ item: it, review: true }));
+  if (currentType === 'quiz') return quizzes.map(q => ({ item: q, review: isDue(q.id, now) }));
+
+  const typed = content.filter(it => currentType === 'all' || it.type === currentType);
+  const list = [];
+  // Due cards resurface at the top of the feed.
+  typed.filter(it => isDue(it.id, now)).forEach(it => list.push({ item: it, review: true }));
+  if (currentType === 'all') quizzes.filter(q => isDue(q.id, now)).forEach(q => list.push({ item: q, review: true }));
+
+  const byAbout = {};
+  quizzes.filter(q => !isDue(q.id, now)).forEach(q => (byAbout[q.about] = byAbout[q.about] || []).push(q));
+  let pending = [], n = 0;
+  typed.filter(it => !isDue(it.id, now)).forEach(it => {
+    list.push({ item: it });
+    pending.push(...(byAbout[it.id] || []));
+    n++;
+    if (n % 3 === 0 && pending.length) list.push({ item: pending.shift() });
+  });
+  pending.slice(0, 2).forEach(q => list.push({ item: q }));
+  return list;
+}
+
+function render(keepScroll) {
+  const prevTop = feed.scrollTop;
+  feed.innerHTML = '';
+  visibleItems = buildList();
+  updateDueCount();
+
+  if (visibleItems.length === 0) {
+    const msg = currentType === 'due' ? 'Nothing due for review. Nice work!' : 'No content for this combination yet.';
+    feed.innerHTML = `<div class="card"><div class="card-inner"><div class="content">${msg}</div></div></div>`;
+    updateProgress(0);
+    return;
+  }
+
+  visibleItems.forEach(({ item, review }) => {
+    const el = document.createElement('div');
+    const isQuiz = item.type === 'quiz' || item.options;
+    el.className = isQuiz ? 'card quiz' : `card ${item.type}` + (state.understood[item.id] ? ' understood' : '');
+    el.dataset.id = item.id;
+    el.innerHTML = isQuiz ? quizCardHTML(item, review) : contentCardHTML(item, review);
+    feed.appendChild(el);
+  });
+
+  if (keepScroll) { feed.scrollTop = prevTop; updateProgress(currentIndex()); }
+  else { feed.scrollTop = 0; updateProgress(0); }
+}
+
+function currentIndex() {
+  const h = feed.children[0]?.offsetHeight || feed.clientHeight || 1;
+  return Math.max(0, Math.min(visibleItems.length - 1, Math.round(feed.scrollTop / h)));
 }
 
 function updateProgress(index) {
   const pct = visibleItems.length ? ((index + 1) / visibleItems.length) * 100 : 0;
   progressBar.style.width = pct + '%';
   counter.textContent = visibleItems.length ? `${index + 1} / ${visibleItems.length}` : '0 / 0';
+  const cur = visibleItems[index];
+  if (cur && !cur.item.options && !state.seen[cur.item.id]) state.seen[cur.item.id] = Date.now();
   saveState();
 }
 
-function render() {
-  feed.innerHTML = '';
-  visibleItems = allItems.filter(item => {
-    const typeOk = currentType === 'all' || item.type === currentType;
-    const topicOk = currentTopic === 'all' || item.topic === currentTopic;
-    return typeOk && topicOk;
-  });
-
-  if (visibleItems.length === 0) {
-    feed.innerHTML = '<div class="card"><div class="card-inner"><div class="content">No content for this combination yet.</div></div></div>';
-    updateProgress(0);
-    return;
-  }
-
-  visibleItems.forEach((item) => {
-    const originalIndex = allItems.indexOf(item);
-    const el = document.createElement('div');
-    el.className = `card ${item.type}` + (state.understood[originalIndex] ? ' understood' : '');
-    el.dataset.index = originalIndex;
-    const badgeText = item.type === 'post' ? 'Post' : 'Article';
-    const topicLabel = item.topic.charAt(0).toUpperCase() + item.topic.slice(1);
-    const source = item.source || 'LearnScroll';
-    el.innerHTML = `
-      <div class="card-inner">
-        <div class="type-badge ${item.type}">${badgeText}</div>
-        <div class="topic-tag">${topicLabel}</div>
-        <div class="meta">
-          <div class="avatar">LS</div>
-          <div>learnscroll</div>
-          <div class="source">${source}</div>
-        </div>
-        <div class="content">${item.text}</div>
-        <div class="actions">
-          <button class="action-btn ${state.saved[originalIndex] ? 'saved' : ''}" data-action="save">★</button>
-          <button class="action-btn ${state.understood[originalIndex] ? 'done' : ''}" data-action="done">✓</button>
-        </div>
-      </div>
-    `;
-    feed.appendChild(el);
-  });
-
-  updateProgress(0);
-  feed.scrollTop = 0;
+function updateDueCount() {
+  const now = Date.now();
+  const n = [...contentItems(), ...allQuizzes()].filter(it => isDue(it.id, now)).length;
+  document.getElementById('dueCount').textContent = n;
 }
 
-typeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    typeBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentType = btn.dataset.filter;
-    render();
-  });
-});
+function renderTopicFilters() {
+  if (currentTopic !== 'all' && !allTopics().some(t => t.id === currentTopic)) currentTopic = 'all';
+  const btn = (id, name, custom) => `<button class="topic-btn${custom ? ' custom' : ''}${currentTopic === id ? ' active' : ''}" data-topic="${esc(id)}">${esc(name)}</button>`;
+  topicFiltersEl.innerHTML = btn('all', 'All topics') +
+    BUILTIN_TOPICS.map(t => btn(t.id, t.name)).join('') +
+    state.topics.map(t => btn(t.id, t.name, true)).join('');
+}
 
-topicBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    topicBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentTopic = btn.dataset.topic;
-    render();
-  });
-});
+function setType(type) {
+  currentType = type;
+  typeFiltersEl.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === type));
+}
+function setTopic(topic) { currentTopic = topic; renderTopicFilters(); }
 
-render();
+typeFiltersEl.addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  setType(btn.dataset.filter);
+  render();
+});
+topicFiltersEl.addEventListener('click', e => {
+  const btn = e.target.closest('.topic-btn');
+  if (!btn) return;
+  setTopic(btn.dataset.topic);
+  render();
+});
 
 let scrollTimeout;
 feed.addEventListener('scroll', () => {
   clearTimeout(scrollTimeout);
-  scrollTimeout = setTimeout(() => {
-    const index = Math.round(feed.scrollTop / (feed.clientHeight || 1));
-    if (index >= 0 && index < visibleItems.length) updateProgress(index);
-  }, 60);
+  scrollTimeout = setTimeout(() => updateProgress(currentIndex()), 60);
 });
 
+// ---------- Card interactions ----------
+function refreshRecall(card, id) {
+  const old = card.querySelector('.recall');
+  const tmp = document.createElement('div');
+  tmp.innerHTML = recallHTML(id);
+  old.replaceWith(tmp.firstElementChild);
+}
+
+function applyRating(card, grade) {
+  const id = card.dataset.id;
+  const r = rate(id, grade);
+  refreshRecall(card, id);
+  const chosen = card.querySelector(`.rate-btn[data-grade="${grade}"]`);
+  if (chosen) chosen.classList.add('chosen');
+  card.querySelector('.recall-label').textContent = grade === 0 ? 'Again in 10m' : `Next review in ${fmtInterval(r.due - Date.now())}`;
+  updateDueCount();
+}
+
+function answerQuiz(card, optBtn) {
+  const id = card.dataset.id;
+  const q = allQuizzes().find(x => x.id === id);
+  if (!q) return;
+  const pick = Number(optBtn.dataset.opt);
+  const right = pick === q.answer;
+  card.querySelectorAll('.quiz-opt').forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.answer) b.classList.add('correct');
+    else if (i === pick) b.classList.add('wrong');
+  });
+  const st = state.quiz[id] = state.quiz[id] || { right: 0, total: 0 };
+  st.total += 1; if (right) st.right += 1; st.last = right; st.at = Date.now();
+  card.querySelector('.quiz-feedback').innerHTML = `<b class="${right ? 'ok' : 'bad'}">${right ? 'Correct!' : 'Not quite.'}</b> ${esc(q.explain)}`;
+  card.querySelector('.recall').classList.remove('hidden');
+  if (!right) {
+    applyRating(card, 0); // wrong answers are automatically scheduled for review
+    card.querySelector('.recall-label').textContent = 'Scheduled for review in 10m';
+  } else saveState();
+}
+
 feed.addEventListener('click', (e) => {
+  const card = e.target.closest('.card');
+  if (!card || !card.dataset.id) return;
+  const id = card.dataset.id;
+
+  const opt = e.target.closest('.quiz-opt');
+  if (opt && !opt.disabled) return answerQuiz(card, opt);
+
+  const rateBtn = e.target.closest('.rate-btn');
+  if (rateBtn) return applyRating(card, Number(rateBtn.dataset.grade));
+
   const btn = e.target.closest('.action-btn');
   if (!btn) return;
-  const card = btn.closest('.card');
-  const originalIndex = Number(card.dataset.index);
   const action = btn.dataset.action;
-
   if (action === 'done') {
-    state.understood[originalIndex] = !state.understood[originalIndex];
-    card.classList.toggle('understood', state.understood[originalIndex]);
-    btn.classList.toggle('done', state.understood[originalIndex]);
+    state.understood[id] = !state.understood[id];
+    card.classList.toggle('understood', state.understood[id]);
+    btn.classList.toggle('done', state.understood[id]);
   } else if (action === 'save') {
-    state.saved[originalIndex] = !state.saved[originalIndex];
-    btn.classList.toggle('saved', state.saved[originalIndex]);
+    state.saved[id] = !state.saved[id];
+    btn.classList.toggle('saved', state.saved[id]);
+  } else if (action === 'delete') {
+    const item = visibleItems.find(v => v.item.id === id)?.item;
+    if (item) deleteMaterial(item.matId);
+    return;
   }
   saveState();
 });
 
+function anyPanelOpen() { return !!document.querySelector('.overlay.open'); }
+
 document.addEventListener('keydown', (e) => {
-  const current = Math.round(feed.scrollTop / (feed.clientHeight || 1));
+  if (e.key === 'Escape') { closePanels(); return; }
+  if (anyPanelOpen()) return;
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  const current = currentIndex();
   if (e.key === 'ArrowDown' || e.key === ' ') {
     e.preventDefault();
     const next = Math.min(current + 1, visibleItems.length - 1);
@@ -376,8 +874,381 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     const prev = Math.max(current - 1, 0);
     feed.children[prev]?.scrollIntoView({ behavior: 'smooth' });
+  } else if (['1', '2', '3', '4'].includes(e.key)) {
+    const card = feed.children[current];
+    const recall = card && card.querySelector('.recall');
+    if (recall && !recall.classList.contains('hidden')) applyRating(card, Number(e.key) - 1);
   }
 });
+
+// ---------- Panels ----------
+function openPanel(id) { closePanels(); document.getElementById(id).classList.add('open'); }
+function closePanels() { document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); }
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => {
+  if (e.target === o || e.target.closest('[data-close]')) closePanels();
+}));
+
+// ---------- Topics ----------
+function slugify(name) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'topic';
+  return 'u-' + base + '-' + Date.now().toString(36);
+}
+function createTopic(name) {
+  name = (name || '').trim().replace(/\s+/g, ' ');
+  if (!name) { toast('Enter a topic name'); return null; }
+  const existing = allTopics().find(t => t.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+  const t = { id: slugify(name), name };
+  state.topics.push(t);
+  saveState();
+  renderTopicFilters();
+  return t;
+}
+function topicCardCount(topicId) {
+  return state.materials.filter(m => m.topic === topicId).reduce((n, m) => n + m.parts.length, 0);
+}
+function renderTopicsPanel() {
+  const custom = document.getElementById('customTopicList');
+  custom.innerHTML = state.topics.length ? state.topics.map(t => `
+    <div class="list-item" data-topic="${esc(t.id)}">
+      <span class="name">${esc(t.name)}</span>
+      <span class="muted">${topicCardCount(t.id)} cards</span>
+      <button class="tool-btn" data-act="rename">Rename</button>
+      <button class="tool-btn danger" data-act="delete">Delete</button>
+    </div>`).join('') : '<div class="hint">No custom topics yet. Add one above or while adding material.</div>';
+  document.getElementById('builtinTopicList').innerHTML = BUILTIN_TOPICS.map(t => `
+    <div class="list-item"><span class="name">${esc(t.name)}</span><span class="muted">built-in</span></div>`).join('');
+}
+document.getElementById('openTopics').addEventListener('click', () => { renderTopicsPanel(); openPanel('topicsPanel'); });
+document.getElementById('addTopic').addEventListener('click', () => {
+  const input = document.getElementById('newTopicName');
+  if (createTopic(input.value)) { input.value = ''; renderTopicsPanel(); toast('Topic added'); }
+});
+document.getElementById('newTopicName').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('addTopic').click(); });
+
+document.getElementById('customTopicList').addEventListener('click', e => {
+  const row = e.target.closest('.list-item');
+  const btn = e.target.closest('button');
+  if (!row || !btn) return;
+  const t = state.topics.find(x => x.id === row.dataset.topic);
+  if (!t) return;
+  const act = btn.dataset.act;
+  if (act === 'rename') {
+    row.innerHTML = `<input type="text" class="rename-input" value="${esc(t.name)}" maxlength="40" style="flex:1">
+      <button class="tool-btn primary" data-act="save-name">Save</button><button class="tool-btn" data-act="cancel">Cancel</button>`;
+    const inp = row.querySelector('input');
+    inp.focus(); inp.select();
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') row.querySelector('[data-act="save-name"]').click(); });
+  } else if (act === 'save-name') {
+    const name = row.querySelector('input').value.trim().replace(/\s+/g, ' ');
+    if (!name) return toast('Name cannot be empty');
+    if (allTopics().some(x => x !== t && x.name.toLowerCase() === name.toLowerCase())) return toast('A topic with that name exists');
+    t.name = name; saveState(); renderTopicsPanel(); renderTopicFilters(); render(true); toast('Topic renamed');
+  } else if (act === 'cancel') {
+    renderTopicsPanel();
+  } else if (act === 'delete') {
+    const n = topicCardCount(t.id);
+    const others = allTopics().filter(x => x.id !== t.id);
+    const box = document.createElement('div');
+    box.className = 'confirm-box';
+    box.innerHTML = `Delete “${esc(t.name)}”?` + (n ? ` Its ${n} cards:
+      <select class="reassign"><option value="">Delete them too</option>${others.map(o => `<option value="${esc(o.id)}">Move to ${esc(o.name)}</option>`).join('')}</select>` : '') +
+      `<button class="tool-btn danger solid" data-act="confirm-delete">Delete</button><button class="tool-btn" data-act="cancel">Cancel</button>`;
+    row.querySelector('.confirm-box')?.remove();
+    row.appendChild(box);
+  } else if (act === 'confirm-delete') {
+    const target = row.querySelector('.reassign')?.value || '';
+    deleteTopic(t.id, target);
+    renderTopicsPanel();
+  }
+});
+
+function forgetIds(ids) {
+  ids.forEach(id => { delete state.srs[id]; delete state.seen[id]; delete state.quiz[id]; delete state.understood[id]; delete state.saved[id]; });
+}
+function deleteTopic(topicId, moveTo) {
+  const mats = state.materials.filter(m => m.topic === topicId);
+  if (moveTo) mats.forEach(m => { m.topic = moveTo; });
+  else {
+    mats.forEach(m => forgetIds([...m.parts.map((_, i) => `m${m.id}-${i}`), ...(m.quizzes || []).map(q => q.id)]));
+    state.materials = state.materials.filter(m => m.topic !== topicId);
+  }
+  state.topics = state.topics.filter(t => t.id !== topicId);
+  saveState();
+  renderTopicFilters();
+  render(currentTopic !== 'all');
+  toast(moveTo ? `Topic deleted, cards moved to ${topicName(moveTo)}` : 'Topic deleted');
+}
+function deleteMaterial(matId) {
+  const m = state.materials.find(x => x.id === matId);
+  if (!m) return;
+  if (!confirm(`Delete “${m.title}” (${m.parts.length} cards)? This cannot be undone.`)) return;
+  forgetIds([...m.parts.map((_, i) => `m${m.id}-${i}`), ...(m.quizzes || []).map(q => q.id)]);
+  state.materials = state.materials.filter(x => x.id !== matId);
+  saveState();
+  render(true);
+  renderMaterialList();
+  toast('Material deleted');
+}
+
+// ---------- Upload / splitting ----------
+function splitSentences(text) {
+  return text.match(/[^.!?]+(?:[.!?]+["')\]]*|$)\s*/g)?.map(s => s.trim()).filter(Boolean) || [text];
+}
+function splitIntoCards(raw, type) {
+  const target = type === 'article' ? 1600 : 550;
+  const max = Math.round(target * 1.5);
+  const text = raw.replace(/\r\n?/g, '\n').replace(/\t/g, '  ').trim();
+  if (!text) return [];
+  const sections = [];
+  let cur = { heading: '', paras: [] }, buf = [];
+  const flush = () => { if (buf.length) { cur.paras.push(buf.join('\n').trim()); buf = []; } };
+  text.split('\n').forEach(line => {
+    const h = line.match(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/);
+    if (h) {
+      flush();
+      if (cur.heading || cur.paras.length) sections.push(cur);
+      cur = { heading: h[1].trim(), paras: [] };
+    } else if (!line.trim()) flush();
+    else buf.push(line);
+  });
+  flush();
+  if (cur.heading || cur.paras.length) sections.push(cur);
+
+  // Break very long paragraphs at sentence boundaries.
+  const pieces = p => {
+    if (p.length <= max) return [p];
+    const out = []; let acc = '';
+    splitSentences(p).forEach(s => {
+      if (acc && (acc + ' ' + s).length > target) { out.push(acc); acc = s; }
+      else acc = acc ? acc + ' ' + s : s;
+    });
+    if (acc) out.push(acc);
+    return out;
+  };
+
+  const cards = [];
+  sections.forEach(sec => {
+    const paras = sec.paras.flatMap(pieces);
+    const prev = cards[cards.length - 1];
+    // Tiny heading-only or very short sections merge into the previous card when there is room.
+    let chunk = { heading: sec.heading, body: '' };
+    let started = false;
+    if (!paras.length) { cards.push({ heading: sec.heading, body: '' }); return; }
+    paras.forEach(p => {
+      if (chunk.body && (chunk.body.length + p.length + 2) > target) {
+        cards.push(chunk);
+        chunk = { heading: sec.heading ? sec.heading + ' (cont.)' : '', body: '' };
+      }
+      chunk.body = chunk.body ? chunk.body + '\n\n' + p : p;
+      started = true;
+    });
+    if (started) cards.push(chunk);
+    void prev;
+  });
+  // Merge cards that are too short (e.g. stray one-liners) into their neighbour.
+  const merged = [];
+  cards.forEach(c => {
+    const last = merged[merged.length - 1];
+    const len = c.body.length + c.heading.length;
+    if (last && len < target * 0.25 && (last.body.length + len) < max && (!c.heading || !last.body)) {
+      last.body = [last.body, c.heading, c.body].filter(Boolean).join('\n\n');
+    } else merged.push({ ...c });
+  });
+  return merged.filter(c => c.body || c.heading);
+}
+
+const STOP = new Set('about above after again against because before being below between could does doing during either every further having himself herself itself other ourselves should their theirs themselves there these those through under until where which while would yours yourself into from with that this than then them they what when will your have been were also more most some such only very each both same just over many much like used using uses make makes made'.split(' '));
+function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
+// Auto-generated cloze questions for uploaded material: blank out a key term, distractors from the same material.
+function makeClozeQuizzes(matId, parts) {
+  const words = [...new Set(parts.flatMap(p => (p.heading + ' ' + p.body).match(/[A-Za-z][A-Za-z\-]{5,}/g) || []).map(w => w.toLowerCase()))].filter(w => !STOP.has(w));
+  if (words.length < 6) return [];
+  const quizzes = [];
+  parts.forEach((p, i) => {
+    const sentences = splitSentences(p.body.replace(/\n+/g, ' ')).filter(s => s.split(/\s+/).length >= 6 && s.length <= 260);
+    for (const s of sentences) {
+      const cands = (s.match(/[A-Za-z][A-Za-z\-]{5,}/g) || []).filter(w => !STOP.has(w.toLowerCase()));
+      if (!cands.length) continue;
+      const answer = cands.sort((a, b) => b.length - a.length)[0];
+      const pool = words.filter(w => w !== answer.toLowerCase() && !s.toLowerCase().includes(w));
+      if (pool.length < 3) continue;
+      const seed = hashStr(s);
+      const distract = [];
+      for (let k = 0; distract.length < 3 && k < pool.length * 2; k++) {
+        const w = pool[(seed + k * 7) % pool.length];
+        if (!distract.includes(w)) distract.push(w);
+      }
+      if (distract.length < 3) continue;
+      const pos = seed % 4;
+      const options = [...distract];
+      options.splice(pos, 0, answer.toLowerCase());
+      const blanked = s.replace(new RegExp('\\b' + answer.replace(/[-]/g, '\\-') + '\\b'), '_____');
+      quizzes.push({ id: `q-m${matId}-${i}`, about: `m${matId}-${i}`, q: `Fill in the blank: “${blanked}”`, options, answer: pos, explain: `From Part ${i + 1}: “${s}”` });
+      break;
+    }
+  });
+  return quizzes;
+}
+
+let upType = 'post';
+function renderUploadTopics(selected) {
+  const sel = document.getElementById('upTopic');
+  const cur = selected || sel.value || (currentTopic !== 'all' ? currentTopic : '');
+  sel.innerHTML = allTopics().map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('') + '<option value="__new">+ New topic…</option>';
+  if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+  document.getElementById('upNewTopicField').style.display = sel.value === '__new' ? '' : 'none';
+}
+function renderMaterialList() {
+  const el = document.getElementById('materialList');
+  el.innerHTML = state.materials.length ? state.materials.slice().reverse().map(m => `
+    <div class="list-item" data-mat="${esc(m.id)}">
+      <span class="name">${esc(m.title)}</span>
+      <span class="muted">${esc(topicName(m.topic))} · ${m.type === 'post' ? 'Post' : 'Article'} · ${m.parts.length} cards</span>
+      <button class="tool-btn danger" data-act="del-mat">Delete</button>
+    </div>`).join('') : '<div class="hint">Nothing uploaded yet.</div>';
+}
+function updatePreview() {
+  const text = document.getElementById('upText').value;
+  const n = splitIntoCards(text, upType).length;
+  document.getElementById('upPreview').textContent = text.trim() ? `Will create ${n} card${n === 1 ? '' : 's'} (${upType === 'post' ? '~550' : '~1600'} chars each).` : 'Paste some text to see how many cards it makes.';
+}
+document.getElementById('openUpload').addEventListener('click', () => {
+  renderUploadTopics(); renderMaterialList(); updatePreview(); openPanel('uploadPanel');
+  setTimeout(() => document.getElementById('upText').focus(), 30);
+});
+document.getElementById('upTopic').addEventListener('change', () => renderUploadTopics());
+document.getElementById('upType').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  upType = b.dataset.type;
+  document.querySelectorAll('#upType button').forEach(x => x.classList.toggle('active', x === b));
+  updatePreview();
+});
+document.getElementById('upText').addEventListener('input', updatePreview);
+document.getElementById('materialList').addEventListener('click', e => {
+  const row = e.target.closest('[data-mat]');
+  if (row && e.target.closest('[data-act="del-mat"]')) deleteMaterial(row.dataset.mat);
+});
+
+const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/';
+async function readPdf(file, status) {
+  const pdfjs = await import(PDFJS + 'pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.mjs';
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const pages = [];
+  const maxPages = Math.min(doc.numPages, 150);
+  for (let p = 1; p <= maxPages; p++) {
+    status(`Reading PDF page ${p}/${doc.numPages}…`);
+    const tc = await (await doc.getPage(p)).getTextContent();
+    let lines = [], line = '';
+    tc.items.forEach(it => {
+      line += it.str;
+      if (it.hasEOL) { lines.push(line.trim()); line = ''; }
+    });
+    if (line.trim()) lines.push(line.trim());
+    // Re-flow lines into paragraphs: break when a line ends a sentence and the next starts a new one.
+    let out = '';
+    lines.forEach((l, i) => {
+      if (!l) { out += '\n\n'; return; }
+      const prev = lines[i - 1] || '';
+      out += (!out || out.endsWith('\n')) ? l : (/[.!?:]$/.test(prev) && /^[A-Z0-9•\-]/.test(l) && prev.length < 60 ? '\n\n' + l : ' ' + l);
+    });
+    pages.push(out.replace(/\n{3,}/g, '\n\n').trim());
+  }
+  return { text: pages.filter(Boolean).join('\n\n'), truncated: doc.numPages > maxPages };
+}
+document.getElementById('upFile').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('upFileStatus');
+  const status = s => { statusEl.textContent = s; };
+  if (!file) return;
+  const titleEl = document.getElementById('upTitle');
+  if (!titleEl.value.trim()) titleEl.value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 80);
+  try {
+    if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+      status('Loading PDF reader…');
+      const { text, truncated } = await readPdf(file, status);
+      if (!text.trim()) { status('No selectable text found (scanned PDFs are not supported yet).'); return; }
+      document.getElementById('upText').value = text;
+      status(`Loaded ${file.name}${truncated ? ' (first 150 pages)' : ''}`);
+    } else {
+      if (file.size > 2e6) { status('File is too large (max 2 MB of text).'); return; }
+      document.getElementById('upText').value = await file.text();
+      status(`Loaded ${file.name}`);
+    }
+    updatePreview();
+  } catch (err) {
+    status('Could not read that file' + (/pdf/i.test(file.name) ? ' (PDF reader needs an internet connection)' : '') + '.');
+  }
+});
+
+document.getElementById('upCreate').addEventListener('click', () => {
+  const text = document.getElementById('upText').value;
+  const parts = splitIntoCards(text, upType);
+  if (!parts.length) return toast('Paste some text or choose a file first');
+  let topicId = document.getElementById('upTopic').value;
+  if (topicId === '__new') {
+    const t = createTopic(document.getElementById('upNewTopic').value);
+    if (!t) return;
+    topicId = t.id;
+  }
+  let title = document.getElementById('upTitle').value.trim() || parts[0].heading || parts[0].body.split('\n')[0].slice(0, 60) || 'Untitled material';
+  const id = Date.now().toString(36);
+  state.materials.push({ id, title, topic: topicId, type: upType, createdAt: Date.now(), parts, quizzes: makeClozeQuizzes(id, parts) });
+  saveState();
+  ['upText', 'upTitle', 'upNewTopic'].forEach(x => { document.getElementById(x).value = ''; });
+  document.getElementById('upFile').value = '';
+  document.getElementById('upFileStatus').textContent = '';
+  closePanels();
+  setTopic(topicId); setType('all'); render();
+  toast(`Created ${parts.length} card${parts.length === 1 ? '' : 's'} in ${topicName(topicId)}`);
+});
+
+// ---------- Progress panel ----------
+function topicStats(topicId) {
+  const now = Date.now();
+  const content = contentItems().filter(it => it.topic === topicId);
+  const quizzes = allQuizzes().filter(q => q.topic === topicId);
+  const seen = content.filter(it => state.seen[it.id] || state.srs[it.id]).length;
+  const mastered = content.filter(it => isMastered(it.id)).length + quizzes.filter(q => isMastered(q.id)).length;
+  const due = [...content, ...quizzes].filter(it => isDue(it.id, now)).length;
+  let right = 0, total = 0;
+  quizzes.forEach(q => { const s = state.quiz[q.id]; if (s) { right += s.right; total += s.total; } });
+  return { cards: content.length, items: content.length + quizzes.length, seen, mastered, due, right, total };
+}
+function bar(cls, frac) { return `<div class="bar"><i class="${cls}" style="width:${Math.round(Math.min(1, frac) * 100)}%"></i></div>`; }
+function renderProgressPanel() {
+  const rows = allTopics().map(t => ({ t, s: topicStats(t.id) })).filter(r => r.s.items > 0 || state.topics.includes(r.t));
+  const sum = rows.reduce((a, { s }) => ({ seen: a.seen + s.seen, cards: a.cards + s.cards, mastered: a.mastered + s.mastered, due: a.due + s.due, right: a.right + s.right, total: a.total + s.total }), { seen: 0, cards: 0, mastered: 0, due: 0, right: 0, total: 0 });
+  const acc = (r, t) => t ? Math.round(r / t * 100) + '%' : '—';
+  document.getElementById('progressBody').innerHTML = `
+    <div class="totals">
+      <div class="total-box"><b>${sum.seen}/${sum.cards}</b><span>cards seen</span></div>
+      <div class="total-box"><b>${sum.mastered}</b><span>mastered</span></div>
+      <div class="total-box"><b>${sum.due}</b><span>due</span></div>
+      <div class="total-box"><b>${acc(sum.right, sum.total)}</b><span>quiz accuracy</span></div>
+    </div>` + rows.map(({ t, s }) => `
+    <div class="stat-topic" data-topic="${esc(t.id)}">
+      <h3>${esc(t.name)} <span>${s.cards} cards · ${s.items - s.cards} quizzes</span></h3>
+      <div class="stat-line"><span>Seen</span>${bar('seen', s.cards ? s.seen / s.cards : 0)}<span class="val">${s.seen}/${s.cards}</span></div>
+      <div class="stat-line"><span>Mastered</span>${bar('mastered', s.items ? s.mastered / s.items : 0)}<span class="val">${s.mastered}/${s.items}</span></div>
+      <div class="stat-line"><span>Due</span>${bar('due', s.items ? s.due / s.items : 0)}<span class="val">${s.due}</span></div>
+      <div class="stat-line"><span>Quiz</span>${bar('acc', s.total ? s.right / s.total : 0)}<span class="val">${s.total ? `${acc(s.right, s.total)} (${s.right}/${s.total})` : '—'}</span></div>
+    </div>`).join('');
+}
+document.getElementById('openProgress').addEventListener('click', () => { renderProgressPanel(); openPanel('progressPanel'); });
+document.getElementById('resetProgress').addEventListener('click', () => {
+  if (!confirm('Reset all progress? This clears seen cards, review schedules, quiz scores and ✓ marks. Your topics, materials and ★ saves are kept.')) return;
+  state.seen = {}; state.srs = {}; state.quiz = {}; state.understood = {};
+  saveState();
+  renderProgressPanel();
+  render();
+  toast('Progress reset');
+});
+
+renderTopicFilters();
+render();
+setInterval(updateDueCount, 60 * 1000);
 </script>
 </body>
 </html>

@@ -1,0 +1,418 @@
+{
+ "id": "electric-circuits",
+ "title": "Fundamentals of Electric Circuits",
+ "short": "Fundamentals of Electric Circuits",
+ "author": "Charles K. Alexander & Matthew N. O. Sadiku",
+ "edition": "5th edition",
+ "description": "DC and AC circuit analysis: basic laws, analysis methods, op amps, transients, phasors, Laplace and Fourier.",
+ "chapters": [
+  {
+   "n": 1,
+   "title": "Basic Concepts",
+   "cards": [
+    {
+     "s": "1.1",
+     "h": "What a circuit is",
+     "t": "An electric circuit is an interconnection of electrical elements. Circuit analysis predicts the voltages and currents in it, which engineers use for communication, power, control and computing systems. The rest of the book builds the tools for that analysis."
+    },
+    {
+     "s": "1.2",
+     "h": "SI units and prefixes",
+     "t": "Circuit quantities use SI units: metre, kilogram, second, ampere, kelvin, mole, candela. Prefixes from pico (\\(10^{-12}\\)) to tera (\\(10^{12}\\)) keep numbers manageable, e.g. 2 mA, 4.7 kΩ, 10 µF."
+    },
+    {
+     "s": "1.3",
+     "h": "Electric charge",
+     "t": "Charge is the basic quantity in electricity, measured in coulombs (C). An electron carries \\(-1.602\\times10^{-19}\\) C. Charge is conserved: it cannot be created or destroyed, only moved.",
+     "eq": "e = 1.602\\times10^{-19}\\ \\mathrm{C}"
+    },
+    {
+     "s": "1.3",
+     "h": "Electric current",
+     "t": "Current is the time rate of change of charge, in amperes (1 A = 1 C/s). By convention current direction is the direction of positive charge flow, opposite to electron motion.",
+     "eq": "i = \\frac{dq}{dt}\\qquad q = \\int_{t_0}^{t} i\\,d\\tau + q(t_0)"
+    },
+    {
+     "s": "1.3",
+     "h": "DC and AC",
+     "t": "Direct current (dc) stays constant in time and is written \\(I\\). Alternating current (ac) varies sinusoidally and is written \\(i\\). A negative current of \\(-5\\) A in one direction equals \\(+5\\) A in the other."
+    },
+    {
+     "s": "1.4",
+     "h": "Voltage",
+     "t": "Voltage (potential difference) \\(v_{ab}\\) is the energy needed to move a unit charge from \\(b\\) to \\(a\\), in volts (1 V = 1 J/C). The \\(+\\) and \\(-\\) marks show polarity; \\(v_{ab} = -v_{ba}\\).",
+     "eq": "v_{ab} = \\frac{dw}{dq}"
+    },
+    {
+     "s": "1.4",
+     "h": "Current through, voltage across",
+     "t": "Current always flows through an element; voltage always appears across it. Together they describe everything about an element’s electrical behaviour."
+    },
+    {
+     "s": "1.5",
+     "h": "Power",
+     "t": "Power is the rate of absorbing or delivering energy, in watts. Multiply the voltage across an element by the current through it.",
+     "eq": "p = \\frac{dw}{dt} = v\\,i"
+    },
+    {
+     "s": "1.5",
+     "h": "Passive sign convention",
+     "t": "If current enters the \\(+\\) terminal of an element, \\(p = +vi\\) is absorbed power. If it enters the \\(-\\) terminal, absorbed power is \\(-vi\\). Positive absorbed power means the element is consuming energy; negative means it is supplying it."
+    },
+    {
+     "s": "1.5",
+     "h": "Conservation of power",
+     "t": "In any circuit, at every instant, the algebraic sum of power is zero: power supplied equals power absorbed. This is a quick check on any solution.",
+     "eq": "\\sum p = 0"
+    },
+    {
+     "s": "1.5",
+     "h": "Energy",
+     "t": "Energy is power integrated over time, in joules. Utilities bill in kilowatt-hours: 1 kWh = 3.6 MJ.",
+     "eq": "w = \\int_{t_0}^{t} p\\,dt = \\int_{t_0}^{t} v\\,i\\,dt",
+     "ex": "A 100 W bulb on for 5 h uses \\(0.1\\ \\text{kW}\\times5\\ \\text{h} = 0.5\\) kWh."
+    },
+    {
+     "s": "1.6",
+     "h": "Active and passive elements",
+     "t": "Passive elements (resistors, capacitors, inductors) cannot generate energy. Active elements (generators, batteries, op amps) can. The most important active elements are sources."
+    },
+    {
+     "s": "1.6",
+     "h": "Independent sources",
+     "t": "An ideal independent voltage source holds a given voltage regardless of the current it supplies. An ideal independent current source delivers a given current regardless of the voltage across it."
+    },
+    {
+     "s": "1.6",
+     "h": "Dependent sources",
+     "t": "A dependent (controlled) source’s value is set by another voltage or current in the circuit. There are four kinds: VCVS, CCVS, VCCS and CCCS. They model transistors and op amps; drawn as diamonds.",
+     "def": "VCVS: voltage-controlled voltage source, \\(v = \\mu v_x\\). CCCS: current-controlled current source, \\(i = \\beta i_x\\)."
+    },
+    {
+     "s": "1.7",
+     "h": "Application: TV picture tube",
+     "t": "A cathode-ray tube fires an electron beam at a phosphor screen; the beam current and accelerating voltage determine the power delivered. It shows how charge, current, voltage and power from this chapter connect in a real device."
+    },
+    {
+     "s": "1.7",
+     "h": "Application: electricity bills",
+     "t": "A bill is energy (kWh) times rate, often with tiered pricing and a fixed monthly charge. Estimating usage means summing power × hours for each appliance."
+    },
+    {
+     "s": "1.8",
+     "h": "Problem-solving steps",
+     "t": "The book suggests six steps: carefully define the problem; present what you know; establish alternative solutions and pick one; attempt a solution; evaluate the solution and check accuracy; and if it satisfies you, present it, otherwise iterate."
+    },
+    {
+     "s": "1.8",
+     "h": "Checking your answer",
+     "t": "Use a second method (e.g. a different analysis technique or simulation) to verify. Check power balance and that signs and magnitudes make physical sense."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "A current of 3 A flows for 2 s. How much charge passes?",
+     "options": [
+      "1.5 C",
+      "3 C",
+      "6 C",
+      "9 C"
+     ],
+     "answer": 2,
+     "why": "q = ∫ i dt = 3 × 2 = 6 C."
+    },
+    {
+     "q": "Under the passive sign convention, current enters the + terminal and p = vi = −12 W. The element is…",
+     "options": [
+      "absorbing 12 W",
+      "supplying 12 W",
+      "dissipating heat only",
+      "not possible"
+     ],
+     "answer": 1,
+     "why": "Negative absorbed power means the element is delivering power to the circuit."
+    },
+    {
+     "q": "Which is a dependent source whose output current is set by a controlling voltage?",
+     "options": [
+      "VCVS",
+      "CCVS",
+      "VCCS",
+      "CCCS"
+     ],
+     "answer": 2,
+     "why": "Voltage-controlled current source."
+    },
+    {
+     "q": "A 2 kW heater runs for 3 hours. Energy used?",
+     "options": [
+      "0.67 kWh",
+      "5 kWh",
+      "6 kWh",
+      "6000 kWh"
+     ],
+     "answer": 2,
+     "why": "w = p × t = 2 kW × 3 h = 6 kWh."
+    },
+    {
+     "q": "The algebraic sum of power in a circuit at any instant is…",
+     "options": [
+      "equal to the source power",
+      "zero",
+      "always positive",
+      "equal to the resistor power"
+     ],
+     "answer": 1,
+     "why": "Conservation of energy: supplied power equals absorbed power."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "title": "Basic Laws",
+   "cards": [
+    {
+     "s": "2.1",
+     "h": "Basic laws",
+     "t": "Ohm’s law and Kirchhoff’s laws are the foundation of circuit analysis. With them you can find any voltage or current in a resistive circuit; later chapters add systematic methods built on these laws."
+    },
+    {
+     "s": "2.2",
+     "h": "Resistance",
+     "t": "Resistance is a material’s opposition to current. It grows with length and resistivity and shrinks with cross-sectional area.",
+     "eq": "R = \\rho\\,\\frac{\\ell}{A}"
+    },
+    {
+     "s": "2.2",
+     "h": "Ohm’s law",
+     "t": "The voltage across a resistor is proportional to the current through it, using the passive sign convention.",
+     "eq": "v = iR"
+    },
+    {
+     "s": "2.2",
+     "h": "Short and open circuits",
+     "t": "A short circuit has \\(R = 0\\): zero voltage whatever the current. An open circuit has \\(R \\to \\infty\\): zero current whatever the voltage."
+    },
+    {
+     "s": "2.2",
+     "h": "Conductance",
+     "t": "Conductance is the inverse of resistance, measured in siemens (S), older name mho (℧).",
+     "eq": "G = \\frac{1}{R} = \\frac{i}{v}"
+    },
+    {
+     "s": "2.2",
+     "h": "Power in a resistor",
+     "t": "A resistor always absorbs power (it is passive), since the power is a square times a positive number.",
+     "eq": "p = vi = i^2R = \\frac{v^2}{R}",
+     "ex": "10 V across 5 Ω: \\(i = 2\\) A, \\(p = 20\\) W."
+    },
+    {
+     "s": "2.3",
+     "h": "Nodes, branches, loops",
+     "t": "A branch is a single element. A node is a point where two or more branches meet. A loop is any closed path. Elements are in series if they carry the same current only, and in parallel if they share the same two nodes.",
+     "eq": "b = l + n - 1",
+     "def": "b = branches, n = nodes, l = independent loops."
+    },
+    {
+     "s": "2.4",
+     "h": "Kirchhoff’s current law (KCL)",
+     "t": "The algebraic sum of currents entering a node (or any closed boundary) is zero. It is conservation of charge: what flows in must flow out.",
+     "eq": "\\sum_{n=1}^{N} i_n = 0"
+    },
+    {
+     "s": "2.4",
+     "h": "Kirchhoff’s voltage law (KVL)",
+     "t": "The algebraic sum of voltages around any closed path is zero. It is conservation of energy. Going around a loop, voltage rises equal voltage drops.",
+     "eq": "\\sum_{m=1}^{M} v_m = 0"
+    },
+    {
+     "s": "2.4",
+     "h": "Sources in series and parallel",
+     "t": "KCL forbids putting different current sources in series; KVL forbids different voltage sources in parallel. Voltage sources in series add; current sources in parallel add."
+    },
+    {
+     "s": "2.5",
+     "h": "Series resistors",
+     "t": "Resistors in series carry the same current. Their equivalent resistance is the sum, always larger than the largest one.",
+     "eq": "R_\\text{eq} = R_1 + R_2 + \\dots + R_N"
+    },
+    {
+     "s": "2.5",
+     "h": "Voltage division",
+     "t": "Source voltage splits among series resistors in proportion to their resistances.",
+     "eq": "v_n = \\frac{R_n}{R_1 + \\dots + R_N}\\,v",
+     "ex": "12 V across 4 Ω and 2 Ω in series: the 4 Ω resistor gets \\(12\\cdot4/6 = 8\\) V."
+    },
+    {
+     "s": "2.6",
+     "h": "Parallel resistors",
+     "t": "Resistors in parallel share the same voltage. The equivalent is smaller than the smallest resistor; conductances add.",
+     "eq": "\\frac{1}{R_\\text{eq}} = \\sum\\frac{1}{R_n},\\qquad R_1\\parallel R_2 = \\frac{R_1R_2}{R_1+R_2}"
+    },
+    {
+     "s": "2.6",
+     "h": "Current division",
+     "t": "Current divides between two parallel resistors inversely to resistance: more current takes the easier path.",
+     "eq": "i_1 = \\frac{R_2}{R_1+R_2}\\,i,\\qquad i_2 = \\frac{R_1}{R_1+R_2}\\,i"
+    },
+    {
+     "s": "2.6",
+     "h": "Limiting cases",
+     "t": "A short in parallel with a resistor carries all the current. An open circuit in parallel takes none. These help simplify circuits quickly."
+    },
+    {
+     "s": "2.7",
+     "h": "Wye and delta networks",
+     "t": "Some networks are neither series nor parallel, like a bridge. Converting a Y (T) network into an equivalent Δ (Π) network, or the reverse, can unlock series-parallel simplification."
+    },
+    {
+     "s": "2.7",
+     "h": "Delta to wye",
+     "t": "Each Y resistor equals the product of the two adjacent Δ resistors divided by the sum of all three.",
+     "eq": "R_1 = \\frac{R_bR_c}{R_a+R_b+R_c},\\ \\ R_2 = \\frac{R_cR_a}{R_a+R_b+R_c},\\ \\ R_3 = \\frac{R_aR_b}{R_a+R_b+R_c}"
+    },
+    {
+     "s": "2.7",
+     "h": "Wye to delta",
+     "t": "Each Δ resistor equals the sum of all pairwise products of Y resistors divided by the opposite Y resistor. For a balanced network, \\(R_\\Delta = 3R_Y\\).",
+     "eq": "R_a = \\frac{R_1R_2 + R_2R_3 + R_3R_1}{R_1}"
+    },
+    {
+     "s": "2.8",
+     "h": "Application: lighting systems",
+     "t": "Household lamps are wired in parallel so each gets full voltage and one failure doesn’t darken the rest. Old series string lights go out entirely when one bulb opens."
+    },
+    {
+     "s": "2.8",
+     "h": "Application: DC meters",
+     "t": "A d’Arsonval movement deflects in proportion to current. Add a parallel shunt to make an ammeter (low resistance, placed in series). Add a series multiplier to make a voltmeter (high resistance, placed in parallel). An ohmmeter uses an internal battery."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "KCL is a statement of conservation of…",
+     "options": [
+      "energy",
+      "charge",
+      "power",
+      "resistance"
+     ],
+     "answer": 1,
+     "why": "Charge cannot accumulate at a node, so currents in equal currents out."
+    },
+    {
+     "q": "6 Ω and 3 Ω in parallel give…",
+     "options": [
+      "9 Ω",
+      "4.5 Ω",
+      "2 Ω",
+      "0.5 Ω"
+     ],
+     "answer": 2,
+     "why": "6·3/(6+3) = 2 Ω."
+    },
+    {
+     "q": "A 10 A source feeds 2 Ω ∥ 8 Ω. Current in the 2 Ω resistor?",
+     "options": [
+      "2 A",
+      "5 A",
+      "8 A",
+      "10 A"
+     ],
+     "answer": 2,
+     "why": "i = 8/(2+8) × 10 = 8 A; more current takes the smaller resistance."
+    },
+    {
+     "q": "A balanced Y with 10 Ω arms converts to a Δ with arms of…",
+     "options": [
+      "3.33 Ω",
+      "10 Ω",
+      "20 Ω",
+      "30 Ω"
+     ],
+     "answer": 3,
+     "why": "For balanced networks R_Δ = 3R_Y."
+    },
+    {
+     "q": "A network has 5 branches and 3 nodes. Independent loops?",
+     "options": [
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "answer": 1,
+     "why": "b = l + n − 1 → l = 5 − 3 + 1 = 3."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "title": "Methods of Analysis"
+  },
+  {
+   "n": 4,
+   "title": "Circuit Theorems"
+  },
+  {
+   "n": 5,
+   "title": "Operational Amplifiers"
+  },
+  {
+   "n": 6,
+   "title": "Capacitors and Inductors"
+  },
+  {
+   "n": 7,
+   "title": "First-Order Circuits"
+  },
+  {
+   "n": 8,
+   "title": "Second-Order Circuits"
+  },
+  {
+   "n": 9,
+   "title": "Sinusoids and Phasors"
+  },
+  {
+   "n": 10,
+   "title": "Sinusoidal Steady-State Analysis"
+  },
+  {
+   "n": 11,
+   "title": "AC Power Analysis"
+  },
+  {
+   "n": 12,
+   "title": "Three-Phase Circuits"
+  },
+  {
+   "n": 13,
+   "title": "Magnetically Coupled Circuits"
+  },
+  {
+   "n": 14,
+   "title": "Frequency Response"
+  },
+  {
+   "n": 15,
+   "title": "Introduction to the Laplace Transform"
+  },
+  {
+   "n": 16,
+   "title": "Applications of the Laplace Transform"
+  },
+  {
+   "n": 17,
+   "title": "The Fourier Series"
+  },
+  {
+   "n": 18,
+   "title": "Fourier Transform"
+  },
+  {
+   "n": 19,
+   "title": "Two-Port Networks"
+  }
+ ]
+}

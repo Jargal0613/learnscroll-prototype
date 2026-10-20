@@ -1,0 +1,496 @@
+{
+ "id": "university-physics",
+ "title": "University Physics with Modern Physics",
+ "short": "University Physics",
+ "author": "Hugh D. Young & Roger A. Freedman",
+ "edition": "15th edition",
+ "description": "Calculus-based physics: mechanics, waves, thermodynamics, electromagnetism, optics and modern physics.",
+ "chapters": [
+  {
+   "n": 1,
+   "title": "Units, Physical Quantities, and Vectors",
+   "cards": [
+    {
+     "s": "1.1",
+     "h": "The nature of physics",
+     "t": "Physics is an experimental science: it looks for patterns in nature and expresses them as laws and theories. A theory is never final; it holds within its range of validity and is replaced or extended when new experiments disagree."
+    },
+    {
+     "s": "1.1",
+     "h": "Models",
+     "t": "A model is a simplified version of a physical system. A thrown baseball becomes a point particle with no air resistance and constant gravity. Good models drop details that hardly matter but keep those that do."
+    },
+    {
+     "s": "1.2",
+     "h": "Solving physics problems",
+     "t": "The book uses a four-step strategy for every example: Identify the relevant concepts and target variable; Set up the problem with a sketch and equations; Execute the math; Evaluate whether the answer makes sense.",
+     "def": "I SEE: Identify, Set up, Execute, Evaluate."
+    },
+    {
+     "s": "1.3",
+     "h": "Standards and units",
+     "t": "Every measurement compares with a standard. Physicists use the SI (metric) system. The second is defined from a cesium-133 atomic transition; the metre from the speed of light; the kilogram, since 2019, from Planck’s constant."
+    },
+    {
+     "s": "1.3",
+     "h": "Unit prefixes",
+     "t": "Prefixes scale units by powers of ten: nano \\(10^{-9}\\), micro \\(10^{-6}\\), milli \\(10^{-3}\\), kilo \\(10^{3}\\), mega \\(10^{6}\\), giga \\(10^{9}\\). The British system is defined in terms of SI, e.g. 1 inch = 2.54 cm exactly."
+    },
+    {
+     "s": "1.4",
+     "h": "Using units",
+     "t": "An equation must be dimensionally consistent: you can only add or equate terms with the same units. Treat units like algebraic quantities; they multiply and cancel. A units check catches many mistakes."
+    },
+    {
+     "s": "1.4",
+     "h": "Converting units",
+     "t": "Multiply by a ratio equal to 1, such as \\(\\tfrac{1\\ \\text{min}}{60\\ \\text{s}}\\), so the unwanted unit cancels.",
+     "ex": "\\(36\\ \\tfrac{\\text{km}}{\\text{h}} \\times \\tfrac{1000\\ \\text{m}}{1\\ \\text{km}}\\times\\tfrac{1\\ \\text{h}}{3600\\ \\text{s}} = 10\\ \\tfrac{\\text{m}}{\\text{s}}\\)."
+    },
+    {
+     "s": "1.5",
+     "h": "Uncertainty",
+     "t": "Every measurement has uncertainty (error), often written \\(56.47 \\pm 0.02\\) mm. Fractional or percent uncertainty is the uncertainty divided by the value. Accuracy is how close to the true value; precision describes the measurement’s resolution."
+    },
+    {
+     "s": "1.5",
+     "h": "Significant figures",
+     "t": "In multiplication or division, keep as many significant figures as the least precise factor. In addition or subtraction, the answer keeps the fewest decimal places. Use scientific notation to make the count clear, e.g. \\(3.00\\times10^8\\) m/s."
+    },
+    {
+     "s": "1.6",
+     "h": "Estimates and orders of magnitude",
+     "t": "An order-of-magnitude estimate gets the power of ten right using rough values. It is a fast sanity check on detailed calculations and helps decide whether an idea is even feasible."
+    },
+    {
+     "s": "1.7",
+     "h": "Scalars and vectors",
+     "t": "A scalar has only magnitude (temperature, mass, time). A vector has magnitude and direction (displacement, velocity, force). Vectors are written in boldface with an arrow, \\(\\vec A\\); magnitude is \\(A\\), always positive."
+    },
+    {
+     "s": "1.7",
+     "h": "Vector addition",
+     "t": "Add vectors tip-to-tail; the sum (resultant) goes from the tail of the first to the tip of the last. Addition is commutative and associative. Subtraction adds the negative: \\(\\vec A - \\vec B = \\vec A + (-\\vec B)\\)."
+    },
+    {
+     "s": "1.8",
+     "h": "Components",
+     "t": "In 2-D, a vector splits into perpendicular components along \\(x\\) and \\(y\\). Components can be negative, unlike magnitudes. Angle \\(\\theta\\) is measured from the \\(+x\\)-axis toward \\(+y\\).",
+     "eq": "A_x = A\\cos\\theta,\\qquad A_y = A\\sin\\theta"
+    },
+    {
+     "s": "1.8",
+     "h": "Back from components",
+     "t": "Magnitude and direction follow from the components. Check the quadrant when using arctangent; a calculator returns only one of two possible angles.",
+     "eq": "A = \\sqrt{A_x^2 + A_y^2},\\qquad \\tan\\theta = \\frac{A_y}{A_x}"
+    },
+    {
+     "s": "1.8",
+     "h": "Adding with components",
+     "t": "To add vectors, add their components separately. This is much easier than geometry for three or more vectors, and works the same in 3-D.",
+     "eq": "R_x = A_x + B_x,\\quad R_y = A_y + B_y,\\quad R_z = A_z + B_z"
+    },
+    {
+     "s": "1.9",
+     "h": "Unit vectors",
+     "t": "Unit vectors have magnitude 1 and point along the axes: \\(\\hat\\imath, \\hat\\jmath, \\hat k\\). Any vector can be written as components times unit vectors.",
+     "eq": "\\vec A = A_x\\hat\\imath + A_y\\hat\\jmath + A_z\\hat k"
+    },
+    {
+     "s": "1.10",
+     "h": "Scalar (dot) product",
+     "t": "The dot product of two vectors is a scalar. It is largest when they are parallel, zero when perpendicular, negative when the angle exceeds 90°.",
+     "eq": "\\vec A\\cdot\\vec B = AB\\cos\\phi = A_xB_x + A_yB_y + A_zB_z"
+    },
+    {
+     "s": "1.10",
+     "h": "Vector (cross) product",
+     "t": "The cross product is a vector perpendicular to both, with direction from the right-hand rule. It is zero for parallel vectors and anticommutative: \\(\\vec B\\times\\vec A = -\\vec A\\times\\vec B\\).",
+     "eq": "|\\vec A\\times\\vec B| = AB\\sin\\phi"
+    },
+    {
+     "s": "1.10",
+     "h": "Cross product in components",
+     "t": "Using \\(\\hat\\imath\\times\\hat\\jmath = \\hat k\\) and cyclic permutations:",
+     "eq": "\\vec A\\times\\vec B = (A_yB_z - A_zB_y)\\hat\\imath + (A_zB_x - A_xB_z)\\hat\\jmath + (A_xB_y - A_yB_x)\\hat k"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "What is \\(\\vec A\\cdot\\vec B\\) for \\(\\vec A = 2\\hat\\imath + 3\\hat\\jmath\\) and \\(\\vec B = 4\\hat\\imath - \\hat\\jmath\\)?",
+     "options": [
+      "5",
+      "8",
+      "11",
+      "−3"
+     ],
+     "answer": 0,
+     "why": "2·4 + 3·(−1) = 8 − 3 = 5."
+    },
+    {
+     "q": "The cross product of two parallel vectors is…",
+     "options": [
+      "maximal",
+      "zero",
+      "equal to their dot product",
+      "a unit vector"
+     ],
+     "answer": 1,
+     "why": "\\(|\\vec A\\times\\vec B| = AB\\sin 0 = 0\\)."
+    },
+    {
+     "q": "Product of 3.2 m and 1.456 m with correct significant figures:",
+     "options": [
+      "4.6592 m²",
+      "4.66 m²",
+      "4.7 m²",
+      "5 m²"
+     ],
+     "answer": 2,
+     "why": "Keep the fewest significant figures (two, from 3.2)."
+    },
+    {
+     "q": "A vector of magnitude 10 at 30° above +x has an x-component of…",
+     "options": [
+      "5.0",
+      "8.7",
+      "10",
+      "−8.7"
+     ],
+     "answer": 1,
+     "why": "10 cos 30° ≈ 8.66."
+    },
+    {
+     "q": "Since 2019 the SI kilogram is defined using…",
+     "options": [
+      "a platinum-iridium cylinder",
+      "the speed of light",
+      "Planck’s constant",
+      "the cesium frequency"
+     ],
+     "answer": 2,
+     "why": "The kilogram is now fixed by assigning an exact value to Planck’s constant."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "title": "Motion Along a Straight Line",
+   "cards": [
+    {
+     "s": "2.1",
+     "h": "Particle model and displacement",
+     "t": "Kinematics describes motion without asking about causes. Treat the object as a particle on an \\(x\\)-axis. Displacement is the change in position \\(\\Delta x = x_2 - x_1\\); its sign gives direction."
+    },
+    {
+     "s": "2.1",
+     "h": "Average velocity",
+     "t": "Average \\(x\\)-velocity is displacement divided by elapsed time. It can be negative, and it is the slope of the line joining two points on an \\(x\\)–\\(t\\) graph. Average speed (distance/time) is different and never negative.",
+     "eq": "v_{\\text{av-}x} = \\frac{\\Delta x}{\\Delta t} = \\frac{x_2 - x_1}{t_2 - t_1}"
+    },
+    {
+     "s": "2.2",
+     "h": "Instantaneous velocity",
+     "t": "Shrink the time interval to zero: velocity at an instant is the derivative of position. On an \\(x\\)–\\(t\\) graph it is the slope of the tangent line. Speed is its magnitude.",
+     "eq": "v_x = \\lim_{\\Delta t\\to0}\\frac{\\Delta x}{\\Delta t} = \\frac{dx}{dt}"
+    },
+    {
+     "s": "2.2",
+     "h": "Reading x–t graphs",
+     "t": "Upward slope means moving in \\(+x\\); downward means \\(-x\\); zero slope means momentarily at rest. Steeper slope means faster. Curvature tells you the velocity is changing."
+    },
+    {
+     "s": "2.3",
+     "h": "Average acceleration",
+     "t": "Acceleration is the rate of change of velocity. Average \\(x\\)-acceleration is the slope of the line joining two points on a \\(v_x\\)–\\(t\\) graph.",
+     "eq": "a_{\\text{av-}x} = \\frac{\\Delta v_x}{\\Delta t}"
+    },
+    {
+     "s": "2.3",
+     "h": "Instantaneous acceleration",
+     "t": "Take the limit: acceleration is the derivative of velocity and the second derivative of position. Speeding up means \\(v_x\\) and \\(a_x\\) have the same sign; slowing down means opposite signs.",
+     "eq": "a_x = \\frac{dv_x}{dt} = \\frac{d^2x}{dt^2}"
+    },
+    {
+     "s": "2.4",
+     "h": "Constant acceleration: velocity",
+     "t": "If \\(a_x\\) is constant, velocity changes linearly with time. The \\(v_x\\)–\\(t\\) graph is a straight line with slope \\(a_x\\).",
+     "eq": "v_x = v_{0x} + a_xt"
+    },
+    {
+     "s": "2.4",
+     "h": "Constant acceleration: position",
+     "t": "The area under the \\(v_x\\)–\\(t\\) graph is displacement, which gives a quadratic in time.",
+     "eq": "x = x_0 + v_{0x}t + \\tfrac12 a_xt^2"
+    },
+    {
+     "s": "2.4",
+     "h": "Eliminating time",
+     "t": "When time isn’t given or asked for, use the equation without \\(t\\).",
+     "eq": "v_x^2 = v_{0x}^2 + 2a_x(x - x_0)"
+    },
+    {
+     "s": "2.4",
+     "h": "Average of velocities",
+     "t": "For constant acceleration only, displacement equals the average of initial and final velocity times time.",
+     "eq": "x - x_0 = \\frac{v_{0x}+v_x}{2}\\,t"
+    },
+    {
+     "s": "2.4",
+     "h": "Worked example",
+     "t": "Choosing the right constant-acceleration equation is half the work.",
+     "ex": "A car from rest at \\(2.0\\ \\mathrm{m/s^2}\\) for 5.0 s: \\(v = 0+2(5) = 10\\) m/s, \\(x = \\tfrac12(2)(5^2) = 25\\) m."
+    },
+    {
+     "s": "2.5",
+     "h": "Free fall",
+     "t": "Near Earth’s surface, ignoring air resistance, every object falls with the same constant downward acceleration, whatever its mass. This idea goes back to Galileo.",
+     "eq": "g = 9.80\\ \\mathrm{m/s^2}"
+    },
+    {
+     "s": "2.5",
+     "h": "Using free fall",
+     "t": "Take \\(+y\\) upward, so \\(a_y = -g\\), and use the constant-acceleration equations with \\(y\\). At the top of a vertical throw, velocity is zero but acceleration is still \\(-g\\). \\(g\\) itself is always positive.",
+     "ex": "Thrown up at 15 m/s: max height \\(= v_0^2/2g = 225/19.6 \\approx 11.5\\) m."
+    },
+    {
+     "s": "2.6",
+     "h": "Velocity by integration",
+     "t": "If acceleration varies, integrate. The change in velocity is the area under the \\(a_x\\)–\\(t\\) curve.",
+     "eq": "v_x = v_{0x} + \\int_0^t a_x\\,dt"
+    },
+    {
+     "s": "2.6",
+     "h": "Position by integration",
+     "t": "Likewise, displacement is the area under the \\(v_x\\)–\\(t\\) curve. With constant \\(a_x\\) these integrals give back the Section 2.4 formulas.",
+     "eq": "x = x_0 + \\int_0^t v_x\\,dt"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "A ball is thrown straight up. At the highest point…",
+     "options": [
+      "v = 0 and a = 0",
+      "v = 0 and a = −g",
+      "v = −g and a = 0",
+      "v and a are both maximal"
+     ],
+     "answer": 1,
+     "why": "Velocity is zero for an instant, but gravity still accelerates it downward."
+    },
+    {
+     "q": "Which equation should you use if time is unknown and not asked for?",
+     "options": [
+      "\\(v_x = v_{0x} + a_xt\\)",
+      "\\(x = x_0 + v_{0x}t + \\tfrac12a_xt^2\\)",
+      "\\(v_x^2 = v_{0x}^2 + 2a_x(x-x_0)\\)",
+      "\\(a_x = dv_x/dt\\)"
+     ],
+     "answer": 2,
+     "why": "It relates velocity and displacement without t."
+    },
+    {
+     "q": "On a \\(v_x\\)–\\(t\\) graph, displacement equals…",
+     "options": [
+      "the slope",
+      "the area under the curve",
+      "the y-intercept",
+      "the curvature"
+     ],
+     "answer": 1,
+     "why": "Integrating velocity over time gives displacement."
+    },
+    {
+     "q": "An object moving in −x with positive \\(a_x\\) is…",
+     "options": [
+      "speeding up",
+      "slowing down",
+      "at rest",
+      "moving at constant speed"
+     ],
+     "answer": 1,
+     "why": "Velocity and acceleration have opposite signs, so speed decreases."
+    },
+    {
+     "q": "Starting from rest with 3 m/s², how far does it go in 4 s?",
+     "options": [
+      "12 m",
+      "24 m",
+      "36 m",
+      "48 m"
+     ],
+     "answer": 1,
+     "why": "x = ½·3·4² = 24 m."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "title": "Motion in Two or Three Dimensions"
+  },
+  {
+   "n": 4,
+   "title": "Newton’s Laws of Motion"
+  },
+  {
+   "n": 5,
+   "title": "Applying Newton’s Laws"
+  },
+  {
+   "n": 6,
+   "title": "Work and Kinetic Energy"
+  },
+  {
+   "n": 7,
+   "title": "Potential Energy and Energy Conservation"
+  },
+  {
+   "n": 8,
+   "title": "Momentum, Impulse, and Collisions"
+  },
+  {
+   "n": 9,
+   "title": "Rotation of Rigid Bodies"
+  },
+  {
+   "n": 10,
+   "title": "Dynamics of Rotational Motion"
+  },
+  {
+   "n": 11,
+   "title": "Equilibrium and Elasticity"
+  },
+  {
+   "n": 12,
+   "title": "Fluid Mechanics"
+  },
+  {
+   "n": 13,
+   "title": "Gravitation"
+  },
+  {
+   "n": 14,
+   "title": "Periodic Motion"
+  },
+  {
+   "n": 15,
+   "title": "Mechanical Waves"
+  },
+  {
+   "n": 16,
+   "title": "Sound and Hearing"
+  },
+  {
+   "n": 17,
+   "title": "Temperature and Heat"
+  },
+  {
+   "n": 18,
+   "title": "Thermal Properties of Matter"
+  },
+  {
+   "n": 19,
+   "title": "The First Law of Thermodynamics"
+  },
+  {
+   "n": 20,
+   "title": "The Second Law of Thermodynamics"
+  },
+  {
+   "n": 21,
+   "title": "Electric Charge and Electric Field"
+  },
+  {
+   "n": 22,
+   "title": "Gauss’s Law"
+  },
+  {
+   "n": 23,
+   "title": "Electric Potential"
+  },
+  {
+   "n": 24,
+   "title": "Capacitance and Dielectrics"
+  },
+  {
+   "n": 25,
+   "title": "Current, Resistance, and Electromotive Force"
+  },
+  {
+   "n": 26,
+   "title": "Direct-Current Circuits"
+  },
+  {
+   "n": 27,
+   "title": "Magnetic Field and Magnetic Forces"
+  },
+  {
+   "n": 28,
+   "title": "Sources of Magnetic Field"
+  },
+  {
+   "n": 29,
+   "title": "Electromagnetic Induction"
+  },
+  {
+   "n": 30,
+   "title": "Inductance"
+  },
+  {
+   "n": 31,
+   "title": "Alternating Current"
+  },
+  {
+   "n": 32,
+   "title": "Electromagnetic Waves"
+  },
+  {
+   "n": 33,
+   "title": "The Nature and Propagation of Light"
+  },
+  {
+   "n": 34,
+   "title": "Geometric Optics"
+  },
+  {
+   "n": 35,
+   "title": "Interference"
+  },
+  {
+   "n": 36,
+   "title": "Diffraction"
+  },
+  {
+   "n": 37,
+   "title": "Relativity"
+  },
+  {
+   "n": 38,
+   "title": "Photons: Light Waves Behaving as Particles"
+  },
+  {
+   "n": 39,
+   "title": "Particles Behaving as Waves"
+  },
+  {
+   "n": 40,
+   "title": "Quantum Mechanics I: Wave Functions"
+  },
+  {
+   "n": 41,
+   "title": "Quantum Mechanics II: Atomic Structure"
+  },
+  {
+   "n": 42,
+   "title": "Molecules and Condensed Matter"
+  },
+  {
+   "n": 43,
+   "title": "Nuclear Physics"
+  },
+  {
+   "n": 44,
+   "title": "Particle Physics and Cosmology"
+  }
+ ]
+}

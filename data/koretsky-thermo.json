@@ -1,0 +1,418 @@
+{
+ "id": "koretsky-thermo",
+ "title": "Engineering and Chemical Thermodynamics",
+ "short": "Engineering and Chemical Thermodynamics",
+ "author": "Milo D. Koretsky",
+ "edition": "2nd edition",
+ "description": "Chemical engineering thermodynamics with a molecular view: energy balances, entropy, equations of state, phase and reaction equilibria.",
+ "chapters": [
+  {
+   "n": 1,
+   "title": "Measured Thermodynamic Properties and Other Basic Concepts",
+   "cards": [
+    {
+     "s": "1.1",
+     "h": "What thermodynamics is for",
+     "t": "Thermodynamics began as the science of turning heat into work in steam engines. Chemical engineers use it for two big jobs: energy balances on process equipment, and predicting equilibrium (phase and reaction). It tells you what is possible and how far a process can go, not how fast."
+    },
+    {
+     "s": "1.2",
+     "h": "Systems and surroundings",
+     "t": "The system is the part of the universe you choose to study; everything else is the surroundings, separated by a boundary. An open system exchanges mass and energy; a closed system exchanges only energy; an isolated system exchanges neither."
+    },
+    {
+     "s": "1.2",
+     "h": "Properties: extensive vs. intensive",
+     "t": "Extensive properties scale with system size (total volume \\(V\\), internal energy \\(U\\)). Intensive properties do not (temperature \\(T\\), pressure \\(P\\), molar volume \\(v\\)). Dividing an extensive property by moles gives a molar (intensive) property.",
+     "eq": "v = \\frac{V}{n},\\qquad \\hat v = \\frac{V}{m}"
+    },
+    {
+     "s": "1.2",
+     "h": "State and path",
+     "t": "State properties depend only on the current state, not on how it was reached. A process is the path between states; common idealized ones are isothermal (constant \\(T\\)), isobaric (constant \\(P\\)), isochoric (constant \\(V\\)) and adiabatic (no heat)."
+    },
+    {
+     "s": "1.2",
+     "h": "Hypothetical paths",
+     "t": "Because a change in a state property is path-independent, you may compute it along any convenient imaginary path between the same two end states. This trick is used throughout the book to get changes in \\(u\\), \\(h\\) and \\(s\\)."
+    },
+    {
+     "s": "1.2",
+     "h": "Phases and length scales",
+     "t": "A phase is a region that is uniform in composition and structure: solid, liquid or gas. The book keeps linking three scales: macroscopic (what we measure), microscopic (small volumes) and molecular (individual molecules and their interactions)."
+    },
+    {
+     "s": "1.2",
+     "h": "Units",
+     "t": "The book works mainly in SI and writes units in square brackets, e.g. [J/(mol K)]. Keep units with every number; a units check catches many algebra mistakes. The gas constant appears in many forms, e.g. 8.314 J/(mol K) or 0.08314 L bar/(mol K)."
+    },
+    {
+     "s": "1.3",
+     "h": "Measured properties",
+     "t": "Volume, temperature and pressure can be measured directly, so they are called measured properties. Other properties (\\(u\\), \\(h\\), \\(s\\), \\(g\\)) are found from these through thermodynamic relations developed later."
+    },
+    {
+     "s": "1.3",
+     "h": "Temperature, molecularly",
+     "t": "Temperature measures the average molecular kinetic energy from translational motion. Two bodies at the same temperature have the same average translational kinetic energy per molecule. The absolute scale (kelvin) starts at zero molecular motion in this classical picture.",
+     "eq": "\\langle e_k^\\text{tr} \\rangle = \\tfrac{3}{2}kT"
+    },
+    {
+     "s": "1.3",
+     "h": "Pressure, molecularly",
+     "t": "Pressure is the force per unit area from molecules hitting a wall and changing momentum. More frequent or harder impacts mean higher pressure. Absolute pressure is measured from vacuum; gauge pressure is relative to the atmosphere."
+    },
+    {
+     "s": "1.3",
+     "h": "The ideal gas",
+     "t": "An ideal gas has molecules with no volume and no intermolecular forces. It is a good model at low pressure or high temperature, when molecules are far apart.",
+     "eq": "Pv = RT\\qquad PV = nRT"
+    },
+    {
+     "s": "1.4",
+     "h": "Equilibrium",
+     "t": "A system is in equilibrium when it has no tendency to change. Thermal equilibrium means no temperature differences, mechanical means no unbalanced forces (equal pressure), and chemical means no net tendency for species to react or move between phases."
+    },
+    {
+     "s": "1.4",
+     "h": "Equilibrium at the molecular level",
+     "t": "At equilibrium molecules are still moving and exchanging between phases. Evaporation and condensation continue, but at equal rates, so macroscopic properties stay constant. Equilibrium is dynamic, not frozen."
+    },
+    {
+     "s": "1.5",
+     "h": "The state postulate",
+     "t": "For a pure substance, fixing two independent intensive properties fixes every other intensive property. To get an extensive property you also need the system size, such as the number of moles.",
+     "eq": "v = v(T,P),\\qquad V = V(T,P,n)"
+    },
+    {
+     "s": "1.5",
+     "h": "Gibbs phase rule",
+     "t": "The phase rule counts how many intensive properties you must specify to fix the state of every phase. \\(m\\) is the number of chemical species and \\(\\pi\\) the number of phases (non-reacting systems).",
+     "eq": "\\mathcal{F} = m - \\pi + 2"
+    },
+    {
+     "s": "1.5",
+     "h": "Phase rule in practice",
+     "t": "Pure water as one phase: \\(\\mathcal F = 1-1+2 = 2\\), so \\(T\\) and \\(P\\) can vary independently. Boiling water (liquid + vapor): \\(\\mathcal F = 1\\); choose \\(P\\) and the boiling temperature is fixed. The triple point has \\(\\mathcal F = 0\\).",
+     "ex": "At 1 atm, a liquid–vapor water mixture must be at 100 °C; the two phases share \\(T\\) and \\(P\\) but have different \\(v\\) and \\(u\\)."
+    },
+    {
+     "s": "1.6",
+     "h": "The PvT surface",
+     "t": "All equilibrium states of a pure substance lie on a surface in \\(P\\)–\\(v\\)–\\(T\\) space. Single-phase regions are separated by two-phase regions. Projections onto the \\(PT\\) and \\(Pv\\) planes are the familiar phase diagrams."
+    },
+    {
+     "s": "1.6",
+     "h": "Changes of state",
+     "t": "Heating a liquid at constant pressure: it warms as a subcooled (compressed) liquid, reaches saturation, boils at constant \\(T\\) while \\(v\\) grows, then becomes superheated vapor. In the two-phase dome, quality \\(x\\) is the vapor mass fraction.",
+     "eq": "\\hat v = (1-x)\\,\\hat v^l + x\\,\\hat v^v"
+    },
+    {
+     "s": "1.6",
+     "h": "Saturation pressure vs. vapor pressure",
+     "t": "Saturation pressure \\(P^\\text{sat}\\) is the pressure at which a pure substance boils at a given temperature (water: 2.34 kPa at 20 °C). Vapor pressure is a species’ contribution to total pressure in a mixture; in an ideal gas mixture it equals the partial pressure."
+    },
+    {
+     "s": "1.6",
+     "h": "The critical point",
+     "t": "Along the liquid–vapor line the two phases become more alike as temperature rises. At the critical point \\((T_c, P_c)\\) they become identical and the line ends. Above it there is a single supercritical fluid phase."
+    },
+    {
+     "s": "1.7",
+     "h": "Property tables",
+     "t": "Steam tables give \\(\\hat v, \\hat u, \\hat h, \\hat s\\) for saturated and superheated states. Pick the table by phase: compare \\(P\\) with \\(P^\\text{sat}(T)\\) or \\(\\hat v\\) with \\(\\hat v^l, \\hat v^v\\). Values between entries are found by linear interpolation.",
+     "ex": "Halfway between two table rows in \\(T\\), take the average of the two property values."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Which property is intensive?",
+     "options": [
+      "Total volume V",
+      "Internal energy U",
+      "Molar volume v",
+      "Number of moles n"
+     ],
+     "answer": 2,
+     "why": "Molar volume does not depend on system size; V and U do."
+    },
+    {
+     "q": "By the Gibbs phase rule, how many degrees of freedom does pure water in vapor–liquid equilibrium have?",
+     "options": [
+      "0",
+      "1",
+      "2",
+      "3"
+     ],
+     "answer": 1,
+     "why": "\\(\\mathcal F = m - \\pi + 2 = 1 - 2 + 2 = 1\\)."
+    },
+    {
+     "q": "According to the state postulate, a pure single-phase substance’s intensive state is fixed by…",
+     "options": [
+      "one intensive property",
+      "two independent intensive properties",
+      "three properties including size",
+      "temperature only"
+     ],
+     "answer": 1,
+     "why": "Two independent intensive properties fix the rest; size is needed only for extensive properties."
+    },
+    {
+     "q": "At the critical point…",
+     "options": [
+      "liquid and vapor become indistinguishable",
+      "the solid melts",
+      "all three phases coexist",
+      "pressure is zero"
+     ],
+     "answer": 0,
+     "why": "The liquid–vapor line ends where the two phases have identical properties."
+    },
+    {
+     "q": "Temperature is, molecularly, a measure of…",
+     "options": [
+      "total molecular energy",
+      "average translational kinetic energy",
+      "intermolecular potential energy",
+      "molecular size"
+     ],
+     "answer": 1,
+     "why": "Equal temperature means equal average translational kinetic energy per molecule."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "title": "The First Law of Thermodynamics",
+   "cards": [
+    {
+     "s": "2.1",
+     "h": "Forms of energy",
+     "t": "Energy can be kinetic, potential or internal. Internal energy \\(U\\) is stored at the molecular level: molecular motion (translation, rotation, vibration) plus the potential energy of intermolecular forces and chemical bonds.",
+     "eq": "E_\\text{total} = U + E_K + E_P"
+    },
+    {
+     "s": "2.1",
+     "h": "Observing changes in U",
+     "t": "We cannot measure \\(U\\) directly, only changes. Changes show up as a temperature change, a phase change, or a chemical reaction. That is why the book tracks sensible heat, latent heat and heat of reaction separately."
+    },
+    {
+     "s": "2.1",
+     "h": "Internal energy of an ideal gas",
+     "t": "Ideal-gas molecules don’t interact, so there is no intermolecular potential energy. Their internal energy depends only on temperature, not on pressure or volume.",
+     "eq": "u^\\text{ideal gas} = u(T)"
+    },
+    {
+     "s": "2.1",
+     "h": "Work",
+     "t": "Work is energy transferred by a force acting through a distance. For expansion against an external pressure \\(P_E\\), the book’s sign convention makes work positive when energy goes into the system.",
+     "eq": "W = -\\int P_E\\,dV"
+    },
+    {
+     "s": "2.1",
+     "h": "Heat",
+     "t": "Heat is energy transferred because of a temperature difference. Heat into the system is positive. Both \\(Q\\) and \\(W\\) are path functions: they describe transfers during a process, not properties of a state."
+    },
+    {
+     "s": "2.2",
+     "h": "Hypothetical paths",
+     "t": "To get \\(\\Delta u\\) or \\(\\Delta h\\) between two states, build an easy imaginary path: e.g. heat at constant pressure, then change pressure at constant temperature. The sum of steps equals the real change because \\(u\\) and \\(h\\) are state functions."
+    },
+    {
+     "s": "2.3",
+     "h": "Reversible processes",
+     "t": "A reversible process proceeds through a series of equilibrium states, driven by infinitesimal differences. It can be undone leaving no trace in system or surroundings. Expansion work is then maximal; compression work is minimal."
+    },
+    {
+     "s": "2.3",
+     "h": "Irreversible processes",
+     "t": "Real processes are driven by finite differences (sudden pressure drop, friction, mixing). They produce less work in expansion and need more in compression than the reversible ideal. Many small steps get closer to reversible than one big step."
+    },
+    {
+     "s": "2.3",
+     "h": "Efficiency factors",
+     "t": "Compare the real work with the reversible work. Both definitions are set up so a reversible process scores 100%.",
+     "eq": "\\eta_\\text{exp} = \\frac{w_\\text{irrev}}{w_\\text{rev}},\\qquad \\eta_\\text{comp} = \\frac{w_\\text{rev}}{w_\\text{irrev}}"
+    },
+    {
+     "s": "2.4",
+     "h": "First law, closed system",
+     "t": "For a closed system, the change in total energy equals heat plus work, with both counted positive into the system. Kinetic and potential energy changes are often negligible.",
+     "eq": "\\Delta U + \\Delta E_K + \\Delta E_P = Q + W"
+    },
+    {
+     "s": "2.4",
+     "h": "Differential form",
+     "t": "For a small step, \\(dU = \\delta Q + \\delta W\\). The \\(\\delta\\) reminds you that \\(Q\\) and \\(W\\) are not exact differentials of properties. For reversible expansion work, \\(\\delta W = -P\\,dV\\)."
+    },
+    {
+     "s": "2.5",
+     "h": "Open systems: material balance",
+     "t": "In an open system, mass can flow in and out. Moles accumulate if inflow exceeds outflow; at steady state they balance.",
+     "eq": "\\frac{dn_\\text{sys}}{dt} = \\sum_\\text{in}\\dot n_\\text{in} - \\sum_\\text{out}\\dot n_\\text{out}"
+    },
+    {
+     "s": "2.5",
+     "h": "Flow work and enthalpy",
+     "t": "Pushing fluid into or out of a control volume takes work \\(Pv\\) per mole. Combining it with internal energy gives enthalpy, the natural property for flowing streams.",
+     "eq": "h = u + Pv"
+    },
+    {
+     "s": "2.5",
+     "h": "Steady-state energy balance",
+     "t": "At steady state nothing accumulates. Shaft work \\(\\dot W_s\\) is any work other than flow work. Neglecting kinetic and potential energy:",
+     "eq": "0 = \\sum_\\text{in}\\dot n_\\text{in}h_\\text{in} - \\sum_\\text{out}\\dot n_\\text{out}h_\\text{out} + \\dot Q + \\dot W_s"
+    },
+    {
+     "s": "2.5",
+     "h": "Transient balance",
+     "t": "If properties inside the control volume change with time, keep the accumulation term \\(d(nu)_\\text{sys}/dt\\). Filling or emptying a tank is the classic example: inflowing enthalpy becomes internal energy of the tank contents."
+    },
+    {
+     "s": "2.6",
+     "h": "Heat capacities",
+     "t": "\\(c_v\\) is the slope of \\(u\\) with \\(T\\) at constant volume; \\(c_P\\) is the slope of \\(h\\) at constant pressure. For ideal gases they differ by \\(R\\).",
+     "eq": "c_v = \\left(\\frac{\\partial u}{\\partial T}\\right)_v,\\quad c_P = \\left(\\frac{\\partial h}{\\partial T}\\right)_P,\\quad c_P - c_v = R"
+    },
+    {
+     "s": "2.6",
+     "h": "Temperature-dependent cP",
+     "t": "Ideal-gas heat capacities rise with temperature as more vibrational modes become active. Data are given as polynomials, integrated to get enthalpy changes.",
+     "eq": "\\frac{c_P}{R} = A + BT + CT^2 + DT^{-2} + ET^3,\\qquad \\Delta h = \\int_{T_1}^{T_2} c_P\\,dT"
+    },
+    {
+     "s": "2.6",
+     "h": "Latent heats",
+     "t": "Phase changes at constant \\(T\\) and \\(P\\) absorb or release latent heat: \\(\\Delta h_\\text{vap}\\), \\(\\Delta h_\\text{fus}\\), \\(\\Delta h_\\text{sub}\\). Molecularly, this energy pulls molecules apart against attractive forces. To get latent heat at another temperature, use a hypothetical path."
+    },
+    {
+     "s": "2.6",
+     "h": "Enthalpy of reaction",
+     "t": "Reaction enthalpies are built from standard enthalpies of formation. Negative \\(\\Delta h_\\text{rxn}\\) means exothermic. To get it at another temperature, add the sensible heat of reactants and products along a path.",
+     "eq": "\\Delta h^\\circ_\\text{rxn} = \\sum \\nu_i\\,\\Delta h^\\circ_{f,i}"
+    },
+    {
+     "s": "2.7",
+     "h": "Reversible isothermal ideal gas",
+     "t": "At constant \\(T\\), an ideal gas has \\(\\Delta u = 0\\), so heat in equals work out.",
+     "eq": "W = -nRT\\ln\\frac{V_2}{V_1} = nRT\\ln\\frac{P_2}{P_1},\\qquad Q = -W"
+    },
+    {
+     "s": "2.7",
+     "h": "Reversible adiabatic ideal gas",
+     "t": "With \\(Q=0\\) and constant heat capacity, \\(Pv^k\\) stays constant, where \\(k = c_P/c_v\\). The gas cools when it expands because it does work using its own internal energy.",
+     "eq": "Pv^k = \\text{const},\\qquad W = \\Delta U = n c_v (T_2 - T_1)"
+    },
+    {
+     "s": "2.8",
+     "h": "Nozzles and diffusers",
+     "t": "These have no shaft work and little heat transfer. A nozzle converts enthalpy into kinetic energy; a diffuser does the reverse.",
+     "eq": "h_2 - h_1 = -\\tfrac{1}{2}\\left(\\vec V_2^{\\,2} - \\vec V_1^{\\,2}\\right)\\ \\text{(per unit mass)}"
+    },
+    {
+     "s": "2.8",
+     "h": "Turbines, pumps, compressors",
+     "t": "Turbines extract shaft work from a flowing fluid; pumps and compressors put it in. Usually treated as adiabatic with negligible kinetic energy change, so shaft work equals the enthalpy change.",
+     "eq": "\\dot W_s = \\dot n\\,(h_\\text{out} - h_\\text{in})"
+    },
+    {
+     "s": "2.8",
+     "h": "Heat exchangers and throttles",
+     "t": "In a heat exchanger, heat lost by the hot stream equals heat gained by the cold one (no shaft work). A throttling valve has no work and negligible heat, so enthalpy is unchanged: \\(h_\\text{out} = h_\\text{in}\\). For an ideal gas that means the temperature doesn’t change."
+    },
+    {
+     "s": "2.9",
+     "h": "Cycles and the Carnot engine",
+     "t": "A cycle returns to its starting state, so \\(\\Delta U = 0\\) and net work equals net heat. Thermal efficiency is net work out over heat taken in at the hot reservoir. The reversible Carnot cycle (two isotherms, two adiabats) sets the upper limit.",
+     "eq": "\\eta = \\frac{|W_\\text{net}|}{Q_H},\\qquad \\eta_\\text{Carnot} = 1 - \\frac{T_C}{T_H}"
+    }
+   ],
+   "quiz": [
+    {
+     "q": "In Koretsky’s sign convention, work done by the surroundings on the system is…",
+     "options": [
+      "negative",
+      "positive",
+      "always zero for closed systems",
+      "equal to heat"
+     ],
+     "answer": 1,
+     "why": "Work is positive when energy goes from the surroundings into the system, so \\(\\Delta U = Q + W\\)."
+    },
+    {
+     "q": "Across a throttling valve (adiabatic, no work), which quantity stays constant?",
+     "options": [
+      "Temperature",
+      "Pressure",
+      "Enthalpy",
+      "Entropy"
+     ],
+     "answer": 2,
+     "why": "With Q = 0 and W = 0, the steady-state balance gives \\(h_{out} = h_{in}\\)."
+    },
+    {
+     "q": "For an ideal gas, internal energy depends on…",
+     "options": [
+      "T only",
+      "P only",
+      "T and P",
+      "V only"
+     ],
+     "answer": 0,
+     "why": "With no intermolecular forces, u depends only on temperature."
+    },
+    {
+     "q": "A Carnot engine runs between 600 K and 300 K. Its efficiency is…",
+     "options": [
+      "25%",
+      "33%",
+      "50%",
+      "100%"
+     ],
+     "answer": 2,
+     "why": "\\(\\eta = 1 - 300/600 = 0.5\\)."
+    },
+    {
+     "q": "The expansion efficiency \\(\\eta_{exp}\\) is defined as…",
+     "options": [
+      "\\(w_{rev}/w_{irrev}\\)",
+      "\\(w_{irrev}/w_{rev}\\)",
+      "\\(Q/W\\)",
+      "\\(T_C/T_H\\)"
+     ],
+     "answer": 1,
+     "why": "Real work obtained divided by the reversible (maximum) work."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "title": "Entropy and the Second Law of Thermodynamics"
+  },
+  {
+   "n": 4,
+   "title": "Equations of State and Intermolecular Forces"
+  },
+  {
+   "n": 5,
+   "title": "The Thermodynamic Web"
+  },
+  {
+   "n": 6,
+   "title": "Phase Equilibria I: Problem Formulation"
+  },
+  {
+   "n": 7,
+   "title": "Phase Equilibria II: Fugacity"
+  },
+  {
+   "n": 8,
+   "title": "Phase Equilibria III: Applications"
+  },
+  {
+   "n": 9,
+   "title": "Chemical Reaction Equilibria"
+  }
+ ]
+}

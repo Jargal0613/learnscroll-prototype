@@ -1,11 +1,8 @@
-# LearnScroll prototype
+# LearnScroll
 
-A vertical scroll feed of bite-sized learning content (single static `index.html`, no backend). Live: https://learn.jargal.me
+A minimal study feed for five textbooks. Pick a book, pick a chapter, scroll through one idea per screen, then answer a few practice questions. Live at https://learn.jargal.me.
 
-- **Feed**: Posts and Articles filtered by topic and type; ↑/↓/Space to move, 1–4 to rate recall.
-- **Quizzes**: a quick multiple-choice check after every few cards (built-in questions + auto fill-in-the-blank for your material).
-- **Spaced repetition**: Again/Hard/Good/Easy ratings on every card (SM-2-like); due cards resurface with a *Review* badge and a *Due* filter. Wrong answers are scheduled automatically.
-- **Add material**: paste text or pick .txt/.md/.pdf (PDF text extracted client-side with pdf.js from a CDN); split into sequential cards.
-- **Custom topics** (create/rename/delete) and a **Progress** panel per topic.
+- `index.html`: markup and styles. `app.js`: the app (hash routing, reader, progress in `localStorage`).
+- `data/<book>.json`: chapters → cards (`s` section, `h` heading, `t` text, optional `eq` LaTeX, `def`, `ex`) → `quiz`. A chapter without `cards` is listed as "coming soon".
 
-All progress lives in `localStorage` (`learnscroll-v5`; older `learnscroll-topics-v4` progress is migrated).
+Cards are original study notes summarizing each section; no textbook text, figures or problems are included.

@@ -1,0 +1,461 @@
+{
+ "id": "heat-mass-transfer",
+ "title": "Heat and Mass Transfer: Fundamentals and Applications",
+ "short": "Heat and Mass Transfer",
+ "author": "Yunus A. Çengel & Afshin J. Ghajar",
+ "edition": "5th edition",
+ "description": "Conduction, convection and radiation, from first principles to heat exchangers and mass transfer.",
+ "chapters": [
+  {
+   "n": 1,
+   "title": "Introduction and Basic Concepts",
+   "cards": [
+    {
+     "s": "1–1",
+     "h": "Thermodynamics vs. heat transfer",
+     "t": "Thermodynamics tells you how much energy must move for a system to go from one equilibrium state to another. It says nothing about how long that takes. Heat transfer adds the missing piece: the rate of energy transfer, which sets sizes, times and temperatures in real equipment.",
+     "def": "Heat: the form of energy that crosses a boundary because of a temperature difference."
+    },
+    {
+     "s": "1–1",
+     "h": "Why rates matter",
+     "t": "Coffee cooling in a thermos and in a mug ends at the same final state, but at very different speeds. Engineers care about rates: how big a radiator must be, how thick insulation should be, how fast a chip heats up. Heat always flows from higher to lower temperature, and stops when temperatures equalize."
+    },
+    {
+     "s": "1–1",
+     "h": "Where heat transfer shows up",
+     "t": "Almost every device has a heat-transfer problem: buildings, car radiators, power plants, refrigerators, electronics, the human body. A short history: the caloric (fluid) theory of heat was abandoned in the 1800s once heat was understood as energy tied to random molecular motion."
+    },
+    {
+     "s": "1–2",
+     "h": "Engineering heat transfer",
+     "t": "Problems are either rating problems (find the heat rate of an existing system) or sizing problems (design a system for a required rate). Experiments give accurate data for one setup; analysis is cheaper and faster but rests on assumptions. In practice both are combined."
+    },
+    {
+     "s": "1–2",
+     "h": "Modeling",
+     "t": "A model is an idealized version of reality written as differential equations. Good models keep the essential physics and drop details that barely change the answer. A simple model with insight often beats a complex one that is hard to interpret."
+    },
+    {
+     "s": "1–3",
+     "h": "Energy forms and specific heat",
+     "t": "The total energy \\(E\\) of a system is the sum of thermal, mechanical, kinetic, potential, chemical and nuclear forms. Internal energy \\(U\\) is the microscopic part; enthalpy combines it with flow work.",
+     "eq": "h = u + Pv"
+    },
+    {
+     "s": "1–3",
+     "h": "Specific heats",
+     "t": "Specific heat is the energy needed to raise a unit mass by one degree. For ideal gases \\(c_p = c_v + R\\). Liquids and solids are nearly incompressible, so \\(c_p \\approx c_v = c\\).",
+     "eq": "\\Delta U = m\\,c_{v,\\text{avg}}\\,\\Delta T \\qquad \\Delta H = m\\,c_{p,\\text{avg}}\\,\\Delta T"
+    },
+    {
+     "s": "1–3",
+     "h": "Energy transfer: Q, W and rates",
+     "t": "Energy crosses a boundary only as heat or work (and with mass flow in open systems). Heat transfer rate is \\(\\dot Q\\) in watts; heat flux is the rate per unit area. A process with no heat transfer is adiabatic.",
+     "eq": "\\dot q = \\frac{\\dot Q}{A}\\ \\ (\\mathrm{W/m^2})"
+    },
+    {
+     "s": "1–4",
+     "h": "The first law",
+     "t": "Energy cannot be created or destroyed. Whatever enters minus whatever leaves equals the change stored in the system. For heat-transfer problems the stored energy is often just the thermal energy \\(mc\\,\\Delta T\\).",
+     "eq": "E_\\text{in} - E_\\text{out} = \\Delta E_\\text{system}"
+    },
+    {
+     "s": "1–4",
+     "h": "Closed and steady-flow balances",
+     "t": "For a closed system with only heat transfer, \\(Q = mc_v\\Delta T\\). For steady flow through a pipe or heat exchanger, the heat added shows up as a temperature rise of the stream.",
+     "eq": "\\dot Q = \\dot m\\,c_p\\,\\Delta T",
+     "ex": "Water at 0.1 kg/s warms by 20 °C (\\(c_p\\approx 4.18\\) kJ/kg·K): \\(\\dot Q = 0.1\\times4.18\\times20 \\approx 8.4\\) kW."
+    },
+    {
+     "s": "1–4",
+     "h": "Surface energy balance",
+     "t": "A surface is a boundary with no mass or volume, so it stores no energy. Every watt arriving at a surface by conduction must leave by convection and radiation (or vice versa).",
+     "eq": "\\dot Q_\\text{cond} = \\dot Q_\\text{conv} + \\dot Q_\\text{rad}"
+    },
+    {
+     "s": "1–5",
+     "h": "Three mechanisms",
+     "t": "Heat moves by conduction, convection and radiation. All need a temperature difference. Conduction and convection need a medium; radiation does not and can cross a vacuum."
+    },
+    {
+     "s": "1–6",
+     "h": "Conduction: Fourier’s law",
+     "t": "Conduction is energy passed from more energetic particles to neighbours by collisions and lattice vibrations. The rate grows with area and temperature gradient and is set by the material’s thermal conductivity \\(k\\). The minus sign makes heat flow toward decreasing temperature.",
+     "eq": "\\dot Q_\\text{cond} = -kA\\,\\frac{dT}{dx}"
+    },
+    {
+     "s": "1–6",
+     "h": "Thermal conductivity",
+     "t": "\\(k\\) (W/m·K) measures how well a material conducts. Metals are high (copper ≈ 400), water ≈ 0.6, air ≈ 0.026. Pure metals conduct mainly through free electrons; insulators rely on lattice vibrations (phonons). Gases conduct poorly because molecules are far apart."
+    },
+    {
+     "s": "1–6",
+     "h": "Thermal diffusivity",
+     "t": "Diffusivity compares how fast heat is conducted to how much heat a material stores per volume. Large \\(\\alpha\\) means temperature changes spread quickly through the body.",
+     "eq": "\\alpha = \\frac{k}{\\rho c_p}\\ \\ (\\mathrm{m^2/s})"
+    },
+    {
+     "s": "1–6",
+     "h": "Example: plane wall",
+     "t": "Steady conduction through a flat slab is linear in the temperature difference.",
+     "eq": "\\dot Q = kA\\frac{T_1-T_2}{L}",
+     "ex": "Brick wall, \\(k=0.7\\), \\(A=10\\ \\mathrm{m^2}\\), \\(L=0.2\\) m, 20 °C inside, 0 °C outside: \\(\\dot Q = 0.7\\cdot10\\cdot20/0.2 = 700\\) W."
+    },
+    {
+     "s": "1–7",
+     "h": "Convection",
+     "t": "Convection is conduction plus bulk fluid motion between a surface and a moving fluid. Forced convection uses a fan or pump; natural (free) convection is driven by buoyancy. Boiling and condensation are convection with phase change.",
+     "eq": "\\dot Q_\\text{conv} = hA_s\\,(T_s - T_\\infty)"
+    },
+    {
+     "s": "1–7",
+     "h": "The convection coefficient h",
+     "t": "\\(h\\) (W/m²·K) is not a material property. It depends on geometry, fluid properties, velocity and flow type, and is found from experiments or correlations. Typical range: free gas convection 2–25, forced liquids 50–20,000, boiling/condensation up to 100,000."
+    },
+    {
+     "s": "1–8",
+     "h": "Radiation",
+     "t": "Radiation is energy carried by electromagnetic waves emitted by all matter above absolute zero. A blackbody emits the maximum possible; real surfaces emit a fraction set by emissivity \\(0\\le\\varepsilon\\le1\\).",
+     "eq": "\\dot Q_\\text{emit} = \\varepsilon\\,\\sigma A_s T_s^4,\\quad \\sigma = 5.67\\times10^{-8}\\ \\mathrm{W/m^2K^4}"
+    },
+    {
+     "s": "1–8",
+     "h": "Net radiation exchange",
+     "t": "A small surface inside a much larger enclosure exchanges radiation with its surroundings at \\(T_\\text{surr}\\). Absorptivity \\(\\alpha\\) is the fraction of incident radiation absorbed. Temperatures must be in kelvin.",
+     "eq": "\\dot Q_\\text{rad} = \\varepsilon\\sigma A_s\\,(T_s^4 - T_\\text{surr}^4)"
+    },
+    {
+     "s": "1–9",
+     "h": "Mechanisms working together",
+     "t": "Opaque solids transfer heat only by conduction. Fluids at rest conduct (and may radiate); moving fluids convect. A vacuum transfers heat only by radiation. Many real surfaces lose heat by convection and radiation at once, so a combined coefficient is often used.",
+     "eq": "\\dot Q_\\text{total} = h_\\text{combined}\\,A_s\\,(T_s - T_\\infty)"
+    },
+    {
+     "s": "1–10",
+     "h": "Prevention through design",
+     "t": "Heat transfer is also about safety: hot surfaces can burn, cold ones can cause frostbite, and overheating can cause fires. Prevention through Design (PtD) means removing such hazards at the design stage, for example by insulating hot pipes so the outer surface stays touch-safe."
+    },
+    {
+     "s": "1–11",
+     "h": "A problem-solving routine",
+     "t": "State the problem, sketch the system, list assumptions, apply the physical laws, look up properties, calculate, then check that the answer is reasonable. Writing assumptions down makes it clear when a result no longer applies."
+    },
+    {
+     "s": "1–11",
+     "h": "Software and significant digits",
+     "t": "Equation solvers such as EES handle large systems of equations and property lookups, but they do not replace understanding. Results cannot be more precise than the input data: property values are often good to only about three digits, so report answers to match."
+    },
+    {
+     "s": "Topic",
+     "h": "Thermal comfort",
+     "t": "The body generates heat by metabolism and loses it by convection, radiation, evaporation and breathing. Comfort depends on air temperature, humidity, air speed, surrounding surface temperatures, clothing and activity. A cold window can make a warm room feel chilly through radiation alone."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Which law gives the rate of heat conduction?",
+     "options": [
+      "Newton’s law of cooling",
+      "Fourier’s law",
+      "Stefan–Boltzmann law",
+      "Kirchhoff’s law"
+     ],
+     "answer": 1,
+     "why": "Fourier’s law: \\(\\dot Q = -kA\\,dT/dx\\). Newton’s law of cooling is for convection."
+    },
+    {
+     "q": "The convection heat transfer coefficient h is…",
+     "options": [
+      "a fluid property like viscosity",
+      "a constant for each material",
+      "set by geometry, flow and fluid properties",
+      "always about 10 W/m²·K"
+     ],
+     "answer": 2,
+     "why": "h depends on the flow situation, not just the material; it comes from experiments or correlations."
+    },
+    {
+     "q": "Thermal diffusivity is defined as…",
+     "options": [
+      "\\(k\\rho c_p\\)",
+      "\\(k/(\\rho c_p)\\)",
+      "\\(\\rho c_p/k\\)",
+      "\\(h/k\\)"
+     ],
+     "answer": 1,
+     "why": "\\(\\alpha = k/\\rho c_p\\): conduction ability divided by heat storage per volume."
+    },
+    {
+     "q": "Which mechanism can transfer heat across a vacuum?",
+     "options": [
+      "Conduction",
+      "Natural convection",
+      "Forced convection",
+      "Radiation"
+     ],
+     "answer": 3,
+     "why": "Radiation is carried by electromagnetic waves and needs no medium."
+    },
+    {
+     "q": "A surface energy balance has no storage term because…",
+     "options": [
+      "surfaces are always adiabatic",
+      "a surface has no mass or volume",
+      "radiation is negligible",
+      "the process is steady"
+     ],
+     "answer": 1,
+     "why": "A surface contains no mass, so it cannot store energy; inflow equals outflow at every instant."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "title": "Heat Conduction Equation",
+   "cards": [
+    {
+     "s": "2–1",
+     "h": "Temperature fields and heat flux",
+     "t": "Temperature is a scalar; heat flux is a vector with direction. Heat conduction is described by a temperature field \\(T(x,y,z,t)\\). The choice of coordinates (rectangular, cylindrical, spherical) should match the shape of the body."
+    },
+    {
+     "s": "2–1",
+     "h": "Steady vs. transient",
+     "t": "Steady means nothing changes with time at any point, though temperature can vary from point to point. Transient (unsteady) means temperatures change with time. Uniform but time-varying temperature is called lumped behaviour."
+    },
+    {
+     "s": "2–1",
+     "h": "Multidimensional heat transfer",
+     "t": "Heat transfer is one-, two- or three-dimensional depending on how many coordinates the temperature truly varies in. A long pipe or a large wall is often treated as 1-D because gradients in other directions are small."
+    },
+    {
+     "s": "2–1",
+     "h": "Heat generation",
+     "t": "Some bodies convert other energy into heat inside the volume: electric resistance wires, nuclear fuel rods, curing concrete, chemical reactions. This is described by a generation rate per unit volume.",
+     "eq": "\\dot E_\\text{gen} = \\int_V \\dot e_\\text{gen}\\,dV\\qquad(\\dot e_\\text{gen}\\ \\text{in W/m}^3)"
+    },
+    {
+     "s": "2–2",
+     "h": "1-D conduction: plane wall",
+     "t": "An energy balance on a thin slice of a wall with constant \\(k\\) gives the 1-D heat conduction equation. The right-hand side is storage; it vanishes in steady operation.",
+     "eq": "\\frac{\\partial^2 T}{\\partial x^2} + \\frac{\\dot e_\\text{gen}}{k} = \\frac{1}{\\alpha}\\frac{\\partial T}{\\partial t}"
+    },
+    {
+     "s": "2–2",
+     "h": "1-D conduction: cylinder",
+     "t": "For a long cylinder, the area normal to radial heat flow grows with \\(r\\), which changes the form of the equation.",
+     "eq": "\\frac{1}{r}\\frac{\\partial}{\\partial r}\\!\\left(r\\frac{\\partial T}{\\partial r}\\right) + \\frac{\\dot e_\\text{gen}}{k} = \\frac{1}{\\alpha}\\frac{\\partial T}{\\partial t}"
+    },
+    {
+     "s": "2–2",
+     "h": "1-D conduction: sphere",
+     "t": "In a sphere the area grows with \\(r^2\\).",
+     "eq": "\\frac{1}{r^2}\\frac{\\partial}{\\partial r}\\!\\left(r^2\\frac{\\partial T}{\\partial r}\\right) + \\frac{\\dot e_\\text{gen}}{k} = \\frac{1}{\\alpha}\\frac{\\partial T}{\\partial t}"
+    },
+    {
+     "s": "2–2",
+     "h": "One compact form",
+     "t": "All three 1-D cases fit one formula with \\(n = 0\\) (wall), \\(1\\) (cylinder) or \\(2\\) (sphere), where \\(r\\) is replaced by \\(x\\) for a wall.",
+     "eq": "\\frac{1}{r^n}\\frac{\\partial}{\\partial r}\\!\\left(r^n k\\frac{\\partial T}{\\partial r}\\right) + \\dot e_\\text{gen} = \\rho c\\frac{\\partial T}{\\partial t}"
+    },
+    {
+     "s": "2–3",
+     "h": "General conduction equation",
+     "t": "In three dimensions with constant \\(k\\) the same balance gives the Laplacian. Without generation and in steady state it reduces to Laplace’s equation \\(\\nabla^2T=0\\); transient without generation is the diffusion equation.",
+     "eq": "\\nabla^2 T + \\frac{\\dot e_\\text{gen}}{k} = \\frac{1}{\\alpha}\\frac{\\partial T}{\\partial t}"
+    },
+    {
+     "s": "2–3",
+     "h": "Cylindrical and spherical coordinates",
+     "t": "Bodies like pipes and balls are easier in \\((r,\\phi,z)\\) or \\((r,\\phi,\\theta)\\). The equations come from the general form by a change of variables. Always choose the system where boundaries lie on constant-coordinate surfaces."
+    },
+    {
+     "s": "2–4",
+     "h": "Why boundary conditions",
+     "t": "The heat equation is second order in space and first order in time, so you need two boundary conditions per direction and one initial condition. Boundary conditions state the thermal situation at the surfaces in mathematical form."
+    },
+    {
+     "s": "2–4",
+     "h": "Specified temperature and heat flux",
+     "t": "A specified-temperature condition fixes \\(T\\) at a surface. A specified heat-flux condition fixes the conducted flux there. An insulated surface is the special case of zero flux; a symmetry plane behaves the same way.",
+     "eq": "-k\\frac{\\partial T(0,t)}{\\partial x} = \\dot q_0\\qquad\\text{insulated: } \\frac{\\partial T(0,t)}{\\partial x}=0"
+    },
+    {
+     "s": "2–4",
+     "h": "Convection boundary condition",
+     "t": "At a surface exposed to a fluid, heat conducted to the surface equals heat convected away.",
+     "eq": "-k\\frac{\\partial T(0,t)}{\\partial x} = h_1\\,[T_{\\infty1} - T(0,t)]"
+    },
+    {
+     "s": "2–4",
+     "h": "Radiation and interface conditions",
+     "t": "A radiation condition balances conduction with \\(\\varepsilon\\sigma(T_\\text{surr}^4 - T_s^4)\\), making the problem nonlinear. At an interface between two solids in perfect contact, temperatures match and heat fluxes match."
+    },
+    {
+     "s": "2–4",
+     "h": "Generalized conditions",
+     "t": "Most real surfaces combine mechanisms: write a surface energy balance with every mode of heat in and out (conduction, convection, radiation, applied flux). The same idea covers all six types of conditions."
+    },
+    {
+     "s": "2–5",
+     "h": "Steady 1-D solutions",
+     "t": "With no generation, steady conduction in a plane wall gives \\(d^2T/dx^2=0\\), so the temperature profile is a straight line. Two boundary conditions fix the two constants.",
+     "eq": "T(x) = T_1 + (T_2 - T_1)\\frac{x}{L}"
+    },
+    {
+     "s": "2–5",
+     "h": "Cylinder and sphere profiles",
+     "t": "Steady radial conduction without generation gives a logarithmic profile in a cylinder and a \\(1/r\\) profile in a sphere. The heat rate is constant through the layer even though flux changes with radius.",
+     "eq": "\\dot Q_\\text{cyl} = 2\\pi L k\\,\\frac{T_1-T_2}{\\ln(r_2/r_1)}"
+    },
+    {
+     "s": "2–6",
+     "h": "Heat generation in a solid",
+     "t": "In steady state all heat generated must leave through the surface. That alone fixes the surface temperature without solving the full equation.",
+     "eq": "T_s = T_\\infty + \\frac{\\dot e_\\text{gen}\\,V}{h\\,A_s}"
+    },
+    {
+     "s": "2–6",
+     "h": "Maximum temperature rise",
+     "t": "The hottest point is at the centre (by symmetry). For a cylinder of radius \\(r_o\\) the centre exceeds the surface by a parabolic rise; for a plane wall of half-thickness \\(L\\) and a sphere the factors differ.",
+     "eq": "\\Delta T_\\text{max,cyl} = \\frac{\\dot e_\\text{gen} r_o^2}{4k}\\quad\\text{(wall: }\\tfrac{\\dot e L^2}{2k},\\ \\text{sphere: }\\tfrac{\\dot e r_o^2}{6k})"
+    },
+    {
+     "s": "2–6",
+     "h": "Example: heating wire",
+     "t": "Surface temperature comes from an overall energy balance.",
+     "ex": "A 2 kW wire, \\(D=4\\) mm, \\(L=0.5\\) m, in 20 °C water with \\(h=3000\\): \\(A_s=\\pi DL\\approx0.00628\\ \\mathrm{m^2}\\), \\(T_s = 20 + 2000/(3000\\cdot0.00628)\\approx126\\) °C."
+    },
+    {
+     "s": "2–7",
+     "h": "Variable thermal conductivity",
+     "t": "When \\(k\\) changes a lot with temperature, a linear model \\(k=k_0(1+\\beta T)\\) is common. For steady 1-D conduction the heat rate equals the constant-\\(k\\) result using the average conductivity over the temperature range.",
+     "eq": "k_\\text{avg} = k_0\\left(1 + \\beta\\,\\frac{T_2+T_1}{2}\\right)"
+    },
+    {
+     "s": "Topic",
+     "h": "Differential equation review",
+     "t": "Equations are ordinary (one variable) or partial (several), linear or nonlinear, homogeneous or not. A general solution has as many arbitrary constants as the order; boundary conditions pick out the particular solution. Simple forms like \\(y''=0\\) and \\(y''-\\lambda^2y=0\\) cover most 1-D conduction problems."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "In steady 1-D conduction through a plane wall with constant k and no generation, the temperature profile is…",
+     "options": [
+      "exponential",
+      "parabolic",
+      "linear",
+      "logarithmic"
+     ],
+     "answer": 2,
+     "why": "\\(d^2T/dx^2=0\\) integrates twice to a straight line."
+    },
+    {
+     "q": "An insulated boundary is equivalent to…",
+     "options": [
+      "a specified temperature",
+      "zero heat flux, \\(\\partial T/\\partial x = 0\\)",
+      "a convection condition with h → ∞",
+      "an interface with perfect contact"
+     ],
+     "answer": 1,
+     "why": "Insulated means no heat crosses the surface, so the temperature gradient there is zero; symmetry planes act the same."
+    },
+    {
+     "q": "For a long cylinder with uniform heat generation, the maximum temperature is located…",
+     "options": [
+      "at the surface",
+      "halfway to the surface",
+      "at the centreline",
+      "it depends on h"
+     ],
+     "answer": 2,
+     "why": "By symmetry the centreline is hottest; \\(\\Delta T_{max} = \\dot e r_o^2/4k\\)."
+    },
+    {
+     "q": "How many boundary conditions does steady 1-D conduction need?",
+     "options": [
+      "One",
+      "Two",
+      "Three",
+      "Four"
+     ],
+     "answer": 1,
+     "why": "The equation is second order in x, so two conditions are needed (no initial condition for steady problems)."
+    },
+    {
+     "q": "Adding a radiation boundary condition makes the problem…",
+     "options": [
+      "linear",
+      "nonlinear, because of \\(T^4\\)",
+      "transient",
+      "one-dimensional"
+     ],
+     "answer": 1,
+     "why": "The fourth-power temperature term makes the boundary condition nonlinear."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "title": "Steady Heat Conduction"
+  },
+  {
+   "n": 4,
+   "title": "Transient Heat Conduction"
+  },
+  {
+   "n": 5,
+   "title": "Numerical Methods in Heat Conduction"
+  },
+  {
+   "n": 6,
+   "title": "Fundamentals of Convection"
+  },
+  {
+   "n": 7,
+   "title": "External Forced Convection"
+  },
+  {
+   "n": 8,
+   "title": "Internal Forced Convection"
+  },
+  {
+   "n": 9,
+   "title": "Natural Convection"
+  },
+  {
+   "n": 10,
+   "title": "Boiling and Condensation"
+  },
+  {
+   "n": 11,
+   "title": "Heat Exchangers"
+  },
+  {
+   "n": 12,
+   "title": "Fundamentals of Thermal Radiation"
+  },
+  {
+   "n": 13,
+   "title": "Radiation Heat Transfer"
+  },
+  {
+   "n": 14,
+   "title": "Mass Transfer"
+  },
+  {
+   "n": 15,
+   "title": "Cooling of Electronic Equipment (web chapter)"
+  },
+  {
+   "n": 16,
+   "title": "Heating and Cooling of Buildings (web chapter)"
+  },
+  {
+   "n": 17,
+   "title": "Refrigeration and Freezing of Foods (web chapter)"
+  }
+ ]
+}

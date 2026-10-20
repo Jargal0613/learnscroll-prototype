@@ -1,0 +1,448 @@
+{
+ "id": "chemistry-silberberg",
+ "title": "Chemistry: The Molecular Nature of Matter and Change",
+ "short": "Chemistry",
+ "author": "Martin S. Silberberg",
+ "edition": "5th edition",
+ "description": "General chemistry from atoms and stoichiometry through bonding, equilibrium, thermodynamics and electrochemistry.",
+ "chapters": [
+  {
+   "n": 1,
+   "title": "Keys to the Study of Chemistry",
+   "cards": [
+    {
+     "s": "1.1",
+     "h": "What chemistry studies",
+     "t": "Chemistry is the study of matter and its properties, the changes matter undergoes, and the energy that goes with those changes. Matter is anything that has mass and takes up volume."
+    },
+    {
+     "s": "1.1",
+     "h": "Physical vs. chemical change",
+     "t": "A physical change alters form but not composition: ice melting is still \\(\\mathrm{H_2O}\\). A chemical change (reaction) turns substances into different ones, like hydrogen and oxygen forming water. Properties are classified the same way: physical properties are seen without changing composition; chemical properties only through reaction."
+    },
+    {
+     "s": "1.1",
+     "h": "States of matter",
+     "t": "A solid has a fixed shape and does not flow. A liquid takes the shape of its container but keeps its volume. A gas fills its container. The differences come from how close and how strongly attracted the particles are."
+    },
+    {
+     "s": "1.1",
+     "h": "Temperature and change",
+     "t": "Heating or cooling can cause physical changes (melting, boiling) and speed up chemical ones. Many properties change with temperature, so measurements should state it."
+    },
+    {
+     "s": "1.1",
+     "h": "Energy",
+     "t": "Energy is the ability to do work. Potential energy comes from position or composition; kinetic energy comes from motion. Energy is conserved: it changes form but the total stays constant. Lower-energy (more stable) arrangements are favoured.",
+     "eq": "E_k = \\tfrac12 mv^2"
+    },
+    {
+     "s": "1.2",
+     "h": "Alchemy and early chemistry",
+     "t": "Alchemists, despite mystical goals, developed lab techniques like distillation and crystallization. Medical chemists and metallurgists added practical knowledge. These chemical arts set the stage for a quantitative science."
+    },
+    {
+     "s": "1.2",
+     "h": "Phlogiston vs. Lavoisier",
+     "t": "The phlogiston theory said burning released a substance called phlogiston. Lavoisier’s careful weighing showed combustion combines a substance with oxygen from air. His quantitative approach marks the start of modern chemistry."
+    },
+    {
+     "s": "1.3",
+     "h": "The scientific approach",
+     "t": "Science starts with observations, often quantitative data. A hypothesis is a tentative, testable explanation. Controlled experiments test it. A natural law summarizes repeated observations (e.g. mass is conserved)."
+    },
+    {
+     "s": "1.3",
+     "h": "Models and theories",
+     "t": "A model (theory) is a well-tested explanation of a natural phenomenon. It must explain the evidence and predict new results. When predictions fail, the model is revised. The approach is a cycle, not a straight line."
+    },
+    {
+     "s": "1.4",
+     "h": "Conversion factors",
+     "t": "Dimensional analysis treats units as algebraic quantities. A conversion factor is a ratio of equivalent quantities, equal to 1, chosen so that unwanted units cancel.",
+     "ex": "\\(2.5\\ \\text{in}\\times\\dfrac{2.54\\ \\text{cm}}{1\\ \\text{in}} = 6.4\\ \\text{cm}\\)."
+    },
+    {
+     "s": "1.4",
+     "h": "A systematic approach",
+     "t": "The book’s problem-solving routine: Plan (clarify what is known and unknown, choose steps), Solve (apply the steps with units), Check (are units right, is the size reasonable?), then Follow-up practice."
+    },
+    {
+     "s": "1.5",
+     "h": "SI base units",
+     "t": "Scientific measurements use SI units built from seven base units, including the metre, kilogram, second, kelvin and mole. Decimal prefixes scale them. Derived units combine base units, e.g. \\(\\mathrm{m^3}\\) for volume."
+    },
+    {
+     "s": "1.5",
+     "h": "Length, volume, mass",
+     "t": "Volume is often in litres: 1 L = 1 dm³ and 1 mL = 1 cm³. Mass measures the quantity of matter and does not depend on location; weight depends on gravity, so it varies from place to place."
+    },
+    {
+     "s": "1.5",
+     "h": "Density",
+     "t": "Density is mass per unit volume, an intensive physical property used to identify substances. It usually decreases as temperature rises because volume grows.",
+     "eq": "d = \\frac{m}{V}",
+     "ex": "A 5.0 cm³ metal sample of mass 39.5 g: \\(d = 7.9\\ \\mathrm{g/cm^3}\\) (close to iron)."
+    },
+    {
+     "s": "1.5",
+     "h": "Extensive vs. intensive",
+     "t": "Extensive properties depend on how much matter there is (mass, volume). Intensive properties do not (density, temperature, melting point). Ratios of two extensive properties, like density, are intensive."
+    },
+    {
+     "s": "1.5",
+     "h": "Temperature scales",
+     "t": "Temperature is a measure of how hot or cold an object is relative to another; heat is energy that flows between them. The kelvin scale is absolute, starting at absolute zero.",
+     "eq": "T(\\mathrm{K}) = T(^\\circ\\mathrm{C}) + 273.15,\\qquad T(^\\circ\\mathrm{F}) = \\tfrac95T(^\\circ\\mathrm{C}) + 32"
+    },
+    {
+     "s": "1.5",
+     "h": "Time",
+     "t": "The SI unit of time is the second, defined through a frequency of the cesium atom. Chemists use time to measure reaction rates and other kinetic processes."
+    },
+    {
+     "s": "1.6",
+     "h": "Significant figures",
+     "t": "Every measurement has uncertainty; significant figures are the digits recorded, with the last one estimated. All nonzero digits count. Zeros count when between nonzero digits or trailing after a decimal point; leading zeros never count."
+    },
+    {
+     "s": "1.6",
+     "h": "Sig figs in calculations",
+     "t": "Multiplying or dividing: keep as many sig figs as the measurement with the fewest. Adding or subtracting: keep the fewest decimal places. Round only at the end. Exact numbers (counts, defined conversions) have unlimited sig figs.",
+     "ex": "\\(16.3521\\ \\mathrm{cm^2} - 1.448\\ \\mathrm{cm^2} = 14.904\\ \\mathrm{cm^2}\\); then \\(14.904/7.68\\ \\mathrm{cm} = 1.94\\ \\mathrm{cm}\\)."
+    },
+    {
+     "s": "1.6",
+     "h": "Precision and accuracy",
+     "t": "Precision (reproducibility) is how close repeated measurements are to one another. Accuracy is how close they are to the true value. Random error lowers precision; systematic error lowers accuracy and can hide behind good precision."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Which is a chemical change?",
+     "options": [
+      "Ice melting",
+      "Iron rusting",
+      "Water boiling",
+      "Sugar dissolving"
+     ],
+     "answer": 1,
+     "why": "Rusting makes a new substance (iron oxide); the others change only physical form."
+    },
+    {
+     "q": "How many significant figures in 0.004050?",
+     "options": [
+      "3",
+      "4",
+      "6",
+      "7"
+     ],
+     "answer": 1,
+     "why": "Leading zeros don’t count; 4, 0, 5, 0 do."
+    },
+    {
+     "q": "25 °C in kelvin is…",
+     "options": [
+      "248.15 K",
+      "298.15 K",
+      "77 K",
+      "−248.15 K"
+     ],
+     "answer": 1,
+     "why": "25 + 273.15 = 298.15 K."
+    },
+    {
+     "q": "Density is…",
+     "options": [
+      "extensive",
+      "intensive",
+      "neither",
+      "a chemical property"
+     ],
+     "answer": 1,
+     "why": "It is a ratio of two extensive properties, so it doesn’t depend on sample size."
+    },
+    {
+     "q": "Whose experiments overturned the phlogiston theory?",
+     "options": [
+      "Dalton",
+      "Lavoisier",
+      "Thomson",
+      "Boyle"
+     ],
+     "answer": 1,
+     "why": "Lavoisier showed combustion is combination with oxygen, using careful mass measurements."
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "title": "The Components of Matter",
+   "cards": [
+    {
+     "s": "2.1",
+     "h": "Elements, compounds, mixtures",
+     "t": "An element is the simplest type of matter, made of only one kind of atom. A compound consists of two or more elements chemically combined in fixed proportions. A mixture is a physical combination of substances in variable proportions."
+    },
+    {
+     "s": "2.1",
+     "h": "Molecular view",
+     "t": "Elements can exist as atoms (Ne) or molecules (\\(\\mathrm{O_2}\\)). A compound’s properties differ from those of its elements: sodium and chlorine are dangerous, sodium chloride is table salt. Mixture components keep their own properties."
+    },
+    {
+     "s": "2.2",
+     "h": "Law of mass conservation",
+     "t": "The total mass of substances does not change during a chemical reaction. Atoms are rearranged, not created or destroyed. This law came from Lavoisier’s quantitative work."
+    },
+    {
+     "s": "2.2",
+     "h": "Law of definite composition",
+     "t": "No matter its source, a given compound always contains the same elements in the same parts by mass. The mass fraction of each element is fixed.",
+     "eq": "\\text{mass fraction} = \\frac{\\text{mass of element}}{\\text{mass of compound}}"
+    },
+    {
+     "s": "2.2",
+     "h": "Law of multiple proportions",
+     "t": "If two elements form different compounds, the masses of one element that combine with a fixed mass of the other are in small whole-number ratios.",
+     "ex": "In CO and \\(\\mathrm{CO_2}\\), the oxygen per gram of carbon is in a 1 : 2 ratio."
+    },
+    {
+     "s": "2.3",
+     "h": "Dalton’s atomic theory",
+     "t": "Dalton proposed: all matter consists of indivisible atoms; atoms of one element are identical and differ from those of other elements; atoms are not created or destroyed in reactions; compounds form from fixed whole-number ratios of atoms. These postulates explain all three mass laws."
+    },
+    {
+     "s": "2.4",
+     "h": "Discovery of the electron",
+     "t": "Thomson’s cathode-ray experiments showed rays bending in electric and magnetic fields, revealing negative particles in every atom. He measured their mass/charge ratio. Millikan’s oil-drop experiment then measured the electron’s charge, giving its mass.",
+     "eq": "e = -1.602\\times10^{-19}\\ \\mathrm{C}"
+    },
+    {
+     "s": "2.4",
+     "h": "The nuclear atom",
+     "t": "Rutherford fired alpha particles at gold foil. Most passed through, but a few bounced back sharply. He concluded that an atom’s positive charge and most of its mass are in a tiny, dense nucleus, with electrons occupying the space around it."
+    },
+    {
+     "s": "2.5",
+     "h": "Structure of the atom",
+     "t": "The nucleus holds protons (+1) and neutrons (0); electrons (−1) surround it. A neutral atom has equal numbers of protons and electrons. Protons and neutrons each weigh about 1 amu; electrons are about 1/1836 of that."
+    },
+    {
+     "s": "2.5",
+     "h": "Atomic number and mass number",
+     "t": "The atomic number \\(Z\\) is the number of protons and defines the element. The mass number \\(A\\) counts protons plus neutrons. The atomic symbol shows both.",
+     "eq": "{}^{A}_{Z}\\mathrm{X},\\qquad N = A - Z"
+    },
+    {
+     "s": "2.5",
+     "h": "Isotopes",
+     "t": "Isotopes are atoms of the same element with different numbers of neutrons, e.g. \\(^{12}\\mathrm{C}\\) and \\(^{13}\\mathrm{C}\\). They behave almost identically in chemistry. The atomic mass on the periodic table is the abundance-weighted average of the isotopic masses.",
+     "eq": "\\text{atomic mass} = \\sum (\\text{isotopic mass})(\\text{fractional abundance})"
+    },
+    {
+     "s": "2.5",
+     "h": "Mass spectrometry",
+     "t": "A mass spectrometer ionizes a sample, accelerates the ions, and deflects them in a magnetic field by mass/charge. The pattern gives isotopic masses and abundances. It is used for elements and for identifying compounds."
+    },
+    {
+     "s": "2.6",
+     "h": "The periodic table",
+     "t": "Elements are arranged by atomic number in periods (rows) and groups (columns). Elements in a group share chemical behaviour. Main groups are 1A–8A; transition elements sit in the middle (B groups)."
+    },
+    {
+     "s": "2.6",
+     "h": "Metals, nonmetals, metalloids",
+     "t": "Metals (lower left, most elements) are shiny, conduct and tend to lose electrons. Nonmetals (upper right) are mostly poor conductors and tend to gain or share electrons. Metalloids along the staircase line have mixed properties."
+    },
+    {
+     "s": "2.7",
+     "h": "Ionic bonding",
+     "t": "Metals transfer electrons to nonmetals, forming cations and anions held by electrostatic attraction. Main-group atoms tend to gain or lose electrons to match the nearest noble gas. Ionic compounds are neutral overall.",
+     "def": "Cation: positive ion (e.g. Na⁺). Anion: negative ion (e.g. Cl⁻)."
+    },
+    {
+     "s": "2.7",
+     "h": "Covalent bonding",
+     "t": "Nonmetals share electron pairs to form covalent bonds, making molecules. Polyatomic ions such as sulfate \\(\\mathrm{SO_4^{2-}}\\) are covalently bonded groups that carry an overall charge."
+    },
+    {
+     "s": "2.8",
+     "h": "Formulas",
+     "t": "A molecular formula shows the actual number of each atom in a molecule; an empirical formula shows the simplest ratio. A structural formula shows how atoms are connected.",
+     "ex": "Hydrogen peroxide: molecular \\(\\mathrm{H_2O_2}\\), empirical HO."
+    },
+    {
+     "s": "2.8",
+     "h": "Naming ionic compounds",
+     "t": "Name the cation first, then the anion with an -ide ending for monatomic anions (NaCl: sodium chloride). Metals with several charges use Roman numerals: \\(\\mathrm{FeCl_3}\\) is iron(III) chloride. Oxoanions use -ate/-ite and per-/hypo- prefixes."
+    },
+    {
+     "s": "2.8",
+     "h": "Acids and binary covalent names",
+     "t": "Binary acids: hydro- + root + -ic acid (HCl: hydrochloric acid). Oxoacids: -ate → -ic, -ite → -ous. Binary covalent compounds use Greek prefixes: \\(\\mathrm{N_2O_4}\\) is dinitrogen tetroxide."
+    },
+    {
+     "s": "2.8",
+     "h": "Molecular and formula mass",
+     "t": "Molecular (formula) mass is the sum of the atomic masses in the formula, in amu.",
+     "ex": "\\(\\mathrm{H_2O}\\): \\(2(1.008) + 16.00 = 18.02\\) amu."
+    },
+    {
+     "s": "2.9",
+     "h": "Mixtures",
+     "t": "A heterogeneous mixture has visibly different regions (sand in water). A homogeneous mixture (solution) is uniform throughout (salt water, air, brass). Solutions can be gaseous, liquid or solid."
+    },
+    {
+     "s": "2.9",
+     "h": "Separation techniques",
+     "t": "Mixtures are separated by physical differences: filtration (particle size), crystallization (solubility), distillation (boiling point), extraction, and chromatography (attraction to a stationary phase)."
+    }
+   ],
+   "quiz": [
+    {
+     "q": "Which law says a compound always has the same elements in the same mass proportions?",
+     "options": [
+      "Mass conservation",
+      "Definite composition",
+      "Multiple proportions",
+      "Avogadro’s law"
+     ],
+     "answer": 1,
+     "why": "Definite (constant) composition."
+    },
+    {
+     "q": "An atom of \\(^{37}_{17}\\mathrm{Cl}\\) has how many neutrons?",
+     "options": [
+      "17",
+      "20",
+      "37",
+      "54"
+     ],
+     "answer": 1,
+     "why": "N = A − Z = 37 − 17 = 20."
+    },
+    {
+     "q": "Rutherford’s gold-foil experiment showed that…",
+     "options": [
+      "electrons have negative charge",
+      "atoms are indivisible",
+      "positive charge and mass are concentrated in a tiny nucleus",
+      "isotopes exist"
+     ],
+     "answer": 2,
+     "why": "The rare large deflections required a small, dense, positive nucleus."
+    },
+    {
+     "q": "The correct name for \\(\\mathrm{FeCl_3}\\) is…",
+     "options": [
+      "iron chloride",
+      "iron(II) chloride",
+      "iron(III) chloride",
+      "iron trichlorine"
+     ],
+     "answer": 2,
+     "why": "Iron has charge 3+ here, shown with a Roman numeral."
+    },
+    {
+     "q": "Salt water is a…",
+     "options": [
+      "compound",
+      "element",
+      "heterogeneous mixture",
+      "homogeneous mixture (solution)"
+     ],
+     "answer": 3,
+     "why": "It is uniform throughout, with salt and water in variable proportions."
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "title": "Stoichiometry of Formulas and Equations"
+  },
+  {
+   "n": 4,
+   "title": "Three Major Classes of Chemical Reactions"
+  },
+  {
+   "n": 5,
+   "title": "Gases and the Kinetic-Molecular Theory"
+  },
+  {
+   "n": 6,
+   "title": "Thermochemistry: Energy Flow and Chemical Change"
+  },
+  {
+   "n": 7,
+   "title": "Quantum Theory and Atomic Structure"
+  },
+  {
+   "n": 8,
+   "title": "Electron Configuration and Chemical Periodicity"
+  },
+  {
+   "n": 9,
+   "title": "Models of Chemical Bonding"
+  },
+  {
+   "n": 10,
+   "title": "The Shapes of Molecules"
+  },
+  {
+   "n": 11,
+   "title": "Theories of Covalent Bonding"
+  },
+  {
+   "n": 12,
+   "title": "Intermolecular Forces: Liquids, Solids, and Phase Changes"
+  },
+  {
+   "n": 13,
+   "title": "The Properties of Mixtures: Solutions and Colloids"
+  },
+  {
+   "n": 14,
+   "title": "Periodic Patterns in the Main-Group Elements"
+  },
+  {
+   "n": 15,
+   "title": "Organic Compounds and the Atomic Properties of Carbon"
+  },
+  {
+   "n": 16,
+   "title": "Kinetics: Rates and Mechanisms of Chemical Reactions"
+  },
+  {
+   "n": 17,
+   "title": "Equilibrium: The Extent of Chemical Reactions"
+  },
+  {
+   "n": 18,
+   "title": "Acid-Base Equilibria"
+  },
+  {
+   "n": 19,
+   "title": "Ionic Equilibria in Aqueous Systems"
+  },
+  {
+   "n": 20,
+   "title": "Thermodynamics: Entropy, Free Energy, and the Direction of Chemical Reactions"
+  },
+  {
+   "n": 21,
+   "title": "Electrochemistry: Chemical Change and Electrical Work"
+  },
+  {
+   "n": 22,
+   "title": "The Elements in Nature and Industry"
+  },
+  {
+   "n": 23,
+   "title": "The Transition Elements and Their Coordination Compounds"
+  },
+  {
+   "n": 24,
+   "title": "Nuclear Reactions and Their Applications"
+  }
+ ]
+}

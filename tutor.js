@@ -261,12 +261,14 @@
     const open = force === undefined ? !ctx.open : force;
     ctx.open = open;
     const panel = document.getElementById('tutor');
+    const had = panel.contains(document.activeElement);
     panel.hidden = !open;
     ctx.reader.classList.toggle('with-tutor', open);
     const btn = document.getElementById('tutorBtn');
     if (btn) { btn.setAttribute('aria-expanded', String(open)); btn.classList.toggle('on', open); }
     if (open) { paintLog(); document.getElementById('t-input').focus(); }
-    else { const f = document.getElementById('feed'); if (f) f.focus({ preventScroll: true }); }
+    else if (btn && had) btn.focus({ preventScroll: true }); // return focus to the opener
+    else { const f = document.getElementById('feed'); if (f && !f.contains(document.activeElement)) f.focus({ preventScroll: true }); }
   }
   function setIndex(i, ch) { if (!ctx) return; if (ch) ctx.ch = ch; ctx.index = i; paintCtx(); paintScope(); }
   function unmount() { ctx = null; }

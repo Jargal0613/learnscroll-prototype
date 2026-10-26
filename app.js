@@ -789,7 +789,7 @@ function renderReader(book, ch, at = null, sess = null) {
         <div class="btns"><a class="btn ghost" id="mistakesBtn" href="#/mistakes/${book.id}/${ch.n}" hidden>Review mistakes</a>${nextReady ? `<a class="btn" href="#/read/${book.id}/${next.n}">Next chapter →</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">All chapters</a></div>
       </div></section>`}
     </main>
-    <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> ${sess ? 'end session' : 'chapters'} · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult</span>
+    <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> ${sess ? 'end session' : 'chapters'} · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult · <kbd>?</kbd> all shortcuts</span>
       <div class="nav"><button class="navbtn" id="prev" aria-label="Previous card">↑ Previous</button><button class="navbtn" id="next" aria-label="Next card">Next ↓</button></div></footer>
   </div>`;
   const feed = document.getElementById('feed');
@@ -996,3 +996,48 @@ function renderReader(book, ch, at = null, sess = null) {
 // ---------- boot ----------
 Promise.all(BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })))
   .then(route);
+
+// ---- Keyboard shortcuts reference ('?') ----
+(function shortcuts() {
+  const rows = [
+    ['Anywhere', [['?', 'Show this list'], ['/', 'Search (library page)']]],
+    ['Reader', [['↑ ↓ ← →', 'Previous / next card'], ['Space', 'Next card (Shift+Space back)'], ['B', 'Bookmark card'], ['D', 'Mark difficult'], ['Esc', 'Back to chapters / end session']]],
+    ['Tutor', [['Enter', 'Send question'], ['Shift+Enter', 'New line'], ['Esc', 'Close tutor']]],
+    ['Review', [['Space / Enter', 'Reveal answer'], ['1', 'Got it'], ['2', 'Review again'], ['Esc', 'Back to chapters']]],
+    ['Notes', [['Esc', 'Close the note editor']]],
+  ];
+  let dlg, opener;
+  function close() { if (!dlg || !dlg.open) return; dlg.close(); }
+  function open() {
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.className = 'keys-dlg'; dlg.setAttribute('aria-labelledby', 'keys-h');
+      dlg.innerHTML = `<div class="keys-head"><h2 id="keys-h">Keyboard shortcuts</h2><button class="t-link" id="keys-x">Close</button></div>
+        <p class="keys-note">Shortcuts are off while you type in a field.</p>
+        ${rows.map(([h, r]) => `<h3>${h}</h3><dl>${r.map(([k, v]) => `<dt><kbd>${k}</kbd></dt><dd>${v}</dd>`).join('')}</dl>`).join('')}`;
+      document.body.appendChild(dlg);
+      dlg.querySelector('#keys-x').addEventListener('click', close);
+      dlg.addEventListener('keydown', e => {
+        e.stopPropagation(); // never reach page shortcuts while open
+        if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+        if (e.key === 'Tab') { // keep focus inside
+          const f = [...dlg.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])')];
+          const i = f.indexOf(document.activeElement);
+          if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+          else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+        }
+      });
+      dlg.addEventListener('click', e => { if (e.target === dlg) close(); });
+      dlg.addEventListener('close', () => { if (opener && opener.isConnected) opener.focus({ preventScroll: true }); });
+    }
+    opener = document.activeElement;
+    dlg.showModal(); dlg.querySelector('#keys-x').focus();
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    e.preventDefault(); if (dlg && dlg.open) close(); else open();
+  }, true);
+  window.addEventListener('hashchange', close);
+})();

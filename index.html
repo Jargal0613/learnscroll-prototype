@@ -14,7 +14,7 @@
   :root {
     --bg: #0a0a0b; --surface: #111113; --surface-2: #17171a; --surface-3: #1e1e22;
     --line: #232327; --line-strong: #2e2e33;
-    --fg: #ededed; --fg-2: #c9c9cc; --muted: #8b8b92; --faint: #55555c;
+    --fg: #ededed; --fg-2: #c9c9cc; --muted: #8b8b92; --faint: #808088;
     --accent: #00e676; --accent-soft: rgba(0,230,118,0.10); --accent-line: rgba(0,230,118,0.45);
     --danger: #ff6b6b; --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
     --radius: 8px;
@@ -25,7 +25,16 @@
   button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
   a { color: inherit; text-decoration: none; }
   :focus { outline: none; }
-  :focus-visible { box-shadow: var(--focus); border-radius: var(--radius); }
+  :focus-visible { box-shadow: var(--focus); border-radius: var(--radius); outline: 2px solid transparent; }
+  .keys-dlg { margin: auto; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 12px; padding: 22px 26px; width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow: auto; }
+  .keys-dlg::backdrop { background: rgba(0,0,0,.6); }
+  .keys-head { display: flex; justify-content: space-between; align-items: center; }
+  .keys-head h2 { font-size: 17px; margin: 0; }
+  .keys-note { color: var(--muted); font-size: 13px; margin: 6px 0 4px; }
+  .keys-dlg h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 16px 0 6px; }
+  .keys-dlg dl { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
+  .keys-dlg dd { margin: 0; color: var(--fg-2); }
+  .keys-dlg kbd { font: inherit; font-size: 12px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 4px; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* Shared page shell */

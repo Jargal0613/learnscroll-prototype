@@ -17,16 +17,19 @@ function bookState(id) {
   const b = state.books[id] || (state.books[id] = { chapter: null, card: 0, done: {} });
   if (!b.marks) b.marks = {};   // cardId -> { b: bookmarked, d: difficult }
   if (!b.seen) b.seen = {};     // chapter -> furthest screen index reached (recorded from Phase 1 on)
+  if (!b.notes) b.notes = {};   // cardId -> { text, at }  (plain text, Phase 2)
+  if (!b.review) b.review = {}; // cardId -> { r: 'got' | 'again', at }  (last review result, Phase 2)
   return b;
 }
 // Stable ids (same as the tutor/server): c<chapter>-<n> for cards, c<chapter>-q<n> for practice questions.
 const screenId = (ch, i) => i < ch.cards.length ? `c${ch.n}-${i + 1}` : `c${ch.n}-q${i - ch.cards.length + 1}`;
 const screenTitle = (ch, i) => i < ch.cards.length ? ch.cards[i].h : `Practice question ${i - ch.cards.length + 1}`;
 function markedList(book, kind) {
-  const bs = state.books[book.id]; if (!bs || !bs.marks) return [];
+  const bs = state.books[book.id]; if (!bs) return [];
   const out = [];
   for (const ch of book.chapters.filter(ready)) for (let i = 0; i < screens(ch); i++) {
-    const m = bs.marks[screenId(ch, i)]; if (m && m[kind]) out.push({ ch, i });
+    const id = screenId(ch, i);
+    if (kind === 'n' ? bs.notes && bs.notes[id] : bs.marks && bs.marks[id] && bs.marks[id][kind]) out.push({ ch, i });
   }
   return out;
 }
@@ -72,6 +75,7 @@ function route() {
   window.scrollTo(0, 0);
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
+  if (parts[0] === 'review' && books[parts[1]]) return renderReview(books[parts[1]], parts[2]);
   if (parts[0] === 'read') {
     const b = books[parts[1]];
     const ch = b.chapters.find(c => c.n === Number(parts[2]));
@@ -111,6 +115,7 @@ function renderHome() {
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
     ${recentHTML()}
+    ${reviewHomeHTML(ids)}
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
       const b = books[id], p = bookProgress(b);
@@ -145,16 +150,112 @@ function recentHTML() {
   return `<div class="section-h"><span>Recently studied</span><span>${items.length ? `Last ${items.length}` : ''}</span></div>${body}`;
 }
 
+function reviewHomeHTML(ids) {
+  const rows = ids.map(id => ({ b: books[id], n: reviewCards(books[id], 'both').length })).filter(r => r.n);
+  const body = rows.length
+    ? `<div class="review-row">${rows.map(r => `<a class="btn ghost sm" href="#/review/${r.b.id}">Review ${esc(r.b.short)} (${r.n})</a>`).join('')}</div>`
+    : '<p class="empty-note">Nothing to review yet. Bookmark cards or mark them as difficult in the reader, then review them here.</p>';
+  return `<div class="section-h"><span>Review</span><span>Marked cards</span></div>${body}`;
+}
+
+// ---------- review mode (no scheduling: just the cards you marked) ----------
+function reviewCards(book, kind) {
+  const ks = kind === 'bookmarked' ? ['b'] : kind === 'difficult' ? ['d'] : ['b', 'd'];
+  const seen = new Set(), out = [];
+  for (const k of ks) for (const x of markedList(book, k)) { const id = screenId(x.ch, x.i); if (!seen.has(id)) { seen.add(id); out.push(x); } }
+  return out.sort((a, b) => a.ch.n - b.ch.n || a.i - b.i);
+}
+const fmtWhen = t => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+function renderReview(book, kind) {
+  document.title = `Review · ${book.short}`;
+  const bs = bookState(book.id);
+  const nb = markedList(book, 'b').length, nd = markedList(book, 'd').length, nboth = reviewCards(book, 'both').length;
+  const head = `<a class="back" href="#/book/${book.id}">← Chapters</a><div class="book-head"><div><h1>Review</h1><p class="meta-line">${esc(book.title)}</p></div></div>`;
+  if (!['bookmarked', 'difficult', 'both'].includes(kind)) {
+    const opt = (k, label, n) => n ? `<a class="rv-choice" href="#/review/${book.id}/${k}"><b>${label}</b><span>${plural(n, 'card')}</span></a>` : `<span class="rv-choice off" aria-disabled="true"><b>${label}</b><span>none marked</span></span>`;
+    app.innerHTML = `<main class="page">${head}${nboth ? `<p class="lead">Choose which marked cards to review. You'll see each card's heading first; recall what it says, then reveal it.</p>
+      <div class="rv-choices">${opt('bookmarked', 'Bookmarked', nb)}${opt('difficult', 'Difficult', nd)}${opt('both', 'Bookmarked and difficult', nboth)}</div>`
+      : `<div class="marked-empty"><p>Nothing to review yet.</p><p>In the reader, bookmark cards (<kbd>B</kbd>) or mark them as difficult (<kbd>D</kbd>); they'll show up here.</p></div>`}</main>`;
+    return;
+  }
+  const list = reviewCards(book, kind);
+  if (!list.length) { go(`#/review/${book.id}`); return; }
+  let pos = 0, revealed = false;
+  const results = [];
+  app.innerHTML = `<main class="page review"><div class="rv-top"><a class="back" href="#/review/${book.id}">← Review options</a><span class="rv-count" id="rv-count"></span></div><div class="rv-track"><i id="rv-line"></i></div><section class="rv-card" id="rv-card" aria-live="polite"></section></main>`;
+  const el = document.getElementById('rv-card');
+  function body(ch, i) {
+    if (i < ch.cards.length) {
+      const c = ch.cards[i];
+      return `<p>${c.t}</p>${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>` : ''}${c.def ? `<div class="note"><span class="label">Definition</span>${c.def}</div>` : ''}${c.ex ? `<div class="note example"><span class="label">Example</span>${c.ex}</div>` : ''}`;
+    }
+    const q = ch.quiz[i - ch.cards.length], letter = String.fromCharCode(65 + q.answer);
+    return `<ol class="rv-opts">${q.options.map((o, k) => `<li class="${k === q.answer ? 'right' : ''}"><span>${String.fromCharCode(65 + k)}</span>${o}</li>`).join('')}</ol>
+      <div class="feedback"><span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span><p style="margin-top:8px">${q.why}</p></div>`;
+  }
+  function show() {
+    if (pos >= list.length) return summary();
+    const { ch, i } = list[pos], id = screenId(ch, i), isQ = i >= ch.cards.length;
+    const prompt = isQ ? ch.quiz[i - ch.cards.length].q : esc(ch.cards[i].h);
+    const last = bs.review[id];
+    const m = bs.marks[id] || {};
+    document.getElementById('rv-count').textContent = `${pos + 1} / ${list.length}`;
+    document.getElementById('rv-line').style.width = `${(pos / list.length) * 100}%`;
+    el.innerHTML = `<div class="sec"><span>Ch ${ch.n} · card ${i + 1}</span>${isQ ? '<span class="tag q-t">Practice</span>' : `<span>${esc(ch.cards[i].s)}</span>`}${m.b ? '<span class="tag">Bookmarked</span>' : ''}${m.d ? '<span class="tag">Difficult</span>' : ''}</div>
+      <h2>${prompt}</h2>
+      ${last ? `<p class="rv-last">Last review: ${last.r === 'got' ? 'Got it' : 'Review again'} · ${esc(fmtWhen(last.at))}</p>` : ''}
+      <div id="rv-body" ${revealed ? '' : 'hidden'}>${body(ch, i)}</div>
+      <div class="rv-actions">${revealed
+        ? `<button class="btn" id="rv-got">Got it <kbd>1</kbd></button><button class="btn ghost" id="rv-again">Review again <kbd>2</kbd></button>`
+        : `<button class="btn" id="rv-reveal">${isQ ? 'Reveal answer' : 'Reveal'} <kbd>space</kbd></button><span class="rv-tip">Recall the ${isQ ? 'answer' : 'idea'} first, then reveal.</span>`}</div>`;
+    renderMath(el);
+    const b = document.getElementById(revealed ? 'rv-got' : 'rv-reveal'); b.focus({ preventScroll: true });
+    if (revealed) { document.getElementById('rv-got').onclick = () => grade('got'); document.getElementById('rv-again').onclick = () => grade('again'); }
+    else document.getElementById('rv-reveal').onclick = () => { revealed = true; show(); };
+  }
+  function grade(r) {
+    const { ch, i } = list[pos];
+    bs.review[screenId(ch, i)] = { r, at: Date.now() };
+    save();
+    results.push({ ch, i, r });
+    pos++; revealed = false; show();
+  }
+  function summary() {
+    document.getElementById('rv-count').textContent = 'Done';
+    document.getElementById('rv-line').style.width = '100%';
+    const again = results.filter(x => x.r === 'again');
+    el.innerHTML = `<div class="sec"><span>Session summary</span></div><h2>${results.length - again.length} of ${results.length} got it</h2>
+      ${again.length ? `<p class="rv-last">Cards to review again:</p><ol class="marked">${again.map(({ ch, i }) => `<li><a href="#/read/${book.id}/${ch.n}/${i + 1}"><span class="num">Ch ${ch.n}</span><span class="name">${esc(stripTags(screenTitle(ch, i)))}</span><span class="counts">card ${i + 1}/${screens(ch)}</span></a></li>`).join('')}</ol>` : '<p>Nothing marked for another look this session.</p>'}
+      <div class="btns"><a class="btn" href="#/review/${book.id}/${kind}" id="rv-restart">Review again from the start</a><a class="btn ghost" href="#/book/${book.id}">Back to chapters</a></div>`;
+    document.getElementById('rv-restart').onclick = e => { e.preventDefault(); pos = 0; results.length = 0; revealed = false; show(); };
+  }
+  const onKey = e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.key === 'Escape') { e.preventDefault(); go(`#/book/${book.id}`); return; }
+    if (pos >= list.length) return;
+    if (!revealed && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); revealed = true; show(); }
+    else if (revealed && e.key === '1') { e.preventDefault(); grade('got'); }
+    else if (revealed && e.key === '2') { e.preventDefault(); grade('again'); }
+  };
+  document.addEventListener('keydown', onKey);
+  cleanup = () => document.removeEventListener('keydown', onKey);
+  show();
+}
+
 // ---------- chapter list ----------
 function renderBook(book, filter) {
   document.title = book.short + ' · LearnScroll';
   const bs = state.books[book.id];
-  const view = filter === 'bookmarked' ? 'b' : filter === 'difficult' ? 'd' : null;
-  const nb = markedList(book, 'b').length, nd = markedList(book, 'd').length;
+  const view = filter === 'bookmarked' ? 'b' : filter === 'difficult' ? 'd' : filter === 'notes' ? 'n' : null;
+  const nb = markedList(book, 'b').length, nd = markedList(book, 'd').length, nn = markedList(book, 'n').length;
   const tabs = `<nav class="tabs" aria-label="Chapter filters">
       <a href="#/book/${book.id}" ${!view ? 'aria-current="page"' : ''}>All chapters</a>
       <a href="#/book/${book.id}/bookmarked" ${view === 'b' ? 'aria-current="page"' : ''}>Bookmarked <span>${nb}</span></a>
-      <a href="#/book/${book.id}/difficult" ${view === 'd' ? 'aria-current="page"' : ''}>Difficult <span>${nd}</span></a></nav>`;
+      <a href="#/book/${book.id}/difficult" ${view === 'd' ? 'aria-current="page"' : ''}>Difficult <span>${nd}</span></a>
+      <a href="#/book/${book.id}/notes" ${view === 'n' ? 'aria-current="page"' : ''}>Notes <span>${nn}</span></a>
+      <span class="tabs-r">${reviewAction(book)}</span></nav>`;
   const avail = book.chapters.filter(ready).length;
   const label = { done: 'Completed', ready: 'Available', soon: 'Coming soon' };
   app.innerHTML = `<main class="page">
@@ -173,15 +274,26 @@ function renderBook(book, filter) {
   </main>`;
 }
 
+function reviewAction(book) {
+  const n = reviewCards(book, 'both').length;
+  return n ? `<a class="btn ghost sm" href="#/review/${book.id}">Review marked cards (${n})</a>`
+    : `<button class="btn ghost sm" disabled title="Bookmark or mark cards as difficult to review them">Review marked cards</button>`;
+}
 function markedHTML(book, kind) {
   const list = markedList(book, kind);
+  if (kind === 'n') {
+    const bs = state.books[book.id];
+    if (!list.length) return `<div class="marked-empty"><p>No notes yet.</p><p>In the reader, use <b>Add note</b> on any card. Notes are saved in this browser.</p></div>`;
+    return `<ol class="marked">${list.map(({ ch, i }) => { const nt = bs.notes[screenId(ch, i)]; return `<li><a href="#/read/${book.id}/${ch.n}/${i + 1}"><span class="num">Ch ${ch.n}</span><span class="name">${esc(stripTags(screenTitle(ch, i)))}<span class="note-snip">${esc(nt.text.length > 140 ? nt.text.slice(0, 140) + '…' : nt.text)}</span></span><span class="counts">${esc(ch.title)} · card ${i + 1}/${screens(ch)}</span></a></li>`; }).join('')}</ol>`;
+  }
   if (!list.length) return `<div class="marked-empty"><p>${kind === 'b' ? 'No bookmarked cards yet.' : 'No cards marked as difficult yet.'}</p><p>In the reader, use the ${kind === 'b' ? 'Bookmark' : 'Difficult'} button on a card or press <kbd>${kind === 'b' ? 'B' : 'D'}</kbd>.</p></div>`;
   return `<ol class="marked">${list.map(({ ch, i }) => `<li><a href="#/read/${book.id}/${ch.n}/${i + 1}"><span class="num">Ch ${ch.n}</span><span class="name">${esc(stripTags(screenTitle(ch, i)))}</span><span class="counts">${esc(ch.title)} · card ${i + 1}/${screens(ch)}</span></a></li>`).join('')}</ol>`;
 }
 
 // ---------- reader ----------
 // Card kinds come from the existing fields: eq → equation, def → definition, ex → worked example.
-const markBtns = id => `<span class="marks"><button class="mark" data-mark="b" data-id="${id}" aria-pressed="false" title="Bookmark (B)">Bookmark</button><button class="mark" data-mark="d" data-id="${id}" aria-pressed="false" title="Mark as difficult (D)">Difficult</button></span>`;
+const markBtns = id => `<span class="marks"><button class="mark" data-mark="n" data-id="${id}" aria-expanded="false" title="Add a note to this card">Add note</button><button class="mark" data-mark="b" data-id="${id}" aria-pressed="false" title="Bookmark (B)">Bookmark</button><button class="mark" data-mark="d" data-id="${id}" aria-pressed="false" title="Mark as difficult (D)">Difficult</button></span>`;
+const noteEditor = id => `<div class="note-ed" data-note="${id}" hidden><label class="sr" for="ne-${id}">Your note</label><textarea id="ne-${id}" rows="3" maxlength="4000" placeholder="Your note on this card (plain text, saved in this browser)…"></textarea><div class="note-row"><span class="note-status" aria-live="polite"></span><span><button class="t-link note-del">Delete note</button><button class="t-link note-close">Close <kbd>esc</kbd></button></span></div></div>`;
 function cardHTML(c, i, ch) {
   const tags = [c.eq && '<span class="tag eq-t">Equation</span>', c.def && '<span class="tag def-t">Definition</span>', c.ex && '<span class="tag">Example</span>'].filter(Boolean).join('');
   return `<section class="card" aria-label="${esc(c.h)}"><div class="card-body">
@@ -191,6 +303,7 @@ function cardHTML(c, i, ch) {
     ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>` : ''}
     ${c.def ? `<div class="note"><span class="label">Definition</span>${c.def}</div>` : ''}
     ${c.ex ? `<div class="note example"><span class="label">Example</span>${c.ex}</div>` : ''}
+    ${noteEditor(screenId(ch, i))}
   </div></section>`;
 }
 function quizHTML(q, i, n, ch) {
@@ -199,6 +312,7 @@ function quizHTML(q, i, n, ch) {
     <h2>${q.q}</h2>
     <div class="opts">${q.options.map((o, k) => `<button class="opt" data-k="${k}">${o}</button>`).join('')}</div>
     <div class="feedback" aria-live="polite"></div>
+    ${noteEditor(`c${ch.n}-q${i + 1}`)}
   </div></section>`;
 }
 function renderReader(book, ch, at = null) {
@@ -276,7 +390,13 @@ function renderReader(book, ch, at = null) {
   nextBtn.addEventListener('click', () => move(1));
   // Bookmark / Difficult marks, saved per book by stable card id.
   function paintMarks() {
-    feed.querySelectorAll('.mark').forEach(b => {
+    feed.querySelectorAll('.mark[data-mark="n"]').forEach(b => {
+      const has = !!bs.notes[b.dataset.id];
+      b.classList.toggle('has-note', has);
+      b.textContent = has ? 'Note' : 'Add note';
+      b.title = has ? 'Edit your note on this card' : 'Add a note to this card';
+    });
+    feed.querySelectorAll('.mark:not([data-mark="n"])').forEach(b => {
       const on = !!(bs.marks[b.dataset.id] && bs.marks[b.dataset.id][b.dataset.mark]);
       b.setAttribute('aria-pressed', String(on));
       b.textContent = b.dataset.mark === 'b' ? (on ? 'Bookmarked' : 'Bookmark') : 'Difficult';
@@ -288,9 +408,52 @@ function renderReader(book, ch, at = null) {
     if (!m.b && !m.d) delete bs.marks[id]; else bs.marks[id] = m;
     save(); paintMarks();
   }
+  // Card notes: plain text, autosaved (debounced) by card id; empty text deletes the note.
+  let noteTimer = null;
+  function openNote(id) {
+    const ed = feed.querySelector(`.note-ed[data-note="${id}"]`); if (!ed) return;
+    ed.hidden = false;
+    feed.querySelector(`.mark[data-mark="n"][data-id="${id}"]`).setAttribute('aria-expanded', 'true');
+    const ta = ed.querySelector('textarea');
+    ta.value = bs.notes[id] ? bs.notes[id].text : '';
+    ed.querySelector('.note-status').textContent = bs.notes[id] ? `Saved · ${fmtWhen(bs.notes[id].at)}` : '';
+    ed.querySelector('.note-del').hidden = !bs.notes[id];
+    ta.focus();
+    ed.scrollIntoView({ block: 'nearest' });
+  }
+  function saveNote(id, text) {
+    const t = text.replace(/\s+$/, '');
+    if (t.trim()) bs.notes[id] = { text: t, at: Date.now() }; else delete bs.notes[id];
+    save(); paintMarks();
+    const ed = feed.querySelector(`.note-ed[data-note="${id}"]`);
+    if (ed) { ed.querySelector('.note-status').textContent = t.trim() ? 'Saved' : 'Note removed'; ed.querySelector('.note-del').hidden = !t.trim(); }
+  }
+  function closeNote(ed) {
+    const id = ed.dataset.note;
+    clearTimeout(noteTimer); saveNote(id, ed.querySelector('textarea').value);
+    ed.hidden = true;
+    const btn = feed.querySelector(`.mark[data-mark="n"][data-id="${id}"]`);
+    btn.setAttribute('aria-expanded', 'false'); btn.focus({ preventScroll: true });
+  }
+  feed.addEventListener('input', e => {
+    const ed = e.target.closest('.note-ed'); if (!ed) return;
+    ed.querySelector('.note-status').textContent = 'Saving…';
+    clearTimeout(noteTimer); noteTimer = setTimeout(() => saveNote(ed.dataset.note, e.target.value), 600);
+  });
+  feed.addEventListener('keydown', e => {
+    const ed = e.target.closest && e.target.closest('.note-ed');
+    if (ed && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeNote(ed); }
+  });
   paintMarks();
   feed.addEventListener('click', e => {
+    const ned = e.target.closest('.note-ed');
+    if (ned) {
+      if (e.target.closest('.note-close')) closeNote(ned);
+      else if (e.target.closest('.note-del')) { clearTimeout(noteTimer); ned.querySelector('textarea').value = ''; saveNote(ned.dataset.note, ''); ned.hidden = true; feed.querySelector(`.mark[data-mark="n"][data-id="${ned.dataset.note}"]`).setAttribute('aria-expanded', 'false'); }
+      return;
+    }
     const mk = e.target.closest('.mark');
+    if (mk && mk.dataset.mark === 'n') { const ed = feed.querySelector(`.note-ed[data-note="${mk.dataset.id}"]`); if (ed && !ed.hidden) closeNote(ed); else openNote(mk.dataset.id); return; }
     if (mk) { toggleMark(mk.dataset.id, mk.dataset.mark); return; }
     const opt = e.target.closest('.opt');
     if (!opt || opt.disabled) return;
@@ -330,7 +493,11 @@ function renderReader(book, ch, at = null) {
   };
   document.addEventListener('keydown', onKey);
   feed.tabIndex = -1; feed.focus({ preventScroll: true });
-  cleanup = () => { document.removeEventListener('keydown', onKey); clearTimeout(t); if (window.Tutor) Tutor.unmount(); };
+  cleanup = () => {
+    document.removeEventListener('keydown', onKey); clearTimeout(t); if (window.Tutor) Tutor.unmount();
+    // flush any pending note edit before leaving the reader
+    feed.querySelectorAll('.note-ed:not([hidden])').forEach(ed => { clearTimeout(noteTimer); saveNote(ed.dataset.note, ed.querySelector('textarea').value); });
+  };
 }
 
 // ---------- boot ----------

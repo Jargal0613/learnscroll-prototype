@@ -17,7 +17,11 @@ with sync_playwright() as p:
         ctx = b.new_context(viewport={'width': W, 'height': H}); pg = ctx.new_page(); watch(pg, errs)
         pg.clock.install(time=T0)
         pg.goto(BASE + '/#/'); pg.evaluate('localStorage.clear()'); pg.goto(BASE + '/#/session'); pg.wait_for_selector('#sessGo')
-        pg.click('[data-book="heat-mass-transfer"]'); pg.click('[data-min="10"]'); pg.click('#sessGo'); pg.wait_for_selector('#left')
+        pg.click('[data-book="heat-mass-transfer"]')
+        for _ in range(5):  # a late picker re-render can swallow the click; retry until selected
+            pg.click('[data-min="10"]')
+            if pg.get_attribute('[data-min="10"]', 'aria-checked') == 'true': break
+        pg.click('#sessGo'); pg.wait_for_selector('#left')
         ok(pg.inner_text('#left') == '10:00 left', f'{W} starts at 10:00 ({pg.inner_text("#left")})')
         pg.clock.run_for(60_000); pg.wait_for_timeout(100)
         ok(near(pg.inner_text('#left'), 540), f'after 1 min: {pg.inner_text("#left")}')

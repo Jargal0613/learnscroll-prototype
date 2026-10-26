@@ -386,3 +386,11 @@ test('check mode pipeline: json_schema format sent to OpenAI, invalid model outp
   // normal answers do not send a response format
   await answer({ ...base }, { provider: p }); assert.equal(sent.text, undefined);
 });
+
+test('check mode: stray control characters and escaped control codes are removed (seen in a live answer)', () => {
+  const { parseCheck } = require('../api/_lib/prompt');
+  const live = { question: 'Q?', hint: 'H.', answer: 'The rate is halved because \u0007\\(\\dot Q=kA\\Delta T/L\\u0007\\), so doubling \u0005\\(L\\) halves it.' };
+  const out = parseCheck(JSON.stringify(live));
+  assert.equal(out.answer, 'The rate is halved because \\(\\dot Q=kA\\Delta T/L\\), so doubling \\(L\\) halves it.');
+  assert.ok(!/[\u0000-\u001F]/.test(out.answer));
+});

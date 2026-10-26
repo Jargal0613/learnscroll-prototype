@@ -112,6 +112,8 @@ function buildCheckPrompt(req) {
   const input = [{ role: 'user', content: `${ctx.join('\n')}\n\nEXPLANATION (data):\n<<<\n${req.explanation}\n>>>\n\nWrite the check question as JSON.` }];
   return { instructions, input };
 }
+// Models sometimes leave stray control characters or escaped control codes (e.g. "\u0007") around inline math.
+const cleanText = s => String(s).replace(/\\u00[01][0-9a-fA-F]/g, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
 // Parses and validates the model's JSON. Returns { question, hint, answer } or throws.
 function parseCheck(text) {
   const s = String(text || '').trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
@@ -122,6 +124,6 @@ function parseCheck(text) {
     if (typeof o[k] !== 'string' || !o[k].trim()) throw new Error(`missing ${k}`);
     if (o[k].length > CHECK_LIMITS[k]) throw new Error(`${k} too long`);
   }
-  return { question: o.question.trim(), hint: o.hint.trim(), answer: o.answer.trim() };
+  return { question: cleanText(o.question), hint: cleanText(o.hint), answer: cleanText(o.answer) };
 }
-module.exports = { buildPrompt, buildFileSearchPrompt, buildCheckPrompt, parseCheck, CHECK_SCHEMA, CHECK_LIMITS, STYLE_INSTRUCTIONS, TEMPERATURE_RULE, MAX_SOURCE_CHARS };
+module.exports = { cleanText, buildPrompt, buildFileSearchPrompt, buildCheckPrompt, parseCheck, CHECK_SCHEMA, CHECK_LIMITS, STYLE_INSTRUCTIONS, TEMPERATURE_RULE, MAX_SOURCE_CHARS };

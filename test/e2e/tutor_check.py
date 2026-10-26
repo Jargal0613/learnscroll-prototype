@@ -3,7 +3,7 @@ question rendered with Hint / Reveal answer, current card unchanged, persisted, 
 from common import *
 import json
 ANS = '### From the textbook\nFourier\'s law: \\(\\dot Q = -kA\\,dT/dx\\).\n\n### Additional explanation\nHeat flows down the gradient.'
-CHECK = {'question': 'If the wall thickness doubles, what happens to \\(\\dot Q\\)?', 'hint': 'Look at where \\(L\\) appears.', 'answer': 'It halves, because \\(\\dot Q = kA\\,\\Delta T/L\\).'}
+CHECK = {'question': 'If the wall thickness doubles, what happens to \\(\\dot Q\\)?', 'hint': 'Look at where \\(L\\) appears.', 'answer': 'It halves, because \u0007\\(\\dot Q = kA\\,\\Delta T/L\\u0007\\).'}  # stray control codes seen live
 CONV = {'heat-mass-transfer': {'conversationId': 'cchk1', 'messages': [{'role': 'user', 'content': 'Explain Fourier', 'at': 1}, {'role': 'assistant', 'content': ANS, 'sources': [], 'passages': [], 'retrieval': {'provider': 'openai-file-search'}, 'at': 2}], 'draft': '', 'scope': 'card'}}
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []
@@ -25,7 +25,7 @@ with sync_playwright() as p:
         r = sent[-1]; ok(r['mode'] == 'check' and r['explanation'].startswith('### From the textbook') and r['cardId'] == 'c1-13' and 'question' not in r, 'request: mode=check, explanation, ids')
         ok(pg.locator('.t-check-hint').is_hidden() and pg.locator('.t-check-ans').is_hidden() and pg.locator('.t-check-q .katex').count() >= 1, 'question rendered (math), hint and answer hidden')
         pg.click('[data-hint]'); ok(pg.locator('.t-check-hint').is_visible() and pg.get_attribute('[data-hint]', 'aria-expanded') == 'true', 'Hint reveals hint')
-        pg.click('[data-reveal]'); ok(pg.locator('.t-check-ans').is_visible() and 'halves' in pg.inner_text('.t-check-ans'), 'Reveal answer shows answer')
+        pg.click('[data-reveal]'); ok(pg.locator('.t-check-ans').is_visible() and 'halves' in pg.inner_text('.t-check-ans') and '0007' not in pg.inner_text('.t-check-ans') and pg.locator('.t-check-ans .katex').count() == 1, 'Reveal answer shows clean answer')
         ok(pg.inner_text('#count').startswith('13 / '), 'current card unchanged')
         pg.screenshot(path=f'{OUT}/{W}-mock-check.png')
         pg.reload(); pg.wait_for_timeout(1200); pg.click('#tutorBtn'); pg.wait_for_selector('.t-check')

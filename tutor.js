@@ -21,7 +21,7 @@
   // Markdown-lite: paragraphs, **bold**, *italic*, `code`, "-"/"1." lists, ### headings. Math is protected first.
   function md(src) {
     const math = [];
-    let s = String(src).replace(/\uE200[^\uE201]{0,200}\uE201/g, '').replace(/[\uE200-\uE2FF]/g, '').replace(/\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$/g, m => `\u0000${math.push(m) - 1}\u0000`);
+    let s = String(src).replace(/\uE200[^\uE201]{0,200}\uE201/g, '').replace(/[\uE200-\uE2FF]/g, '').replace(/\\u00[01][0-9a-fA-F]/g, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$/g, m => `\u0000${math.push(m) - 1}\u0000`);
     s = esc(s);
     const inline = t => t.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
     const out = []; let list = null, para = [];

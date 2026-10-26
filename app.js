@@ -154,6 +154,51 @@ function renderMissing(msg, href, label) {
 }
 
 // ---------- home ----------
+// ---- First-use guide + Help menu ----
+// Shown only to someone with no study activity in this browser. Dismissal is a UI preference in its own key
+// (not study data; not exported). Reopening it from Help shows it until dismissed again.
+const GUIDE_KEY = 'learnscroll-guide-v1';
+const DOCS_IE = 'https://github.com/Jargal0613/learnscroll-prototype/blob/main/docs/import-export.md';
+function guidePref() { try { const g = JSON.parse(localStorage.getItem(GUIDE_KEY) || 'null'); return g && typeof g === 'object' ? g : {}; } catch (e) { return {}; } }
+function setGuide(v) { try { localStorage.setItem(GUIDE_KEY, JSON.stringify({ state: v, at: Date.now() })); return true; } catch (e) { saveFailed(e); return false; } }
+function hasActivity() {
+  if (state.last || (state.recent || []).length || (state.sessions || []).length) return true;
+  for (const b of Object.values(state.books || {})) {
+    if (!b) continue;
+    if (b.card > 0 || b.chapter > 1) return true;
+    for (const k of ['done', 'seen', 'marks', 'notes', 'review', 'attempts']) if (b[k] && Object.keys(b[k]).length) return true;
+  }
+  try { const t = JSON.parse(localStorage.getItem('learnscroll-tutor-v1') || '{}'); if (Object.keys(t).some(k => !k.startsWith('_') && t[k] && ((t[k].messages || []).length || (t[k].saved || []).length))) return true; } catch (e) {}
+  try { if (localStorage.getItem(SESSION_KEY)) return true; } catch (e) {}
+  return false;
+}
+function guideHTML() {
+  const g = guidePref().state;
+  if (g === 'dismissed' || (g !== 'open' && hasActivity())) return '';
+  return `<section class="guide" id="guide" aria-labelledby="guide-h"><div class="guide-top"><h2 id="guide-h">Getting started</h2><button class="t-link" id="guide-x" aria-label="Dismiss the getting started guide">Dismiss</button></div>
+    <ol class="guide-steps">
+      <li><b>Choose a book.</b> Pick one in the Library below, or search with <kbd>/</kbd>.</li>
+      <li><b>Study a card.</b> Open a chapter and move one idea at a time with the arrow keys or Space. <kbd>B</kbd> bookmarks, <kbd>D</kbd> marks difficult.</li>
+      <li><b>Review or ask the tutor.</b> Each chapter ends with practice questions; Review brings back marked cards. On a card, “Ask tutor” answers questions about it.</li>
+    </ol>
+    <p class="guide-foot"><button class="t-link" id="guide-keys">All keyboard shortcuts</button> · Reopen this any time from Help.</p></section>`;
+}
+function wireHelp() {
+  const btn = document.getElementById('helpBtn'), menu = document.getElementById('helpMenu');
+  const show = v => { menu.hidden = !v; btn.setAttribute('aria-expanded', String(v)); };
+  btn.addEventListener('click', () => { show(menu.hidden); if (!menu.hidden) menu.querySelector('button').focus(); });
+  document.addEventListener('keydown', function esc(e) { if (!btn.isConnected) return document.removeEventListener('keydown', esc, true); if (e.key === 'Escape' && !menu.hidden) { e.preventDefault(); e.stopImmediatePropagation(); show(false); btn.focus(); } }, true);
+  document.addEventListener('click', function off(e) { if (!btn.isConnected) return document.removeEventListener('click', off); if (!e.target.closest('.help-wrap')) show(false); });
+  menu.addEventListener('click', e => {
+    const b = e.target.closest('[data-help]'); if (!b) return; show(false);
+    if (b.dataset.help === 'keys') { btn.focus(); window.lsShowKeys(); }
+    if (b.dataset.help === 'guide') { setGuide('open'); renderHome(); const g = document.getElementById('guide'); if (g) { g.scrollIntoView({ block: 'nearest' }); document.getElementById('guide-x').focus(); } }
+  });
+  const x = document.getElementById('guide-x'); if (!x) return;
+  x.addEventListener('click', () => { if (setGuide('dismissed')) { document.getElementById('guide').remove(); btn.focus(); } });
+  document.getElementById('guide-keys').addEventListener('click', () => window.lsShowKeys());
+}
+
 function renderHome() {
   if (finishExpiredSession()) flash = flash || `Your study session ended while you were away (${plural(lastSummary.seen, 'card')} seen, ${fmtDur(lastSummary.seconds)} active). Only time with the page open counts.`;
   document.title = 'LearnScroll';
@@ -173,10 +218,13 @@ function renderHome() {
   app.innerHTML = `<main class="page">
     <div class="topline"><div class="brand"><i></i>LearnScroll</div>
       <div class="search" role="search"><label class="sr" for="q">Search the library</label><input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search cards, chapters, books" aria-controls="q-res" aria-expanded="false" aria-autocomplete="list"><kbd class="q-key" aria-hidden="true">/</kbd>
-        <div class="q-res" id="q-res" role="listbox" aria-label="Search results" hidden></div></div></div>
+        <div class="q-res" id="q-res" role="listbox" aria-label="Search results" hidden></div></div>
+      <div class="help-wrap"><button class="t-link help-btn" id="helpBtn" aria-haspopup="true" aria-expanded="false" aria-controls="helpMenu">Help</button>
+        <div class="help-menu" id="helpMenu" hidden><button class="t-link" data-help="guide">Getting started guide</button><button class="t-link" data-help="keys">Keyboard shortcuts <kbd>?</kbd></button><a class="t-link" href="${DOCS_IE}" target="_blank" rel="noopener">How export and import work ↗</a></div></div></div>
     <h1>Study, one card at a time.</h1>
     <p class="lead">Short study notes for five textbooks, chapter by chapter. Move through a chapter one idea per screen, then check yourself with a few practice questions. Progress is saved in this browser.</p>
     ${flash ? `<div class="notice ok" role="status">${esc(flash)}</div>` : ''}
+    ${guideHTML()}
     ${recoveryHTML()}
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
@@ -211,6 +259,7 @@ function renderHome() {
   flash = '';
   wireRecovery();
   mountSearch();
+  wireHelp();
   document.getElementById('exp').onclick = () => exportData(document.getElementById('exp-conv').checked);
   document.getElementById('expMd').onclick = () => {
     const { markdown, count } = StudyData.notesMarkdown(state, BOOK_IDS.filter(id => books[id]).map(id => books[id]));
@@ -1135,6 +1184,7 @@ Promise.all(BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) t
     opener = document.activeElement;
     dlg.showModal(); dlg.querySelector('#keys-x').focus();
   }
+  window.lsShowKeys = open;
   document.addEventListener('keydown', e => {
     if (e.key !== '?' || e.metaKey || e.ctrlKey || e.altKey) return;
     const t = e.target;

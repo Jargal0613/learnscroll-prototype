@@ -18,7 +18,7 @@ downloads one JSON file; **Import study data** reads one back. Nothing is upload
 | Study session in progress | always | `null` when there is none |
 
 **Never exported or imported (intentionally):** copies of unreadable data kept for recovery
-(`*-corrupt-backup`), pre-upgrade copies (`*-pre-schema-N`), the interrupted-import journal, and anything on the
+(`*-corrupt-backup`), pre-upgrade copies (`*-pre-schema-N`), the interrupted-import journal, whether the getting-started guide was dismissed, and anything on the
 server (the server stores nothing about you; API keys and vector-store ids never reach the browser).
 
 ## Before anything is written

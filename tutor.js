@@ -4,6 +4,7 @@
   const KEY = 'learnscroll-tutor-v1';
   const API = '/api/tutor';
   const MAX_HISTORY = 10;
+  const STYLES = [['default', 'Default'], ['simple', 'Explain simply'], ['math', 'Walk through the math'], ['example', 'Give an example']];
   const SUGGEST = ['Explain this more simply', 'Walk me through the equation', 'Give me a similar example'];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
@@ -58,6 +59,7 @@
         <div class="t-actions"><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
       <div class="t-scope" role="radiogroup" aria-label="Question scope">
         <button role="radio" data-scope="card">This card</button><button role="radio" data-scope="chapter">This chapter</button><button role="radio" data-scope="book">Whole book</button></div>
+      <div class="t-style" role="radiogroup" aria-label="Answer style"><span>Style</span>${STYLES.map(([k, l]) => `<button role="radio" data-style="${k}">${l}</button>`).join('')}</div>
       <div class="t-notice" id="t-notice" hidden></div>
       <div class="t-log" id="t-log" aria-live="polite"></div>
       <div class="t-suggest" id="t-suggest">${SUGGEST.map(s => `<button>${s}</button>`).join('')}</div>
@@ -69,7 +71,7 @@
     const $ = id => panel.querySelector('#' + id);
     const input = $('t-input');
     const c = conv(); input.value = c.draft || '';
-    paintScope(); paintLog(); paintCtx();
+    paintScope(); paintStyle(); paintLog(); paintCtx();
     checkStatus(book.id);
 
     panel.addEventListener('keydown', e => {
@@ -89,6 +91,10 @@
     panel.querySelector('.t-scope').addEventListener('click', e => {
       const b = e.target.closest('[data-scope]'); if (!b || b.disabled) return;
       const c = conv(); c.scope = b.dataset.scope; store(c); paintScope();
+    });
+    panel.querySelector('.t-style').addEventListener('click', e => {
+      const b = e.target.closest('[data-style]'); if (!b) return;
+      const all = load(); all._prefs = { ...(all._prefs || {}), style: b.dataset.style }; save(all); paintStyle();
     });
     $('t-suggest').addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b || ctx.busy) return;
@@ -125,6 +131,11 @@
       b.disabled = b.dataset.scope === 'card' && noCard;
     });
   }
+  function getStyle() { const s = (load()._prefs || {}).style; return STYLES.some(x => x[0] === s) ? s : 'default'; }
+  function paintStyle() {
+    const s = getStyle();
+    document.querySelectorAll('#tutor [data-style]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.style === s)));
+  }
   function paintCtx() {
     const el = document.getElementById('t-ctx'); if (!el) return;
     const card = cardAt(ctx.index);
@@ -155,11 +166,14 @@
     const input = document.getElementById('t-input');
     const q = input.value.trim(); if (!q) { input.focus(); return; }
     const c = conv(), card = cardAt(ctx.index), scope = effectiveScope();
-    const where = scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${ctx.ch.n}` : card.label;
+    const where0 = scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${ctx.ch.n}` : card.label;
+    const style = getStyle();
+    const styleLabel = style === 'default' ? '' : STYLES.find(x => x[0] === style)[1];
+    const where = [where0, styleLabel].filter(Boolean).join(' · ');
+    // Ids only: the server resolves book, chapter and card titles from its own data.
     const payload = {
-      bookId: ctx.book.id, bookTitle: ctx.book.title, chapterId: ctx.ch.n, chapterTitle: ctx.ch.title,
-      cardId: card ? card.id : null, card: card ? card.data : null,
-      conversationId: c.conversationId, scope, question: q,
+      bookId: ctx.book.id, chapterId: ctx.ch.n, cardId: card ? card.id : null,
+      conversationId: c.conversationId, scope, style, question: q,
       messages: c.messages.slice(-MAX_HISTORY).map(m => ({ role: m.role, content: m.content })),
     };
     ctx.busy = true; setBusy(true);

@@ -7,7 +7,7 @@ Node function (`api/tutor.js`). No framework, no npm dependencies, no database.
 `POST /api/tutor` → `api/_lib/tutor.js`:
 1. **Validate** (`validate.js`): bookId must be one of the 5 known books; chapter and card id must exist in the
    server's own `data/*.json` (the client's card text is ignored; the server copy is used). Question ≤ 2000 chars,
-   ≤ 50 messages accepted, last 10 kept, each ≤ 4000 chars, roles `user|assistant` only, scope `card|chapter|book`,
+   ≤ 50 messages accepted, last 10 kept, each ≤ 4000 chars, roles `user|assistant` only, scope `card|chapter|book`, style `default|simple|math|example` (optional, default `default`; anything else → 400; each style adds its own prompt instruction). Book, chapter and card titles are resolved from server data and put in the prompt; client-sent titles or card content are ignored,
    body ≤ 64 KB.
 2. **Retrieve** (`retrieve.js`): BM25 over (a) the private textbook index if present and (b) LearnScroll's own card
    notes. `card`/`chapter` scope filters to the current chapter; `book` scope searches the whole book.

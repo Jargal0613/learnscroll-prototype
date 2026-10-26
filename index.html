@@ -231,6 +231,11 @@
   .t-scope button:hover:not(:disabled) { color: var(--fg); background: var(--surface-2); }
   .t-scope button[aria-checked="true"] { color: var(--accent); background: var(--accent-soft); }
   .t-scope button:disabled { color: var(--faint); cursor: default; }
+  .t-style { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: -4px 20px 12px; font-size: 12px; }
+  .t-style > span { color: var(--faint); margin-right: 4px; }
+  .t-style button { padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid transparent; }
+  .t-style button:hover { color: var(--fg); }
+  .t-style button[aria-checked="true"] { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
   .t-notice { flex: none; margin: 0 20px 12px; padding: 10px 12px; border: 1px solid var(--line-strong); border-left: 2px solid var(--muted); border-radius: var(--radius); font-size: 13px; line-height: 1.5; color: var(--fg-2); background: var(--bg); }
   .t-notice b { color: var(--fg); }
   .t-n { color: var(--faint); }

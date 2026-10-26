@@ -3,6 +3,8 @@ const { E } = require('./errors');
 
 const LIMITS = { question: 2000, message: 4000, messages: 12, keptMessages: 10, cardText: 4000, conversationId: 64 };
 const SCOPES = ['card', 'chapter', 'book'];
+// Answer styles. 'default' = no extra style instruction.
+const STYLES = ['default', 'simple', 'math', 'example'];
 const str = v => typeof v === 'string';
 
 // Returns a normalized request built ONLY from server-known data where possible.
@@ -15,6 +17,8 @@ function validate(body) {
   if (!chapter) throw E.bad('Unknown chapter for this book.');
   const scope = body.scope === undefined ? 'chapter' : body.scope;
   if (!SCOPES.includes(scope)) throw E.bad('Scope must be card, chapter or book.');
+  const style = body.style === undefined || body.style === null ? 'default' : body.style;
+  if (!STYLES.includes(style)) throw E.bad('Style must be default, simple, math or example.');
   if (!str(body.question) || !body.question.trim()) throw E.bad('Question is required.');
   const question = body.question.trim();
   if (question.length > LIMITS.question) throw E.bad(`Question is too long (max ${LIMITS.question} characters).`);
@@ -39,6 +43,11 @@ function validate(body) {
     if (!m || !['user', 'assistant'].includes(m.role) || !str(m.content)) throw E.bad('Each message needs role user|assistant and text content.');
     return { role: m.role, content: m.content.slice(0, LIMITS.message) };
   });
-  return { book, chapter, card, scope, question, conversationId, messages };
+  // Titles come from server data only; any client-sent bookTitle/chapterTitle/card content is ignored.
+  const titles = { book: book.title, chapter: `Chapter ${chapter.n}: ${chapter.title}`, card: card ? cardTitle(card) : null };
+  return { book, chapter, card, scope, style, titles, question, conversationId, messages };
 }
-module.exports = { validate, LIMITS, SCOPES };
+function cardTitle(card) {
+  return card.kind === 'quiz' ? `Practice question ${card.index + 1}: ${card.q}` : `Card ${card.index + 1}: ${card.h}`;
+}
+module.exports = { validate, cardTitle, LIMITS, SCOPES, STYLES };

@@ -251,3 +251,48 @@ test('prompt asks for From the textbook / Additional explanation sections', () =
   assert.match(instructions, /### From the textbook/);
   assert.match(instructions, /### Additional explanation/);
 });
+
+test('style enum: default when missing/null, accepts the four styles, rejects anything else', () => {
+  const { validate, STYLES } = require('../api/_lib/validate');
+  const base = { bookId: 'heat-mass-transfer', chapterId: 1, cardId: 'c1-2', question: 'Why?' };
+  assert.deepEqual(STYLES, ['default', 'simple', 'math', 'example']);
+  assert.equal(validate(base).style, 'default');
+  assert.equal(validate({ ...base, style: null }).style, 'default');
+  for (const s of STYLES) assert.equal(validate({ ...base, style: s }).style, s);
+  for (const bad of ['Simple', 'eli5', '', 1, true, {}, ['math'], 'math ', '__proto__', 'toString'])
+    assert.throws(() => validate({ ...base, style: bad }), e => e.status === 400 && /Style/.test(e.message));
+});
+test('titles come from server data; client-sent titles and card content are ignored', () => {
+  const { validate } = require('../api/_lib/validate');
+  const { buildFileSearchPrompt, buildPrompt } = require('../api/_lib/prompt');
+  const r = validate({ bookId: 'heat-mass-transfer', chapterId: 1, cardId: 'c1-2', question: 'Why?', bookTitle: 'EVIL BOOK', chapterTitle: 'EVIL CH', card: { h: 'EVIL CARD' } });
+  assert.equal(r.titles.card, 'Card 2: Why rates matter');
+  const q = validate({ bookId: 'heat-mass-transfer', chapterId: 1, cardId: 'c1-q1', question: 'Why?' });
+  assert.match(q.titles.card, /^Practice question 1: /);
+  for (const txt of [buildFileSearchPrompt(r).input.at(-1).content, buildPrompt(r, [], { bookIndexAvailable: false }).at(-1).content]) {
+    assert.match(txt, /Book: "Heat and Mass Transfer/);
+    assert.match(txt, /Chapter 1: Introduction and Basic Concepts\./);
+    assert.match(txt, /Current card: Card 2: Why rates matter\./);
+    assert.doesNotMatch(txt, /EVIL/);
+  }
+  const noCard = validate({ bookId: 'heat-mass-transfer', chapterId: 1, question: 'Why?' });
+  assert.match(buildFileSearchPrompt(noCard).input.at(-1).content, /Current card: none/);
+});
+test('each style adds its own instruction; default adds none; equation and section rules always present', () => {
+  const { validate } = require('../api/_lib/validate');
+  const { buildFileSearchPrompt, buildPrompt, STYLE_INSTRUCTIONS } = require('../api/_lib/prompt');
+  const base = { bookId: 'heat-mass-transfer', chapterId: 1, cardId: 'c1-2', question: 'Why?' };
+  const fs_ = s => buildFileSearchPrompt(validate({ ...base, style: s })).instructions;
+  const loc = s => buildPrompt(validate({ ...base, style: s }), [], { bookIndexAvailable: false })[0].content;
+  const marks = { simple: /Explain simply/, math: /Walk through the math/, example: /Give an example/ };
+  for (const s of ['default', 'simple', 'math', 'example']) for (const txt of [fs_(s), loc(s)]) {
+    for (const [k, re] of Object.entries(marks)) (k === s ? assert.match : assert.doesNotMatch)(txt, re);
+    assert.match(txt, /define each symbol it uses with its SI units/);
+    assert.match(txt, /consistent notation/);
+  }
+  for (const s of ['default', 'simple', 'math', 'example']) {
+    assert.match(fs_(s), /### From the textbook/); assert.match(fs_(s), /### Additional explanation/);
+  }
+  assert.equal(STYLE_INSTRUCTIONS.default, '');
+  assert.equal(new Set(Object.values(STYLE_INSTRUCTIONS)).size, 4);
+});

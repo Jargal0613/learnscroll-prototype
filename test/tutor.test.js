@@ -132,10 +132,12 @@ function call(method, body) {
     handler({ method, body }, res);
   });
 }
-test('HTTP handler: 405, 400, 503 not configured', async () => {
-  const keys = ['TUTOR_API_KEY', 'TUTOR_MODEL']; const saved = keys.map(k => process.env[k]); keys.forEach(k => delete process.env[k]);
+test('HTTP handler: GET status, 405, 400, 503 not configured', async () => {
+  const keys = ['TUTOR_API_KEY', 'TUTOR_MODEL', 'OPENAI_API_KEY', 'TUTOR_PROVIDER']; const saved = keys.map(k => process.env[k]); keys.forEach(k => delete process.env[k]);
   try {
-    assert.equal((await call('GET')).status, 405);
+    const st = await call('GET');
+    assert.equal(st.status, 200); assert.equal(st.body.configured, false);
+    assert.equal((await call('PUT')).status, 405);
     assert.equal((await call('POST', '{not json')).body.error.code, 'bad_request');
     const r = await call('POST', base);
     assert.equal(r.status, 503);
@@ -153,4 +155,75 @@ test('real private index (local only): retrieval finds relevant pages', { skip: 
   const r2 = retrieve(validate({ ...base, bookId: 'electric-circuits', cardId: undefined, chapterId: 2, question: 'Kirchhoff current law nodes' }));
   assert.ok(r2.sources.filter(s => s.kind === 'book').every(s => s.chapter === 2));
   console.log('  sample:', bk.slice(0, 3).map(s => s.label).join(' | '), '||', r2.sources.slice(0, 2).map(s => s.label).join(' | '));
+});
+
+// ---------- OpenAI File Search provider (fake SDK client; no network) ----------
+const openaiProv = require('../api/_lib/providers/openai');
+const knowledge = require('../api/_lib/knowledge');
+const OpenAI = require('openai');
+const KB = { 'heat-mass-transfer': { status: 'completed', vectorStoreId: 'vs_test', fileId: 'file-real', filename: 'heat-mass-transfer.pdf' }, 'koretsky-thermo': { status: 'failed', vectorStoreId: 'vs_x', fileId: 'file-x' } };
+const fakeResponse = (annotations, extra = {}) => ({
+  status: 'completed', output_text: 'Plane wall resistance is \\(R = L/(kA)\\).',
+  output: [{ type: 'file_search_call', results: [{ file_id: 'file-real' }, { file_id: 'file-real' }] }, { type: 'message', content: [{ type: 'output_text', text: 'x', annotations }] }],
+  usage: { input_tokens: 6000, input_tokens_details: { cached_tokens: 1000 }, output_tokens: 120, output_tokens_details: { reasoning_tokens: 40 } }, ...extra,
+});
+const fakeClient = impl => ({ responses: { create: impl } });
+
+test('openai provider: request shape uses Responses API + file_search on the server-side vector store', async () => {
+  knowledge.setKnowledge(KB);
+  let sent;
+  const p = openaiProv({ model: 'gpt-6-luna', client: fakeClient(async b => { sent = b; return fakeResponse([{ type: 'file_citation', file_id: 'file-real', filename: 'heat-mass-transfer.pdf', index: 3 }]); }) });
+  const out = await answer({ ...base, vectorStoreId: 'vs_EVIL', messages: Array.from({ length: 30 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: 'm' + i })) }, { provider: p });
+  assert.equal(sent.model, 'gpt-6-luna');
+  assert.deepEqual(sent.tools[0].vector_store_ids, ['vs_test']);
+  assert.equal(sent.tools[0].type, 'file_search');
+  assert.ok(sent.include.includes('file_search_call.results'));
+  assert.equal(sent.input.length, 11); // 10 history + question
+  assert.match(sent.instructions, /Never invent/);
+  assert.equal(out.sources.length, 1);
+  assert.equal(out.sources[0].filename, 'heat-mass-transfer.pdf');
+  assert.ok(!('page' in out.sources[0]), 'no page claimed without verified metadata');
+  assert.equal(out.retrieval.passages, 2);
+  assert.equal(out.retrieval.usage.input, 6000);
+});
+test('openai provider: citations to unknown files and duplicates are dropped; no citations -> no sources', async () => {
+  knowledge.setKnowledge(KB);
+  const ann = [{ type: 'file_citation', file_id: 'file-other', filename: 'evil.pdf' }, { type: 'file_citation', file_id: 'file-real', filename: 'heat-mass-transfer.pdf' }, { type: 'file_citation', file_id: 'file-real', filename: 'heat-mass-transfer.pdf' }, { type: 'url_citation', url: 'http://x' }];
+  const out = await answer(base, { provider: openaiProv({ model: 'm', client: fakeClient(async () => fakeResponse(ann)) }) });
+  assert.deepEqual(out.sources.map(s => [s.id, s.citations]), [['file-real', 2]]);
+  const none = await answer(base, { provider: openaiProv({ model: 'm', client: fakeClient(async () => fakeResponse([])) }) });
+  assert.equal(none.sources.length, 0);
+});
+test('openai provider: unindexed or failed book -> book_not_available', async () => {
+  knowledge.setKnowledge(KB);
+  const p = openaiProv({ model: 'm', client: fakeClient(async () => { throw new Error('must not be called'); }) });
+  await assert.rejects(answer({ ...base, bookId: 'koretsky-thermo', cardId: 'c1-1' }, { provider: p }), e => e.code === 'book_not_available' && e.status === 409);
+  await assert.rejects(answer({ ...base, bookId: 'electric-circuits', cardId: 'c1-1' }, { provider: p }), e => e.code === 'book_not_available');
+});
+test('openai provider: error mapping (429, quota, auth, 500, timeout, connection, empty)', async () => {
+  knowledge.setKnowledge(KB);
+  const run = err => answer(base, { provider: openaiProv({ model: 'm', client: fakeClient(async () => { throw err; }) }) });
+  const apiErr = (status, code) => Object.assign(new Error('x'), { status, code });
+  await assert.rejects(run(apiErr(429)), e => e.code === 'rate_limited' && e.status === 429);
+  await assert.rejects(run(apiErr(429, 'insufficient_quota')), e => e.code === 'provider_error' && /quota/.test(e.message));
+  await assert.rejects(run(apiErr(401)), e => e.code === 'provider_error' && /credentials/.test(e.message));
+  await assert.rejects(run(apiErr(500)), e => e.code === 'provider_error' && e.status === 502);
+  await assert.rejects(run(new OpenAI.APIConnectionTimeoutError()), e => e.code === 'timeout' && e.status === 504);
+  await assert.rejects(run(new OpenAI.APIConnectionError({ message: 'down' })), e => e.code === 'provider_error');
+  await assert.rejects(answer(base, { provider: openaiProv({ model: 'm', client: fakeClient(async () => ({ status: 'completed', output_text: '', output: [] })) }) }), e => e.code === 'provider_error');
+});
+test('provider selection: OPENAI_API_KEY selects openai; missing key -> not configured', () => {
+  assert.equal(getProvider({ OPENAI_API_KEY: 'k' }).name, 'openai');
+  assert.equal(getProvider({ OPENAI_API_KEY: 'k', OPENAI_MODEL: 'gpt-x' }).model, 'gpt-x');
+  assert.equal(code(() => getProvider({ TUTOR_PROVIDER: 'openai' })), 'not_configured');
+  assert.equal(getProvider({ TUTOR_API_KEY: 'k', TUTOR_MODEL: 'm' }).name, 'openai-compatible');
+});
+test('status lists only indexed books when openai is configured', () => {
+  knowledge.setKnowledge(KB);
+  const { status } = require('../api/_lib/tutor');
+  const s = status({ OPENAI_API_KEY: 'k' });
+  assert.equal(s.books['heat-mass-transfer'], true);
+  assert.equal(s.books['koretsky-thermo'], false);
+  assert.equal(status({}).configured, false);
+  knowledge.setKnowledge(null);
 });

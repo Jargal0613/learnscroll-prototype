@@ -1,0 +1,18 @@
+{
+  "books": {
+    "heat-mass-transfer": {
+      "filename": "heat-mass-transfer.pdf",
+      "bytes": 26748262,
+      "sha256": "48f0bb67fe14b3324475999c3c778310a77db5c635890d29b1f62f228f8207c5",
+      "status": "completed",
+      "startedAt": "2026-10-26T15:56:23.168Z",
+      "vectorStoreId": "vs_6adf7827d6748191afa7281d9b5efa24",
+      "fileId": "file-WDju9dYbL4twKsvHA1vFVh",
+      "fileStatus": "completed",
+      "usageBytes": 10258861,
+      "lastError": null,
+      "vectorStoreUsageBytes": 10258861,
+      "finishedAt": "2026-10-26T15:57:52.568Z"
+    }
+  }
+}

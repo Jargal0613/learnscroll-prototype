@@ -35,7 +35,35 @@ Redeploy after setting them. Without `TUTOR_API_KEY` + `TUTOR_MODEL` the endpoin
 and the panel says "Tutor not configured". Add another vendor by writing `api/_lib/providers/<name>.js` exporting
 `(config) => ({ complete(messages) → Promise<string> })` and registering it in `providers/index.js`.
 
-## Textbook index (PRIVATE — never commit or serve it)
+
+## OpenAI File Search (production provider)
+When `OPENAI_API_KEY` is set (or `TUTOR_PROVIDER=openai`), `/api/tutor` uses the official `openai` SDK
+(`api/_lib/providers/openai.js`): `responses.create` with `tools: [{ type: "file_search", vector_store_ids: [<id>] }]`,
+`include: ["file_search_call.results"]`, `store: false`, low reasoning effort. The vector store id comes ONLY from
+`api/_lib/knowledge.json` (written by the index script); anything the browser sends is ignored.
+
+Env (Vercel → Settings → Environment Variables, Production, type Sensitive for the key):
+- `OPENAI_API_KEY` (required) · `OPENAI_MODEL` (default `gpt-6-luna`) · optional `TUTOR_TIMEOUT_MS` (45000), `TUTOR_MAX_TOKENS` (2500).
+
+Sources = `file_citation` annotations that point at the book's own recorded file id (others are dropped). Annotations
+carry only file id + filename, so the panel shows "Heat and Mass Transfer (5th edition), textbook PDF …" and **no page
+numbers**. (Retrieved chunks contain the publisher's print footers like `…indd 143`, which could later be used to
+show verified pages per retrieved passage; not done because a citation can't be tied to a specific chunk.)
+
+Books without a completed `knowledge.json` entry return `409 book_not_available`; `GET /api/tutor` returns
+`{ configured, provider, books: { <bookId>: bool } }` so the panel shows "Tutor not available for this book yet".
+
+### Index the next book (only books B is authorized to upload)
+```
+npm install
+OPENAI_API_KEY=… node scripts/index-book.js koretsky-thermo /workspace/books/koretsky-thermo.pdf
+git add api/_lib/knowledge.json && git commit -m "Index koretsky-thermo" && git push
+```
+It hashes the PDF (SHA-256) and skips if the same file is already `completed`; otherwise it creates a vector store,
+uploads the file once (`purpose: assistants`, max 512 MB), attaches it and polls until processed, recording
+`vectorStoreId, fileId, sha256, bytes, status, fileStatus, usageBytes, lastError, startedAt, finishedAt`.
+
+## Local BM25 textbook index (openai-compatible provider only; PRIVATE — never commit or serve it)
 The textbooks are copyrighted and this repo is public. The index is built locally and is gitignored
 (`private/`) and vercelignored.
 

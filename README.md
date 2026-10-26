@@ -9,4 +9,4 @@ Cards are original study notes summarizing each section; no textbook text, figur
 
 ## Tutor
 
-The reader has an "Ask tutor" panel backed by `api/tutor.js` (Vercel function). It needs provider env vars to answer; see [TUTOR.md](TUTOR.md). Tests: `node --test test/`.
+The reader has an "Ask tutor" panel backed by `api/tutor.js` (Vercel function). It uses OpenAI File Search (Heat and Mass Transfer indexed so far) and needs `OPENAI_API_KEY` on the server; see [TUTOR.md](TUTOR.md). Tests: `node --test test/`.

@@ -6,6 +6,7 @@ const E = {
   notConfigured: () => new TutorError('not_configured', 'The tutor is not configured yet: no AI provider credentials are set on the server.', 503),
   timeout: () => new TutorError('timeout', 'The AI provider took too long to answer. Please try again.', 504),
   rateLimited: () => new TutorError('rate_limited', 'The AI provider is rate-limiting requests. Wait a moment and try again.', 429),
+  notAvailable: () => new TutorError('book_not_available', 'The tutor is not available for this book yet.', 409),
   provider: m => new TutorError('provider_error', m || 'The AI provider returned an error.', 502),
 };
 // Anything unexpected becomes a generic 500 without leaking details.

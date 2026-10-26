@@ -1,0 +1,15 @@
+{
+  "name": "learnscroll",
+  "private": true,
+  "version": "1.0.0",
+  "description": "LearnScroll static study feed + /api/tutor Vercel function",
+  "scripts": {
+    "test": "node --test test/",
+    "index-book": "node scripts/index-book.js",
+    "dev": "node scripts/dev-server.js 8787"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "openai": "^6.0.0"
+  }
+}

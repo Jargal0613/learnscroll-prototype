@@ -58,6 +58,7 @@
         <div class="t-actions"><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
       <div class="t-scope" role="radiogroup" aria-label="Question scope">
         <button role="radio" data-scope="card">This card</button><button role="radio" data-scope="chapter">This chapter</button><button role="radio" data-scope="book">Whole book</button></div>
+      <div class="t-notice" id="t-notice" hidden></div>
       <div class="t-log" id="t-log" aria-live="polite"></div>
       <div class="t-suggest" id="t-suggest">${SUGGEST.map(s => `<button>${s}</button>`).join('')}</div>
       <form class="t-form" id="t-form">
@@ -69,6 +70,7 @@
     const input = $('t-input');
     const c = conv(); input.value = c.draft || '';
     paintScope(); paintLog(); paintCtx();
+    checkStatus(book.id);
 
     panel.addEventListener('keydown', e => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); toggle(false); }
@@ -94,6 +96,23 @@
     });
   }
 
+  // Ask the server which books the tutor can answer for, and say so up front instead of after a failed send.
+  let statusCache = null;
+  async function checkStatus(bookId) {
+    try {
+      if (!statusCache) { const r = await fetch(API, { method: 'GET' }); statusCache = r.ok ? await r.json() : null; }
+    } catch (e) { statusCache = null; }
+    if (!ctx || ctx.book.id !== bookId || !statusCache) return;
+    const n = document.getElementById('t-notice'); if (!n) return;
+    let msg = '';
+    if (!statusCache.configured) msg = '<b>Tutor not configured.</b> The server has no AI provider credentials yet.';
+    else if (!statusCache.books[bookId]) msg = '<b>Tutor not available for this book yet.</b> Only books whose textbook has been indexed can be asked about.';
+    n.innerHTML = msg; n.hidden = !msg;
+    ctx.unavailable = !!msg;
+    const dis = !!msg;
+    document.querySelectorAll('#t-input, #t-send, #t-suggest button').forEach(x => { x.disabled = dis; });
+  }
+
   function effectiveScope() {
     const s = conv().scope || 'card';
     return s === 'card' && !cardAt(ctx.index) ? 'chapter' : s;
@@ -114,7 +133,7 @@
   function msgHTML(m) {
     if (m.role === 'user') return `<div class="t-msg user"><div class="t-who">You${m.where ? ` · ${esc(m.where)}` : ''}</div><div class="t-body">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`;
     const src = (m.sources || []).length
-      ? `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`
+      ? `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}${s.citations > 1 ? ` <span class="t-n">· cited ${s.citations}×</span>` : ''}</li>`).join('')}</ol></div>`
       : (m.retrieval ? '<div class="t-src none">No sources cited for this answer.</div>' : '');
     return `<div class="t-msg bot"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}</div>`;
   }
@@ -123,13 +142,13 @@
     const c = conv();
     log.innerHTML = c.messages.length || extra
       ? c.messages.map(msgHTML).join('') + extra
-      : `<div class="t-empty"><p>Ask anything about what you're studying. Answers come with references to the passages they used.</p><p>Pick a scope above, or try a suggestion below.</p></div>`;
+      : `<div class="t-empty"><p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope above, or try a suggestion below.</p></div>`;
     renderMath(log);
     log.scrollTop = log.scrollHeight;
   }
 
   async function send() {
-    if (!ctx || ctx.busy) return;
+    if (!ctx || ctx.busy || ctx.unavailable) return;
     const input = document.getElementById('t-input');
     const q = input.value.trim(); if (!q) { input.focus(); return; }
     const c = conv(), card = cardAt(ctx.index), scope = effectiveScope();
@@ -164,13 +183,14 @@
       // Keep the user's question: put it back in the box (and the saved draft) so nothing is lost.
       input.value = q; const d = conv(); d.draft = q; store(d);
       const msg = e.name === 'AbortError' ? 'The request timed out.' : e.message === 'Failed to fetch' ? 'Could not reach the tutor service. Check your connection.' : e.message;
-      paintLog(`<div class="t-err" role="alert"><b>${e.code === 'not_configured' ? 'Tutor not configured' : 'Couldn’t get an answer'}</b><p>${esc(msg)}</p><button class="t-retry" id="t-retry">Retry</button></div>`);
+      paintLog(`<div class="t-err" role="alert"><b>${e.code === 'not_configured' ? 'Tutor not configured' : e.code === 'book_not_available' ? 'Tutor not available for this book yet' : e.code === 'rate_limited' ? 'Too many requests' : 'Couldn’t get an answer'}</b><p>${esc(msg)}</p><button class="t-retry" id="t-retry">Retry</button></div>`);
       document.getElementById('t-retry').addEventListener('click', send);
     }
   }
   function setBusy(b) {
-    const s = document.getElementById('t-send'); if (s) { s.disabled = b; s.textContent = b ? 'Thinking…' : 'Send'; }
-    document.querySelectorAll('#t-suggest button, #t-new').forEach(x => { x.disabled = b; });
+    const s = document.getElementById('t-send'); if (s) { s.disabled = b || !!(ctx && ctx.unavailable); s.textContent = b ? 'Thinking…' : 'Send'; }
+    document.querySelectorAll('#t-new').forEach(x => { x.disabled = b; });
+    document.querySelectorAll('#t-suggest button').forEach(x => { x.disabled = b || !!(ctx && ctx.unavailable); });
   }
 
   function toggle(force) {

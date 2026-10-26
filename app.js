@@ -218,10 +218,11 @@ const recentShown = () => state.recent.filter(r => books[r.book] && books[r.book
   .map(r => { const ch = books[r.book].chapters.find(c => c.n === r.chapter); return { ...r, card: Math.min(r.card, screens(ch) - 1) }; });
 function attentionHTML() {
   const items = StudyData.needsAttention(state, BOOK_IDS.filter(id => books[id]).map(id => books[id]), { shown: recentShown() });
-  if (!items.length) return ''; // hidden when there is nothing
-  const label = { mistakes: 'Quiz mistakes', difficult: 'Difficult', again: 'Review again', unfinished: 'Unfinished' };
+  const has = Object.keys(state.books || {}).length > 0;
+  if (!items.length) return has ? `<div class="section-h"><span>Needs attention</span></div><p class="empty-note att-empty">Nothing needs attention right now. Cards you mark difficult or review again, missed quiz questions and unfinished chapters show up here.</p>` : '';
+  const label = { difficult: 'Difficult', again: 'Review again', unfinished: 'Unfinished' };
   return `<div class="section-h"><span>Needs attention</span><span>${items.length === 5 ? 'Top 5' : plural(items.length, 'item')}</span></div>
-    <ol class="recent attention">${items.map(it => `<li><a href="${it.href}"><span class="r-book">${esc(books[it.book].short)}</span><span class="r-ch"><span class="att-k k-${it.kind}">${label[it.kind]}</span>${esc(it.title)}</span><span class="r-pos">${it.detail ? esc(it.detail) : it.kind === 'mistakes' ? 'Retry' : `Ch ${it.chapter} · card ${it.card + 1}`}</span></a></li>`).join('')}</ol>`;
+    <ol class="recent attention">${items.map(it => `<li><a href="${it.href}"><span class="r-book">${esc(books[it.book].short)}</span><span class="r-ch"><span class="att-k k-${it.kind}">${label[it.kind]}</span>${esc(it.title)}</span><span class="att-why">${esc(it.reason)}</span><span class="r-pos">${esc(it.detail)}</span></a></li>`).join('')}</ol>`;
 }
 function recentHTML() {
   const items = state.recent.filter(r => books[r.book] && books[r.book].chapters.some(c => c.n === r.chapter && ready(c))).slice(0, 3);

@@ -421,35 +421,45 @@
   // 'Needs attention': up to `limit` items from local data, in priority order: chapters with quiz mistakes,
   // difficult cards, review-again cards, unfinished chapters. `shown` lists what Recently studied already shows
   // ({ book, chapter, card } with card 0-based); those chapters/cards are skipped.
+  // Needs attention: difficult > review again (incl. missed quiz questions) > unfinished chapters. One entry per card,
+  // each with a short reason and a link to that exact card. Order is stable: ties fall back to book/chapter/card order.
   function needsAttention(study, books, { shown = [], limit = 5 } = {}) {
     const ready = ch => Array.isArray(ch.cards) && ch.cards.length > 0;
     const screens = ch => ch.cards.length + (ch.quiz || []).length;
     const shownCh = new Set(shown.map(r => `${r.book}/${r.chapter}`)), shownCard = new Set(shown.map(r => `${r.book}/${r.chapter}/${r.card}`));
-    const strip = s => String(s || '').replace(/<[^>]*>/g, '').trim();
-    const pick = { mistakes: [], difficult: [], again: [], unfinished: [] };
+    const strip = s => String(s || '').replace(/<[^>]*>/g, '').replace(/\\\(|\\\)/g, '').trim();
+    const tiers = { difficult: [], again: [], unfinished: [] };
+    let order = 0;
     for (const book of books) {
       const bs = (study.books || {})[book.id]; if (!bs) continue;
+      const recentAt = ch => Math.max(0, ...((study.recent || []).filter(r => r.book === book.id && r.chapter === ch).map(r => r.at || 0)));
       for (const ch of book.chapters.filter(ready)) {
         const n = screens(ch);
-        const miss = (ch.quiz || []).filter((_, i) => { const l = (bs.attempts || {})[`c${ch.n}-q${i + 1}`]; return l && l.length && !l[l.length - 1].ok; }).length;
-        if (miss) pick.mistakes.push({ kind: 'mistakes', book: book.id, chapter: ch.n, count: miss, title: `${miss} quiz mistake${miss === 1 ? '' : 's'} · Ch ${ch.n}: ${strip(ch.title)}`, href: `#/mistakes/${book.id}/${ch.n}` });
-        for (let i = 0; i < n; i++) {
-          const id = i < ch.cards.length ? `c${ch.n}-${i + 1}` : `c${ch.n}-q${i - ch.cards.length + 1}`;
+        for (let i = 0; i < n; i++, order++) {
+          const isQ = i >= ch.cards.length, id = isQ ? `c${ch.n}-q${i - ch.cards.length + 1}` : `c${ch.n}-${i + 1}`;
           if (shownCard.has(`${book.id}/${ch.n}/${i}`)) continue;
-          const h = i < ch.cards.length ? strip(ch.cards[i].h) : `Practice: ${strip(ch.quiz[i - ch.cards.length].q)}`;
-          const item = { book: book.id, chapter: ch.n, card: i, title: h, href: `#/read/${book.id}/${ch.n}/${i + 1}` };
-          if (bs.marks && bs.marks[id] && bs.marks[id].d) pick.difficult.push({ ...item, kind: 'difficult' });
-          else if (bs.review && bs.review[id] && bs.review[id].r === 'again') pick.again.push({ ...item, kind: 'again', at: bs.review[id].at });
+          const diff = !!(bs.marks && bs.marks[id] && bs.marks[id].d);
+          const again = bs.review && bs.review[id] && bs.review[id].r === 'again' ? bs.review[id] : null;
+          const att = (bs.attempts || {})[id], missed = att && att.length && !att[att.length - 1].ok ? att[att.length - 1] : null;
+          if (!diff && !again && !missed) continue;
+          const title = isQ ? `Practice: ${strip(ch.quiz[i - ch.cards.length].q)}` : strip(ch.cards[i].h);
+          const item = { book: book.id, chapter: ch.n, card: i, id, title, detail: `Ch ${ch.n} · card ${i + 1}`, href: `#/read/${book.id}/${ch.n}/${i + 1}`, order };
+          const also = [again && 'review again', missed && 'missed in quiz'].filter(Boolean);
+          if (diff) tiers.difficult.push({ ...item, kind: 'difficult', reason: `You marked it difficult${also.length ? ` · also ${also.join(', ')}` : ''}` });
+          else tiers.again.push({ ...item, kind: 'again', at: Math.max(again ? again.at : 0, missed ? missed.at : 0),
+            reason: again && missed ? 'Missed in the quiz and marked review again' : again ? 'You marked it review again' : 'You missed this quiz question' });
         }
         const seen = bs.seen && bs.seen[ch.n];
         if (Number.isInteger(seen) && !(bs.done && bs.done[ch.n]) && !shownCh.has(`${book.id}/${ch.n}`)) {
           const next = Math.min(seen + 1, n - 1);
-          pick.unfinished.push({ kind: 'unfinished', book: book.id, chapter: ch.n, card: next, title: `Ch ${ch.n}: ${strip(ch.title)}`, detail: `${seen + 1} of ${n} cards`, href: `#/read/${book.id}/${ch.n}/${next + 1}` });
+          tiers.unfinished.push({ kind: 'unfinished', book: book.id, chapter: ch.n, card: next, title: `Ch ${ch.n}: ${strip(ch.title)}`, detail: `Ch ${ch.n} · card ${next + 1}`,
+            reason: `Stopped after ${seen + 1} of ${n} cards`, href: `#/read/${book.id}/${ch.n}/${next + 1}`, at: recentAt(ch.n), order: order - n + next });
         }
       }
     }
-    pick.again.sort((a, b) => b.at - a.at);
-    return [...pick.mistakes, ...pick.difficult, ...pick.again, ...pick.unfinished].slice(0, limit);
+    tiers.again.sort((a, b) => b.at - a.at || a.order - b.order);
+    tiers.unfinished.sort((a, b) => b.at - a.at || a.order - b.order);
+    return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
   const api = { SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };

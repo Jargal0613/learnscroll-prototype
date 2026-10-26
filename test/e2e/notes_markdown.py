@@ -23,6 +23,6 @@ with sync_playwright() as p:
         ok('#### Why rates matter\n\nRates, not just end states.' in md, 'no equation block for card without eq')
         with pg.expect_download() as dj: pg.click('#exp')
         d = json.load(open(dj.value.path()))
-        ok(set(d) == {'app', 'version', 'exportedAt', 'study', 'tutor'} and d['version'] == 1, 'JSON backup unchanged (same envelope, version 1)')
+        ok(set(d) <= {'app', 'version', 'exportedAt', 'study', 'tutor', 'session'} and d['version'] == 2, 'JSON backup unaffected by Markdown export (round-8 envelope, version 2)')
         ctx.close()
     b.close(); finish(errs)

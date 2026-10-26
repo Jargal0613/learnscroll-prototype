@@ -799,7 +799,10 @@ function renderReader(book, ch, at = null, sess = null) {
   renderMath(feed);
 
   const h = () => feed.clientHeight || 1;
-  const idx = () => Math.max(0, Math.min(total, Math.round(feed.scrollTop / h())));
+  // Card positions come from the layout, so cards taller than the screen (phones) still map to the right index.
+  const cardEls = () => feed.querySelectorAll(':scope > .card');
+  const topOf = i => { const c = cardEls()[i]; return c ? c.offsetTop : i * h(); };
+  const idx = () => { const y = feed.scrollTop + h() / 2, cs = cardEls(); let i = 0; while (i + 1 < cs.length && cs[i + 1].offsetTop <= y) i++; return Math.max(0, Math.min(total, i)); };
   let target = null; // index we are smooth-scrolling toward; prevents double jumps on repeated keys
   function paint(i) {
     document.getElementById('count').textContent = i >= total ? 'Done' : `${i + 1} / ${total}`;
@@ -824,18 +827,23 @@ function renderReader(book, ch, at = null, sess = null) {
   }
   function move(d) {
     const from = target !== null ? target : idx();
+    if (target === null) { // a card taller than the screen (phones): page through it before moving on
+      const c = cardEls()[from], top = feed.scrollTop, bottom = top + h();
+      if (c && d > 0 && c.offsetTop + c.offsetHeight > bottom + 4) { feed.scrollTo({ top: Math.min(top + h() * 0.85, c.offsetTop + c.offsetHeight - h()), behavior: 'smooth' }); return; }
+      if (c && d < 0 && c.offsetTop < top - 4) { feed.scrollTo({ top: Math.max(c.offsetTop, top - h() * 0.85), behavior: 'smooth' }); return; }
+    }
     const to = Math.max(0, Math.min(total, from + d));
     if (to === from) return;
     target = to;
     paint(to);
-    feed.scrollTo({ top: to * h(), behavior: 'smooth' });
+    feed.scrollTo({ top: topOf(to), behavior: 'smooth' });
   }
   // Resume where the reader left off in this chapter.
   // A deep link (#/read/book/ch/N) jumps once; then drop N so a reload resumes at the saved card instead.
   if (at !== null && !sess) history.replaceState(null, '', `#/read/${book.id}/${ch.n}`);
   const start = sess ? sess.pos : at !== null ? at : bs.chapter === ch.n && !bs.done[ch.n] ? bs.card : 0;
   feed.style.scrollSnapType = 'none';
-  feed.scrollTop = start * h();
+  feed.scrollTop = topOf(start);
   feed.style.scrollSnapType = '';
   update();
 

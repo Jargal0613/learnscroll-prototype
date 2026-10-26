@@ -430,6 +430,39 @@
     .eq { font-size: 18px; padding: 16px; }
     .hint { display: none; }
   }
+
+  /* Phones and small tablets: one column, same markup. Desktop (>600px) rules above are untouched. */
+  @media (max-width: 600px) {
+    .page { padding: 24px 16px 56px; }
+    h1 { font-size: 26px; margin-top: 24px; }
+    .grid, .recent { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .book { min-height: 0; padding: 16px; min-width: 0; }
+    .book-desc { display: none; }
+    .search { width: auto; flex: 1; min-width: 0; }
+    .tabs { flex-wrap: wrap; row-gap: 0; }
+    .tabs a { padding: 10px 10px; }
+    .tabs-r { margin-left: 0; width: 100%; padding: 8px 0; }
+    .chap { grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; padding: 14px 4px; }
+    .chap .name { font-size: 16px; overflow-wrap: normal; }
+    .rv-choices { grid-template-columns: minmax(0, 1fr); }
+    .sess-field { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .lib-foot-a { flex-wrap: wrap; }
+    .bar { gap: 8px; padding: 0 10px; }
+    .sec { flex-wrap: wrap; row-gap: 8px; }
+    .marks { margin-left: 0; flex-wrap: wrap; }
+    .t-style { flex-wrap: wrap; overflow: visible; }
+    .t-style button { flex: 1 1 40%; border-bottom: 1px solid var(--line-strong); }
+    .card { height: auto; min-height: 100vh; min-height: 100dvh; scroll-snap-stop: normal; align-items: flex-start; padding: 72px 16px 104px; }
+    .card-body { max-width: 100%; min-width: 0; max-height: none; overflow: visible; }
+    .card h2 { font-size: 23px; }
+    .card p { font-size: 17px; }
+    .eq { font-size: 16px; padding: 12px 14px; max-width: 100%; }
+    .foot { height: auto; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(10,10,11,0.94); border-top: 1px solid var(--line); }
+    .foot .nav { width: 100%; }
+    .foot .nav .navbtn { flex: 1; height: 44px; justify-content: center; }
+    .tutor { top: 0; width: 100%; z-index: 8; border-left: 0; }
+    .reader.with-tutor .foot { display: none; }
+  }
 </style>
 </head>
 <body>

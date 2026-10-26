@@ -6,3 +6,7 @@ A minimal study feed for five textbooks. Pick a book, pick a chapter, scroll thr
 - `data/<book>.json`: chapters → cards (`s` section, `h` heading, `t` text, optional `eq` LaTeX, `def`, `ex`) → `quiz`. A chapter without `cards` is listed as "coming soon".
 
 Cards are original study notes summarizing each section; no textbook text, figures or problems are included.
+
+## Tutor
+
+The reader has an "Ask tutor" panel backed by `api/tutor.js` (Vercel function). It needs provider env vars to answer; see [TUTOR.md](TUTOR.md). Tests: `node --test test/`.

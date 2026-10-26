@@ -162,7 +162,7 @@ function renderReader(book, ch) {
   const nextReady = next && ready(next);
   const quiz = ch.quiz || [];
   app.innerHTML = `<div class="reader">
-    <header class="bar"><a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span><span class="count" id="count" aria-live="polite"></span></header>
+    <header class="bar"><a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span><span class="bar-r"><span class="count" id="count" aria-live="polite"></span><button class="navbtn sm" id="tutorBtn" aria-expanded="false" aria-controls="tutor">Ask tutor</button></span></header>
     <div class="track" role="progressbar" aria-label="Chapter progress" aria-valuemin="0" aria-valuemax="${total}" id="track"><div class="line" id="line"></div></div>
     <main class="feed" id="feed">
       ${ch.cards.map(cardHTML).join('')}
@@ -178,6 +178,8 @@ function renderReader(book, ch) {
       <div class="nav"><button class="navbtn" id="prev" aria-label="Previous card">↑ Previous</button><button class="navbtn" id="next" aria-label="Next card">Next ↓</button></div></footer>
   </div>`;
   const feed = document.getElementById('feed');
+  if (window.Tutor) { Tutor.mount(app.querySelector('.reader'), book, ch, 0); document.getElementById('tutorBtn').addEventListener('click', () => Tutor.toggle()); }
+  else document.getElementById('tutorBtn').remove();
   const prevBtn = document.getElementById('prev'), nextBtn = document.getElementById('next');
   renderMath(feed);
 
@@ -188,6 +190,7 @@ function renderReader(book, ch) {
     document.getElementById('count').textContent = i >= total ? 'Done' : `${i + 1} / ${total}`;
     document.getElementById('line').style.width = `${Math.min(100, (Math.min(i + 1, total) / total) * 100)}%`;
     document.getElementById('track').setAttribute('aria-valuenow', Math.min(i + 1, total));
+    if (window.Tutor) Tutor.setIndex(Math.min(i, total));
     prevBtn.disabled = i <= 0;
     nextBtn.disabled = i >= total;
   }
@@ -239,6 +242,7 @@ function renderReader(book, ch) {
   const onKey = e => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
     const el = e.target;
+    if (el && el.closest && el.closest('.tutor')) return; // the tutor panel handles its own keys
     if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
     const onControl = el && el.closest && el.closest('button, a');
     let d = 0;
@@ -252,7 +256,7 @@ function renderReader(book, ch) {
   };
   document.addEventListener('keydown', onKey);
   feed.tabIndex = -1; feed.focus({ preventScroll: true });
-  cleanup = () => { document.removeEventListener('keydown', onKey); clearTimeout(t); };
+  cleanup = () => { document.removeEventListener('keydown', onKey); clearTimeout(t); if (window.Tutor) Tutor.unmount(); };
 }
 
 // ---------- boot ----------

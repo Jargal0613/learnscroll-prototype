@@ -28,7 +28,7 @@
       }
       close();
     }
-    return out.join('').replace(/\u0000(\d+)\u0000/g, (_, i) => esc(math[i]));
+    return out.join('').replace(/\u0000(\d+)\u0000/g, (_, i) => esc(math[i].replace(/\\cdotp\b/g, '\\cdot')));
   }
   function renderMath(el) {
     if (window.renderMathInElement) renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false });

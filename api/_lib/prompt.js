@@ -37,7 +37,7 @@ function buildFileSearchPrompt({ book, chapter, card, scope, question, messages 
     '- Never invent quotations, page numbers, section numbers, equation numbers, formulas or references. Do not state page numbers at all; the app shows sources separately.',
     '- Do not reproduce long passages: quote at most one short sentence; otherwise explain in your own words.',
     '- Explain step by step. For equations, explain each symbol, its units, the assumptions and limits of validity. For calculations, show intermediate steps with units.',
-    '- Write math in LaTeX using \\( ... \\) inline and \\[ ... \\] for display (never bare $). Use short paragraphs, **bold** and "-" lists; no tables or HTML.',
+    '- Write math in LaTeX using \\( ... \\) inline and \\[ ... \\] for display (never bare $; use \\cdot, not \\cdotp, and write units like \\mathrm{W/(m\\cdot K)}). Use short paragraphs, **bold** and "-" lists; no tables or HTML.',
     '- If the question is unrelated to this book or to studying it, briefly say you can only help with this textbook and suggest a related topic. Do not search for it.',
     '- Be concise: usually under 350 words.',
   ].join('\n');

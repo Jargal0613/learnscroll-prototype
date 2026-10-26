@@ -257,6 +257,14 @@
   .fpage .marked-empty { margin-top: 8px; }
   .end-extra { margin-top: 14px; font-size: 13px; }
   .end-extra a { color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
+  .rv-target { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; color: var(--muted); }
+  .rv-target [aria-checked="true"] { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
+  .rv-note { font-size: 13.5px; color: var(--muted); max-width: 760px; line-height: 1.55; }
+  .rv-list li { display: flex; align-items: center; gap: 8px; }
+  .rv-list li > a { flex: 1; min-width: 0; }
+  .rv-why { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .rv-acts { display: flex; flex: none; }
+  @media (max-width: 600px) { .rv-list li { flex-wrap: wrap; } .rv-acts { width: 100%; justify-content: flex-end; } }
   .legend-a { display: block; margin-top: 6px; font-size: 13px; color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
   .sh-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 20px; }
   .sh-title { font: inherit; font-size: 24px; font-weight: 600; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; margin-left: -8px; flex: 1 1 300px; min-width: 0; }

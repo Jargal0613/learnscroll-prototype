@@ -136,6 +136,7 @@ function route() {
   if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'formulas') return Formulas.render(parts[1]);
   if (parts[0] === 'sheets') return Sheets.route(parts);
+  if (parts[0] === 'revision') return renderRevision(books[parts[1]] ? books[parts[1]] : null);
   if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
   if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
@@ -235,7 +236,7 @@ function renderHome() {
     ${attentionHTML()}
     ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
-    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span><span aria-hidden="true">·</span><a href="#/sheets">Study sheets</a><span>${plural(Sheets.count(), 'sheet')}</span></p>
+    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span><span aria-hidden="true">·</span><a href="#/sheets">Study sheets</a><span>${plural(Sheets.count(), 'sheet')}</span><span aria-hidden="true">·</span><a href="#/revision">Revision plan</a></p>
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
       const b = books[id], p = bookProgress(b);
@@ -730,18 +731,19 @@ function renderReview(book, kind) {
   const bs = bookState(book.id);
   const nb = markedList(book, 'b').length, nd = markedList(book, 'd').length, nboth = reviewCards(book, 'both').length;
   const head = `<a class="back" href="#/book/${book.id}">← Chapters</a><div class="book-head"><div><h1>Review</h1><p class="meta-line">${esc(book.title)}</p></div></div>`;
-  if (!['bookmarked', 'difficult', 'both'].includes(kind)) {
+  if (!['bookmarked', 'difficult', 'both', 'plan'].includes(kind)) {
     const opt = (k, label, n) => n ? `<a class="rv-choice" href="#/review/${book.id}/${k}"><b>${label}</b><span>${plural(n, 'card')}</span></a>` : `<span class="rv-choice off" aria-disabled="true"><b>${label}</b><span>none marked</span></span>`;
     app.innerHTML = `<main class="page">${head}${nboth ? `<p class="lead">Choose which marked cards to review. You'll see each card's heading first; recall what it says, then reveal it.</p>
       <div class="rv-choices">${opt('bookmarked', 'Bookmarked', nb)}${opt('difficult', 'Difficult', nd)}${opt('both', 'Bookmarked and difficult', nboth)}</div>`
       : `<div class="marked-empty"><p>Nothing to review yet.</p><p>In the reader, bookmark cards (<kbd>B</kbd>) or mark them as difficult (<kbd>D</kbd>); they'll show up here.</p></div>`}</main>`;
     return;
   }
-  const list = reviewCards(book, kind);
-  if (!list.length) { go(`#/review/${book.id}`); return; }
+  const plan = kind === 'plan';
+  const list = plan ? StudyData.revisionPlan(state, book).today.map(x => ({ ch: book.chapters.find(c => c.n === x.chapter), i: x.card })) : reviewCards(book, kind);
+  if (!list.length) { go(plan ? `#/revision/${book.id}` : `#/review/${book.id}`); return; }
   let pos = 0, revealed = false;
   const results = [];
-  app.innerHTML = `<main class="page review"><div class="rv-top"><a class="back" href="#/review/${book.id}">← Review options</a><span class="rv-count" id="rv-count"></span></div><div class="rv-track"><i id="rv-line"></i></div><section class="rv-card" id="rv-card" aria-live="polite"></section></main>`;
+  app.innerHTML = `<main class="page review"><div class="rv-top"><a class="back" href="${plan ? `#/revision/${book.id}">← Revision plan` : `#/review/${book.id}">← Review options`}</a><span class="rv-count" id="rv-count"></span></div><div class="rv-track"><i id="rv-line"></i></div><section class="rv-card" id="rv-card" aria-live="polite"></section></main>`;
   const el = document.getElementById('rv-card');
   function body(ch, i) {
     if (i < ch.cards.length) {
@@ -785,7 +787,7 @@ function renderReview(book, kind) {
     const again = results.filter(x => x.r === 'again');
     el.innerHTML = `<div class="sec"><span>Session summary</span></div><h2>${results.length - again.length} of ${results.length} got it</h2>
       ${again.length ? `<p class="rv-last">Cards to review again:</p><ol class="marked">${again.map(({ ch, i }) => `<li><a href="#/read/${book.id}/${ch.n}/${i + 1}"><span class="num">Ch ${ch.n}</span><span class="name">${esc(stripTags(screenTitle(ch, i)))}</span><span class="counts">card ${i + 1}/${screens(ch)}</span></a></li>`).join('')}</ol>` : '<p>Nothing marked for another look this session.</p>'}
-      <div class="btns"><a class="btn" href="#/review/${book.id}/${kind}" id="rv-restart">Review again from the start</a><a class="btn ghost" href="#/book/${book.id}">Back to chapters</a></div>`;
+      <div class="btns"><a class="btn" href="#/review/${book.id}/${kind}" id="rv-restart">Review again from the start</a>${plan ? `<a class="btn ghost" href="#/revision/${book.id}">Back to revision plan</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">Back to chapters</a></div>`;
     document.getElementById('rv-restart').onclick = e => { e.preventDefault(); pos = 0; results.length = 0; revealed = false; show(); };
   }
   const onKey = e => {
@@ -1151,6 +1153,43 @@ function renderReader(book, ch, at = null, sess = null) {
     feed.querySelectorAll('.note-ed:not([hidden])').forEach(ed => { clearTimeout(noteTimer); saveNote(ed.dataset.note, ed.querySelector('textarea').value); });
   };
 }
+
+// ---------- revision plan (ranking in StudyData.revisionPlan; runs in Review mode) ----------
+function renderRevision(book) {
+  if (!book) { const id = (state.last && books[state.last]) ? state.last : BOOK_IDS.find(x => books[x]); return go(`#/revision/${id}`); }
+  document.title = `Revision plan · ${book.short}`;
+  const rev = state.revision || {}, p = StudyData.revisionPlan(state, book);
+  const row = (x, acts) => { const ch = book.chapters.find(c => c.n === x.chapter); return `<li data-rid="${x.id}"><a href="#/read/${book.id}/${x.chapter}/${x.card + 1}"><span class="num">Ch ${x.chapter}</span><span class="name">${esc(stripTags(screenTitle(ch, x.card)))}<span class="rv-why">${esc(x.reason)}</span></span><span class="counts">card ${x.card + 1}/${screens(ch)}</span></a>${acts ? `<span class="rv-acts"><button class="t-link" data-rv="postpone" data-id="${x.id}">Postpone</button><button class="t-link" data-rv="understood" data-id="${x.id}">Understood</button></span>` : ''}</li>`; };
+  const hasData = !!state.books[book.id];
+  app.innerHTML = `<main class="page rvplan"><a class="back" href="#/">← Library</a>
+    <div class="book-head"><div><h1>Revision plan</h1><p class="meta-line">${esc(book.title)}</p></div></div>
+    <div class="f-bar"><label class="sr" for="rv-book">Book</label><select id="rv-book">${BOOK_IDS.filter(x => books[x]).map(x => `<option value="${x}"${x === book.id ? ' selected' : ''}>${esc(books[x].short)}</option>`).join('')}</select>
+      <span class="rv-target" role="radiogroup" aria-label="Cards per day">Per day: ${StudyData.TARGETS.map(n => `<button class="t-link" role="radio" data-target="${n}" aria-checked="${p.target === n}">${n}</button>`).join('')}</span>
+      ${p.today.length ? `<a class="btn sm" id="rv-start" href="#/review/${book.id}/plan">Start revision (${p.today.length})</a>` : ''}</div>
+    <p class="rv-note">Ranked from your quiz mistakes, cards marked difficult or “review again”, and cards not reviewed for ${14} days. Missed questions rank highest. Postpone hides a card until tomorrow; Understood hides it until you miss it or mark it again.</p>
+    <div class="f-msg" id="rv-msg" role="status"></div>
+    ${p.today.length ? `<div class="section-h"><span>Today</span><span>${p.today.length} of ${p.target}</span></div><ol class="marked rv-list">${p.today.map(x => row(x, true)).join('')}</ol>`
+      : `<div class="marked-empty"><p>${hasData ? 'Nothing to revise in this book right now.' : 'Nothing studied in this book yet.'}</p><p>${hasData ? 'Cards show up here when you miss a quiz question, mark a card difficult or “review again”, or haven’t reviewed a card for two weeks.' : 'Study a chapter and try its practice questions; cards that need another look will appear here.'}</p></div>`}
+    ${p.later.length ? `<div class="section-h"><span>Later</span><span>${p.later.length}</span></div><ol class="marked rv-list">${p.later.map(x => row(x, true)).join('')}</ol>` : ''}
+    ${p.postponed.length ? `<div class="section-h"><span>Postponed until tomorrow</span><span>${p.postponed.length}</span></div><ol class="marked rv-list">${p.postponed.map(x => row(x, false)).join('')}</ol>` : ''}
+  </main>`;
+  document.getElementById('rv-book').onchange = e => go(`#/revision/${e.target.value}`);
+  const main = app.querySelector('.rvplan');
+  main.addEventListener('click', e => {
+    const t = e.target.closest('[data-target]');
+    if (t) { const before = state.revision; state.revision = { log: {}, ...(state.revision || {}), target: Number(t.dataset.target) }; if (!save()) { state.revision = before; return revMsg('Not saved: browser storage unavailable.'); } renderRevision(book); return document.querySelector(`[data-target="${t.dataset.target}"]`).focus(); }
+    const b = e.target.closest('[data-rv]'); if (!b) return;
+    const k = `${book.id}/${b.dataset.id}`, before = JSON.stringify(state.revision || null);
+    state.revision = { target: 10, log: {}, ...(state.revision || {}) };
+    const log = state.revision.log[k] = [...(state.revision.log[k] || []), { a: b.dataset.rv, at: Date.now() }].slice(-20);
+    if (!save()) { state.revision = JSON.parse(before) || undefined; return revMsg('Not saved: browser storage unavailable. Nothing changed.'); }
+    const ids = [...main.querySelectorAll('[data-rv="postpone"]')].map(x => x.dataset.id), at = ids.indexOf(b.dataset.id);
+    renderRevision(book); revMsg(`${b.dataset.rv === 'postpone' ? 'Postponed until tomorrow' : 'Marked understood'}: ${log.length > 1 ? `history kept (${log.length} entries)` : 'history kept'}.`);
+    const next = document.querySelectorAll('[data-rv="postpone"]')[Math.min(at, document.querySelectorAll('[data-rv="postpone"]').length - 1)];
+    (next || document.getElementById('rv-book')).focus();
+  });
+}
+function revMsg(m) { const el = document.getElementById('rv-msg'); if (el) el.textContent = m; }
 
 // ---------- usability-test kit (dev only: open with ?usability=1) ----------
 // Puts this browser into a labeled test profile for moderated sessions. Nothing is sent anywhere (no telemetry).

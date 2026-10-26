@@ -17,6 +17,7 @@ downloads one JSON file; **Import study data** reads one back. Nothing is upload
 | Tutor conversations (open one, saved ones, your Helpful / Needs improvement feedback on answers, unsent draft) | optional | "include tutor conversations" checkbox, on by default |
 | Study session in progress | always | `null` when there is none |
 | Formula notebook (equations saved from cards, your own formulas and notes) | always | since format 3 |
+| Revision plan (daily target, Postpone / Understood history) | always, when set | since format 3 |
 | Study sheets (title and the ordered list of picked items; the items themselves are referenced, not copied) | always | since format 3 |
 
 **Never exported or imported (intentionally):** copies of unreadable data kept for recovery
@@ -44,6 +45,7 @@ Keeps everything from both sides. Conflict rules:
 - Tutor conversations (only if the file has them): the most recent conversation per book stays open, all others go to
   Saved (max 10 per book).
 - Session in progress: this browser's is kept; if there is none here, the file's is taken.
+- Revision plan: histories combined (duplicates dropped); this browser's daily target kept.
 - Study sheets: combined; the same sheet on both sides: the copy edited most recently wins.
 - Formula notebook: combined. The same formula on both sides (same card, or same custom formula id): the copy edited most recently wins.
 
@@ -55,6 +57,7 @@ Every category **included in the file** replaces this browser's, even when the f
 - Tutor conversations: if the file includes conversations (even zero), this browser's are replaced (an empty list
   removes them). If the file was exported without conversations, this browser's are kept.
 - Study sheets: replaced by the file's (an empty list removes yours); files without sheets keep yours.
+- Revision plan: replaced by the file's; files without it keep yours.
 - Formula notebook: replaced by the file's (an empty list removes yours). Files from before format 3 have no formula data, so yours are kept.
 - Session in progress: replaced by the file's; if the file says there is none (`null`), the session here ends. A
   version-1 file has no session data, so the session here is kept.

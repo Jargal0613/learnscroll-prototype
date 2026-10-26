@@ -116,9 +116,20 @@
     if (Object.keys(out).length > MAX_SHEETS) fail(`study.sheets has more than ${MAX_SHEETS} sheets.`);
     return out;
   }
+  // Revision plan state (schema 3, optional): daily target and a per-card history of Postpone / Understood.
+  const REV_KEY_RE = /^[a-z0-9-]{1,40}\/c\d{1,3}-q?\d{1,4}$/, TARGETS = [5, 10, 15], MAX_REV_LOG = 20;
+  function validRevision(r) {
+    if (!isObj(r)) fail('study.revision must be an object.'); onlyKeys(r, ['target', 'log'], 'study.revision');
+    if (r.target !== undefined && !TARGETS.includes(r.target)) fail('study.revision.target must be 5, 10 or 15.');
+    const log = mapOf(r.log || {}, REV_KEY_RE, 'study.revision.log', (v, w) => {
+      if (!Array.isArray(v) || v.length > MAX_REV_LOG) fail(`${w} must be a list (max ${MAX_REV_LOG}).`);
+      return v.map((e, i) => { if (!isObj(e) || !['postpone', 'understood'].includes(e.a) || !isTime(e.at) || Object.keys(e).length !== 2) fail(`${w}[${i}] must be { a: postpone|understood, at }.`); return { a: e.a, at: e.at }; });
+    });
+    return { target: r.target || 10, log };
+  }
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets', 'revision'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -156,6 +167,7 @@
     }
     if (s.formulas !== undefined) out.formulas = validFormulas(s.formulas, bookIds); // absent in files before format 3
     if (s.sheets !== undefined) out.sheets = validSheets(s.sheets, bookIds);
+    if (s.revision !== undefined) out.revision = validRevision(s.revision);
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -277,6 +289,7 @@
     if (isObj(s.readPrefs)) study.readPrefs = s.readPrefs;
     study.formulas = isObj(s.formulas) ? s.formulas : {};
     study.sheets = isObj(s.sheets) ? s.sheets : {};
+    if (isObj(s.revision)) study.revision = s.revision;
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
@@ -360,6 +373,11 @@
     const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
     study.formulas = mergeById(L.formulas, I.formulas);
     study.sheets = mergeById(L.sheets, I.sheets);
+    if (L.revision || I.revision) { // histories combined (deduplicated, oldest first); this browser's target kept
+      const log = {}, a = (L.revision || {}).log || {}, b = (I.revision || {}).log || {};
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const seen = new Set(); log[k] = [...(a[k] || []), ...(b[k] || [])].filter(e => { const x = e.a + e.at; if (seen.has(x)) return false; seen.add(x); return true; }).sort((x, y) => x.at - y.at).slice(-MAX_REV_LOG); }
+      study.revision = { target: (L.revision || I.revision).target || 10, log };
+    }
     // a session in progress here wins; otherwise take the file's
     return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
   }
@@ -386,6 +404,10 @@
         file: incoming.study.sheets === undefined ? 'Not in the file' : n(Object.keys(incoming.study.sheets).length, 'sheet'),
         merge: incoming.study.sheets === undefined ? 'Kept as they are' : 'Combined (same sheet: most recently edited copy kept)',
         replace: incoming.study.sheets === undefined ? 'Kept (the file has no sheets)' : Object.keys(incoming.study.sheets).length ? 'Replaced by the file' : Object.keys(local.study.sheets || {}).length ? `Removed (${n(Object.keys(local.study.sheets).length, 'sheet')} here; the file has none)` : 'None before or after' },
+      { key: 'revision', label: 'Revision plan (daily target, Postpone / Understood history)',
+        file: incoming.study.revision === undefined ? 'Not in the file' : 'Included',
+        merge: incoming.study.revision === undefined ? 'Kept as it is' : 'History combined; this browser\u2019s target kept',
+        replace: incoming.study.revision === undefined ? 'Kept (the file has none)' : 'Replaced by the file' },
       { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
         file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
         merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
@@ -403,6 +425,7 @@
     const study = { ...incoming.study };
     if (study.formulas === undefined) study.formulas = local.study.formulas || {}; // older file: not part of it, kept
     if (study.sheets === undefined) study.sheets = local.study.sheets || {};
+    if (study.revision === undefined && local.study.revision) study.revision = local.study.revision;
     return {
       study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
@@ -491,6 +514,7 @@
     study.formulas = objOr(s.formulas, (k, v) => { try { return FORMULA_RE.test(k) && !!validFormula(v, k); } catch (e) { return false; } });
     if (s.sheets !== undefined && !isObj(s.sheets)) repaired = true;
     study.sheets = objOr(s.sheets, (k, v) => { try { return SHEET_RE.test(k) && !!validSheet(v, k); } catch (e) { return false; } });
+    if (s.revision !== undefined) { try { study.revision = validRevision(s.revision); } catch (e) { repaired = true; } }
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
     if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
@@ -572,6 +596,43 @@
     return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
-  const api = { validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  // Revision plan for one book: deterministic ranking of cards that need another look.
+  // Signals: quiz misses (count of wrong answers, while the latest answer is still wrong), "difficult" marks,
+  // "review again" results, and cards last reviewed more than 14 days ago. Repeatedly missed questions rank highest.
+  // "Understood" hides a card until a newer negative signal (wrong answer or review again); "Postpone" hides it for
+  // the rest of that day. Ties: older last activity first, then book order. Each card appears at most once.
+  const DAY = 864e5, STALE_DAYS = 14;
+  function revisionPlan(study, book, { now = Date.now(), target } = {}) {
+    const bs = (study.books || {})[book.id] || {}, rev = study.revision || {}, log = rev.log || {};
+    const t = TARGETS.includes(target) ? target : TARGETS.includes(rev.target) ? rev.target : 10;
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+    const words = ['', 'once', 'twice'], times = n => words[n] || `${n} times`;
+    const items = []; let order = 0;
+    for (const ch of book.chapters) {
+      if (!Array.isArray(ch.cards) || !ch.cards.length) continue; // chapter not available
+      const n = ch.cards.length + (ch.quiz || []).length;
+      for (let i = 0; i < n; i++, order++) {
+        const isQ = i >= ch.cards.length, id = isQ ? `c${ch.n}-q${i - ch.cards.length + 1}` : `c${ch.n}-${i + 1}`;
+        const att = (bs.attempts || {})[id] || [], lastA = att[att.length - 1];
+        const misses = lastA && !lastA.ok ? att.filter(a => !a.ok).length : 0;
+        const diff = !!((bs.marks || {})[id] && bs.marks[id].d), r = (bs.review || {})[id];
+        const again = r && r.r === 'again' ? r : null;
+        const staleDays = r && r.r === 'got' ? Math.floor((now - r.at) / DAY) : 0;
+        const stale = staleDays >= STALE_DAYS;
+        if (!misses && !diff && !again && !stale) continue;
+        const neg = Math.max(misses ? lastA.at : 0, again ? again.at : 0);
+        const h = log[`${book.id}/${id}`] || [], und = h.filter(e => e.a === 'understood').pop(), post = h.filter(e => e.a === 'postpone').pop();
+        if (und && und.at >= neg) continue;
+        const score = misses * 10 + (again ? 4 : 0) + (diff ? 3 : 0) + (stale ? 1 : 0);
+        const reasons = [misses && `Missed ${times(misses)}`, again && 'Marked review again', diff && 'Marked difficult', stale && `Not reviewed recently (${staleDays} days)`].filter(Boolean);
+        const lastTouch = Math.max(neg, r ? r.at : 0);
+        items.push({ id, chapter: ch.n, card: i, score, reason: reasons.join(' · '), postponed: !!(post && post.at >= dayStart.getTime() && post.at > neg), lastTouch, order });
+      }
+    }
+    items.sort((a, b) => b.score - a.score || a.lastTouch - b.lastTouch || a.order - b.order);
+    const active = items.filter(x => !x.postponed).map(({ order: _o, ...x }) => x), postponed = items.filter(x => x.postponed).map(({ order: _o, ...x }) => x);
+    return { target: t, today: active.slice(0, t), later: active.slice(t), postponed };
+  }
+  const api = { revisionPlan, TARGETS, validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -217,3 +217,32 @@ test('study sheets: validate, export, merge (newest edit wins), replace; older f
   const { sheets: _s, ...old } = p.data.study; assert.deepEqual(SD.overwrite(local, { ...p.data, study: old }).study.sheets, S);
   assert.deepEqual(SD.overwrite(local, { ...p.data, study: { ...p.data.study, sheets: {} } }).study.sheets, {});
 });
+
+test('revision plan: deterministic ranking, reasons, target, Postpone/Understood, no unavailable or duplicate cards', () => {
+  const book = { id: 'heat-mass-transfer', chapters: [{ n: 1, cards: [{ h: 'a' }, { h: 'b' }, { h: 'c' }, { h: 'd' }], quiz: [{ q: 'q1' }, { q: 'q2' }] }, { n: 2, cards: [], quiz: [] }] };
+  const NOW = Date.UTC(2026, 9, 27, 12), D = 864e5;
+  const bs = { marks: { 'c1-2': { d: true }, 'c1-3': { b: true } }, review: { 'c1-1': { r: 'again', at: NOW - 2 * D }, 'c1-4': { r: 'got', at: NOW - 20 * D } },
+    attempts: { 'c1-q1': [{ k: 0, ok: false, at: NOW - 3 * D }, { k: 2, ok: false, at: NOW - D }], 'c1-q2': [{ k: 0, ok: false, at: NOW - D }, { k: 1, ok: true, at: NOW - 1000 }] }, notes: {}, done: {}, seen: {} };
+  const study = { books: { 'heat-mass-transfer': bs } };
+  const p = SD.revisionPlan(study, book, { now: NOW });
+  assert.deepEqual(p.today.map(x => x.id), ['c1-q1', 'c1-1', 'c1-2', 'c1-4'], 'missed twice first; answered-right-since question excluded; bookmark alone excluded');
+  assert.equal(p.today[0].reason, 'Missed twice'); assert.equal(p.today[1].reason, 'Marked review again'); assert.equal(p.today[3].reason, 'Not reviewed recently (20 days)');
+  assert.deepEqual(SD.revisionPlan(study, book, { now: NOW }), p, 'stable');
+  assert.equal(new Set(p.today.map(x => x.id)).size, p.today.length);
+  const t5 = SD.revisionPlan(study, book, { now: NOW, target: 5 }); assert.equal(t5.target, 5);
+  const small = SD.revisionPlan({ ...study, revision: { target: 5, log: {} } }, book, { now: NOW, target: 2 }); assert.equal(small.target, 5, 'only 5/10/15');
+  // understood hides until a newer negative signal; postpone hides for the day only
+  const withLog = { ...study, revision: { target: 10, log: { 'heat-mass-transfer/c1-q1': [{ a: 'understood', at: NOW - 1000 }], 'heat-mass-transfer/c1-2': [{ a: 'postpone', at: NOW - 1000 }] } } };
+  const q = SD.revisionPlan(withLog, book, { now: NOW });
+  assert.ok(!q.today.some(x => x.id === 'c1-q1') && !q.today.some(x => x.id === 'c1-2') && q.postponed.map(x => x.id).includes('c1-2'));
+  assert.ok(SD.revisionPlan(withLog, book, { now: NOW + D }).today.some(x => x.id === 'c1-2'), 'postponed card back the next day');
+  const missedAgain = JSON.parse(JSON.stringify(withLog)); missedAgain.books['heat-mass-transfer'].attempts['c1-q1'].push({ k: 3, ok: false, at: NOW });
+  const r = SD.revisionPlan(missedAgain, book, { now: NOW + 1 }); assert.equal(r.today[0].id, 'c1-q1'); assert.equal(r.today[0].reason, 'Missed 3 times');
+  // export/import
+  const st = { ...SD.sanitizeStudy({ schema: 3, books: { 'heat-mass-transfer': bs } }).study, revision: withLog.revision };
+  const f = SD.build(SD.fromStorage(JSON.stringify(st), '{}', null), { now: new Date(NOW) });
+  const pp = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(pp.ok, pp.error); assert.deepEqual(pp.data.study.revision, withLog.revision);
+  assert.equal(SD.parse(JSON.stringify({ ...f, study: { ...f.study, revision: { target: 7 } } }), { bookIds: IDS }).ok, false);
+  const m = SD.merge(SD.fromStorage(JSON.stringify({ ...st, revision: { target: 15, log: { 'heat-mass-transfer/c1-1': [{ a: 'postpone', at: NOW }] } } }), '{}', null), pp.data);
+  assert.equal(m.study.revision.target, 15); assert.equal(Object.keys(m.study.revision.log).length, 3);
+});

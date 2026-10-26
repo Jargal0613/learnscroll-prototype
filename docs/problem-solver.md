@@ -1,4 +1,10 @@
-# Engineering Problem Solver: design (ON HOLD, not released)
+# Engineering Problem Solver
+
+> **Status (27 Oct 2026):** approved for release with limits **2/min per IP, 10/day per IP, 200/day global**,
+> enforced in code (`api/_lib/solver.js` `LIMITS`) via Upstash Redis counters (`api/_lib/upstash.js`).
+> Route: `POST /api/solve` (`api/solve.js`). It returns 404 unless `SOLVER_ENABLED=1`, and 503 (`limiter_unavailable`)
+> if `KV_REST_API_URL`/`KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_*`) are missing; a counter error refuses with 429.
+> The figures below are the original design numbers (3/20/500); the released limits replace them.
 
 Status: **design only.** The prototype lives on the `problem-solver-design` branch: `api/_lib/solver.js` plus
 the mocked tests in `test/solver.test.js`. There is **no API route** that calls it. It also refuses to run unless

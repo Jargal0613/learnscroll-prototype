@@ -1,7 +1,7 @@
-// Engineering Problem Solver: DESIGN PROTOTYPE, NOT RELEASED. There is deliberately no api/ route that uses this
-// file, and enabled() is false unless SOLVER_ENABLED=1 is set on the server. See docs/problem-solver.md.
+// Engineering Problem Solver (POST /api/solve). Off unless SOLVER_ENABLED=1; refuses every request when the
+// Upstash rate-limit store is missing or failing (fail closed). See docs/problem-solver.md.
 const MAX_PROBLEM = 3000;
-const LIMITS = { perMinute: 3, perDay: 20, globalPerDay: 500 };
+const LIMITS = { perMinute: 2, perDay: 10, globalPerDay: 200 };
 const enabled = (env = process.env) => env.SOLVER_ENABLED === '1';
 
 // Request shape from the client: ids only + the problem text the student typed.

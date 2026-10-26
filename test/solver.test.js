@@ -27,14 +27,57 @@ test('mocked solve: this book’s store only, strict JSON schema, parsed result'
 });
 test('limits: per minute, per day, global; fail closed when the store is down', async () => {
   const st = mapStore(), now = Date.UTC(2026, 9, 27, 10, 0, 5);
-  for (let i = 0; i < 3; i++) assert.ok((await S.limit(st, { ip: 'a', now })).ok);
+  for (let i = 0; i < 2; i++) assert.ok((await S.limit(st, { ip: 'a', now })).ok);
   const r = await S.limit(st, { ip: 'a', now }); assert.equal(r.ok, false); assert.equal(r.reason, 'minute'); assert.ok(r.retryAfter > 0 && r.retryAfter <= 60);
   assert.ok((await S.limit(st, { ip: 'b', now })).ok, 'other students unaffected');
   const st2 = mapStore(); let t = now; let res;
-  for (let i = 0; i < 21; i++) { res = await S.limit(st2, { ip: 'c', now: t }); t += 61000; }
+  for (let i = 0; i < 11; i++) { res = await S.limit(st2, { ip: 'c', now: t }); t += 61000; }
   assert.equal(res.ok, false); assert.equal(res.reason, 'day');
   const st3 = mapStore(); let g;
   for (let i = 0; i < 501; i++) g = await S.limit(st3, { ip: `ip${i}`, now });
   assert.equal(g.reason, 'global');
   assert.deepEqual(await S.limit({ incr: async () => { throw new Error('down'); } }, { ip: 'a', now }), { ok: false, reason: 'limiter_unavailable', retryAfter: 60 });
+});
+
+// Route: fail closed and rate limits (mocked store and provider; no network).
+const handler = require('../api/solve');
+function call(method, body, deps, ip = '9.9.9.9') {
+  return new Promise(resolve => {
+    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end(s) { resolve({ status: this.statusCode, headers: this.headers, body: JSON.parse(s) }); } };
+    handler({ method, body, headers: { 'x-real-ip': ip } }, res, deps);
+  });
+}
+const ON = { SOLVER_ENABLED: '1' };
+const prov = () => ({ calls: 0, async respond() { this.calls++; return { text: good, usage: { input: 1, output: 1 } }; } });
+const okBody = { bookId: 'heat-mass-transfer', problem: 'A wall 0.2 m thick with k = 0.8 W/m K has 50 K across it. Find q.' };
+test('route: 404 when the flag is off', async () => { assert.equal((await call('POST', okBody, { env: {}, store: mapStore(), provider: prov(), knowledge: kb })).status, 404); });
+test('route: fail closed without limiter config, and when the store throws', async () => {
+  const p = prov();
+  assert.equal((await call('POST', okBody, { env: ON, store: null, provider: p, knowledge: kb })).status, 503);
+  const r = await call('POST', okBody, { env: ON, store: { incr: async () => { throw new Error('down'); } }, provider: p, knowledge: kb });
+  assert.equal(r.status, 429); assert.equal(p.calls, 0);
+});
+test('route: 2/min per IP, then 429 with Retry-After', async () => {
+  const st = mapStore(), p = prov(), d = { env: ON, store: st, provider: p, knowledge: kb };
+  assert.equal((await call('POST', okBody, d)).status, 200);
+  assert.equal((await call('POST', okBody, d)).status, 200);
+  const r = await call('POST', okBody, d); assert.equal(r.status, 429); assert.ok(Number(r.headers['Retry-After']) > 0);
+  assert.equal(p.calls, 2);
+});
+test('limits: 10/day per IP and 200/day global', async () => {
+  assert.deepEqual(S.LIMITS, { perMinute: 2, perDay: 10, globalPerDay: 200 });
+  const st = mapStore(); let t = Date.UTC(2026, 9, 27, 1), n = 0;
+  for (let i = 0; i < 11; i++) { const r = await S.limit(st, { ip: 'a', now: t + i * 61000 }); if (r.ok) n++; else assert.equal(r.reason, 'day'); }
+  assert.equal(n, 10);
+  const g = mapStore(); let ok = 0;
+  for (let i = 0; i < 201; i++) { const r = await S.limit(g, { ip: 'ip' + i, now: t }); if (r.ok) ok++; else assert.equal(r.reason, 'global'); }
+  assert.equal(ok, 200);
+});
+test('upstash store: null when unconfigured; throws on HTTP error', async () => {
+  const { upstashStore } = require('../api/_lib/upstash');
+  assert.equal(upstashStore({}), null);
+  const s = upstashStore({ KV_REST_API_URL: 'https://x', KV_REST_API_TOKEN: 't' }, async () => ({ ok: false, status: 500 }));
+  await assert.rejects(s.incr('k', 60));
+  const s2 = upstashStore({ KV_REST_API_URL: 'https://x', KV_REST_API_TOKEN: 't' }, async () => ({ ok: true, json: async () => [{ result: 3 }, { result: 1 }] }));
+  assert.equal(await s2.incr('k', 60), 3);
 });

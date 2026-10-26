@@ -10,7 +10,13 @@ const STYLE_INSTRUCTIONS = {
   example: 'ANSWER STYLE: Give an example. Build one concrete, realistic worked example with stated numbers (SI units): given data, what is asked, the solution steps with units, and a one-line sanity check of the answer.',
 };
 // Equation consistency rule shared by both prompts.
-const EQUATION_RULE = '- Equations: keep one consistent notation throughout the answer (same symbol always means the same quantity). Right after every equation, define each symbol it uses with its SI units (e.g. "where \\(k\\) is thermal conductivity, \\(\\mathrm{W/(m\\cdot K)}\\)"), then state the assumptions and limits of validity. For calculations, show intermediate steps with units.';
+const EQUATION_RULE = [
+  '- Equations: whenever you present or explain an equation, use this order, each part starting with its bold label on its own line:',
+  '  **Equation** (display math), **Symbols and units** (a "-" list: each symbol once with its SI units), **Assumptions**, **Physical meaning** (what it says physically, in one or two sentences).',
+  '  Define each symbol only once per answer, the first time it appears, and keep the same symbol and the same units for that quantity throughout (no re-definitions, no switching units mid-answer). For later equations, list only symbols that are new.',
+  '  Assumptions: list only assumptions stated in the retrieved textbook text or strictly required for the equation to hold; never invent assumptions, conditions or textbook claims. If you are unsure the book states one, put it under "Additional explanation" as general knowledge or omit it.',
+  '- Worked examples: write the equation, then the substitution with every number carrying its units, then the result with units (and a unit check when units combine), as separate steps.',
+].join('\n');
 const styleLine = s => (STYLE_INSTRUCTIONS[s] ? STYLE_INSTRUCTIONS[s] + STYLE_SUFFIX : '');
 // Temperature convention rule shared by both prompts.
 const TEMPERATURE_RULE = '- Temperatures: for temperature differences use K or °C consistently within an answer (a change of 1 K equals a change of 1 °C, so ΔT is numerically the same in both; say so when you switch or when it matters). Use absolute temperature in K wherever an equation needs it, such as temperature ratios, the ideal-gas law or radiation with T^4 (convert by adding 273.15 or 273 and show the conversion). Never silently change the textbook\'s convention or units; if you present something differently from the book, state that and explain why.';

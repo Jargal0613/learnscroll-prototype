@@ -300,6 +300,10 @@
   .md strong { color: var(--fg); font-weight: 600; }
   .md code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--surface-3); padding: 1px 5px; border-radius: 4px; }
   .md .katex-display { margin: 10px 0; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+  .md p, .md li { overflow-x: auto; overflow-y: hidden; } /* long inline math scrolls instead of widening the panel */
+  .t-body.md { min-width: 0; }
+  .card .note { overflow-x: auto; overflow-y: hidden; }
+  .eq { scrollbar-width: thin; overscroll-behavior-x: contain; }
   .t-src { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
   .t-src.none { font-style: italic; }
   .t-src-h { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }

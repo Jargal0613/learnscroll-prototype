@@ -287,8 +287,8 @@ test('each style adds its own instruction; default adds none; equation and secti
   const marks = { simple: /Explain simply/, math: /Walk through the math/, example: /Give an example/ };
   for (const s of ['default', 'simple', 'math', 'example']) for (const txt of [fs_(s), loc(s)]) {
     for (const [k, re] of Object.entries(marks)) (k === s ? assert.match : assert.doesNotMatch)(txt, re);
-    assert.match(txt, /define each symbol it uses with its SI units/);
-    assert.match(txt, /consistent notation/);
+    assert.match(txt, /each symbol once with its SI units/);
+    assert.match(txt, /keep the same symbol and the same units/);
   }
   for (const s of ['default', 'simple', 'math', 'example']) {
     assert.match(fs_(s), /### From the textbook/); assert.match(fs_(s), /### Additional explanation/);
@@ -316,4 +316,21 @@ test('raw inline citation markers are stripped from answers', () => {
   const { cleanMarkers } = require('../api/_lib/tutor');
   assert.equal(cleanMarkers('Heat approach. \uE200filecite\uE202turn0file6\uE202turn0file1\uE201\n\n### Next'), 'Heat approach.\n\n### Next');
   assert.equal(cleanMarkers('a \\(T^4\\) b'), 'a \\(T^4\\) b');
+});
+test('equation format: Equation -> Symbols and units -> Assumptions -> Physical meaning, symbols once, worked substitution, no invention', () => {
+  const { validate } = require('../api/_lib/validate');
+  const { buildFileSearchPrompt, buildPrompt } = require('../api/_lib/prompt');
+  const r = validate({ bookId: 'heat-mass-transfer', chapterId: 1, cardId: 'c1-13', question: 'x' });
+  for (const s of ['default', 'simple', 'math', 'example']) {
+    for (const txt of [buildFileSearchPrompt({ ...r, style: s }).instructions, buildPrompt({ ...r, style: s }, [], { bookIndexAvailable: false })[0].content]) {
+      const order = ['**Equation**', '**Symbols and units**', '**Assumptions**', '**Physical meaning**'].map(k => txt.indexOf(k));
+      assert.ok(order.every(k => k > 0) && order.every((k, i) => i === 0 || k > order[i - 1]), `order for ${s}`);
+      assert.match(txt, /Define each symbol only once per answer/);
+      assert.match(txt, /same units for that quantity throughout/);
+      assert.match(txt, /substitution with every number carrying its units, then the result with units/);
+      assert.match(txt, /never invent assumptions, conditions or textbook claims/);
+      assert.match(txt, /Temperatures: for temperature differences use K or °C consistently/);
+    }
+  }
+  assert.match(buildFileSearchPrompt(r).instructions, /### From the textbook/);
 });

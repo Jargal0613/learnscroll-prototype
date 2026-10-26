@@ -127,7 +127,9 @@ function chapterState(book, ch) {
 function go(hash) { if (location.hash === hash) route(); else location.hash = hash; }
 window.addEventListener('hashchange', route);
 let cleanup = null;
+let booted = false; // hash changes before boot are handled by the boot route()
 function route() {
+  if (!booted) return;
   if (cleanup) { cleanup(); cleanup = null; }
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   window.scrollTo(0, 0);
@@ -1256,7 +1258,7 @@ function renderUsability(msg = '') {
 // Wait for the book data AND for every deferred script (formulas.js, sheets.js run after this file).
 const domReady = new Promise(r => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', r, { once: true }) : r()));
 Promise.all([...BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })), domReady])
-  .then(route);
+  .then(() => { booted = true; route(); });
 
 // ---- Keyboard shortcuts reference ('?') ----
 (function shortcuts() {

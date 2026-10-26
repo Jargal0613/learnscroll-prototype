@@ -171,3 +171,29 @@ test('notes as Markdown: grouped by book > chapter > card heading, equation as $
   assert.ok(pos[0] < pos[1], 'card order follows the book');
   assert.equal(SD.notesMarkdown({ books: {} }, books).count, 0);
 });
+
+test('needs attention: priority order, limit 5, skips what Recently studied shows, links to card or mistakes', () => {
+  const books = [require('../data/heat-mass-transfer.json')];
+  const ch1 = books[0].chapters[0], nq = ch1.quiz.length;
+  const study = { books: { 'heat-mass-transfer': {
+    marks: { 'c1-3': { d: true }, 'c1-4': { b: true }, 'c2-2': { d: true } },
+    review: { 'c1-6': { r: 'again', at: T1 }, 'c1-7': { r: 'got', at: T1 }, 'c2-5': { r: 'again', at: T2 } },
+    attempts: { 'c1-q1': [{ k: 0, ok: false, at: T1 }], 'c1-q2': [{ k: 0, ok: false, at: T1 }, { k: 1, ok: true, at: T2 }] },
+    seen: { 1: 9, 2: 3 }, done: {},
+  } } };
+  const all = SD.needsAttention(study, books, { limit: 20 });
+  assert.deepEqual(all.map(x => x.kind), ['mistakes', 'difficult', 'difficult', 'again', 'again', 'unfinished', 'unfinished']);
+  assert.equal(all[0].href, '#/mistakes/heat-mass-transfer/1'); assert.equal(all[0].count, 1, 'a later right answer clears a mistake');
+  assert.equal(all[1].href, '#/read/heat-mass-transfer/1/3');
+  assert.equal(all[3].href, '#/read/heat-mass-transfer/2/5', 'newest review-again first');
+  assert.equal(all[5].href, '#/read/heat-mass-transfer/1/11', 'unfinished chapter links to the next card');
+  assert.equal(SD.needsAttention(study, books).length, 5, 'default limit 5');
+  const shown = [{ book: 'heat-mass-transfer', chapter: 1, card: 2 }, { book: 'heat-mass-transfer', chapter: 2, card: 3 }];
+  const ex = SD.needsAttention(study, books, { shown, limit: 20 });
+  assert.ok(!ex.some(x => x.kind === 'unfinished'), 'chapters in Recently studied are not repeated');
+  assert.ok(!ex.some(x => x.href === '#/read/heat-mass-transfer/1/3'), 'the exact card shown in Recently studied is skipped');
+  study.books['heat-mass-transfer'].done = { 1: true, 2: true };
+  assert.ok(!SD.needsAttention(study, books, { limit: 20 }).some(x => x.kind === 'unfinished'), 'done chapters are not unfinished');
+  assert.deepEqual(SD.needsAttention({ books: {} }, books), []);
+  assert.ok(nq > 0);
+});

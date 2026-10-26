@@ -142,6 +142,7 @@ function renderHome() {
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
     ${recentHTML()}
+    ${attentionHTML()}
     ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
@@ -182,6 +183,15 @@ function renderHome() {
   document.getElementById('imp-file').onchange = e => { const f = e.target.files[0]; if (f) readImport(f); };
 }
 
+const recentShown = () => state.recent.filter(r => books[r.book] && books[r.book].chapters.some(c => c.n === r.chapter && ready(c))).slice(0, 3)
+  .map(r => { const ch = books[r.book].chapters.find(c => c.n === r.chapter); return { ...r, card: Math.min(r.card, screens(ch) - 1) }; });
+function attentionHTML() {
+  const items = StudyData.needsAttention(state, BOOK_IDS.filter(id => books[id]).map(id => books[id]), { shown: recentShown() });
+  if (!items.length) return ''; // hidden when there is nothing
+  const label = { mistakes: 'Quiz mistakes', difficult: 'Difficult', again: 'Review again', unfinished: 'Unfinished' };
+  return `<div class="section-h"><span>Needs attention</span><span>${items.length === 5 ? 'Top 5' : plural(items.length, 'item')}</span></div>
+    <ol class="recent attention">${items.map(it => `<li><a href="${it.href}"><span class="r-book">${esc(books[it.book].short)}</span><span class="r-ch"><span class="att-k k-${it.kind}">${label[it.kind]}</span>${esc(it.title)}</span><span class="r-pos">${it.detail ? esc(it.detail) : it.kind === 'mistakes' ? 'Retry' : `Ch ${it.chapter} · card ${it.card + 1}`}</span></a></li>`).join('')}</ol>`;
+}
 function recentHTML() {
   const items = state.recent.filter(r => books[r.book] && books[r.book].chapters.some(c => c.n === r.chapter && ready(c))).slice(0, 3);
   const body = items.length ? `<ol class="recent">${items.map(r => {

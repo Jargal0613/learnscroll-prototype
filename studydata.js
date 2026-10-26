@@ -306,6 +306,40 @@
     return { markdown: out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n', count };
   }
 
-  const api = { notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  // 'Needs attention': up to `limit` items from local data, in priority order: chapters with quiz mistakes,
+  // difficult cards, review-again cards, unfinished chapters. `shown` lists what Recently studied already shows
+  // ({ book, chapter, card } with card 0-based); those chapters/cards are skipped.
+  function needsAttention(study, books, { shown = [], limit = 5 } = {}) {
+    const ready = ch => Array.isArray(ch.cards) && ch.cards.length > 0;
+    const screens = ch => ch.cards.length + (ch.quiz || []).length;
+    const shownCh = new Set(shown.map(r => `${r.book}/${r.chapter}`)), shownCard = new Set(shown.map(r => `${r.book}/${r.chapter}/${r.card}`));
+    const strip = s => String(s || '').replace(/<[^>]*>/g, '').trim();
+    const pick = { mistakes: [], difficult: [], again: [], unfinished: [] };
+    for (const book of books) {
+      const bs = (study.books || {})[book.id]; if (!bs) continue;
+      for (const ch of book.chapters.filter(ready)) {
+        const n = screens(ch);
+        const miss = (ch.quiz || []).filter((_, i) => { const l = (bs.attempts || {})[`c${ch.n}-q${i + 1}`]; return l && l.length && !l[l.length - 1].ok; }).length;
+        if (miss) pick.mistakes.push({ kind: 'mistakes', book: book.id, chapter: ch.n, count: miss, title: `${miss} quiz mistake${miss === 1 ? '' : 's'} · Ch ${ch.n}: ${strip(ch.title)}`, href: `#/mistakes/${book.id}/${ch.n}` });
+        for (let i = 0; i < n; i++) {
+          const id = i < ch.cards.length ? `c${ch.n}-${i + 1}` : `c${ch.n}-q${i - ch.cards.length + 1}`;
+          if (shownCard.has(`${book.id}/${ch.n}/${i}`)) continue;
+          const h = i < ch.cards.length ? strip(ch.cards[i].h) : `Practice: ${strip(ch.quiz[i - ch.cards.length].q)}`;
+          const item = { book: book.id, chapter: ch.n, card: i, title: h, href: `#/read/${book.id}/${ch.n}/${i + 1}` };
+          if (bs.marks && bs.marks[id] && bs.marks[id].d) pick.difficult.push({ ...item, kind: 'difficult' });
+          else if (bs.review && bs.review[id] && bs.review[id].r === 'again') pick.again.push({ ...item, kind: 'again', at: bs.review[id].at });
+        }
+        const seen = bs.seen && bs.seen[ch.n];
+        if (Number.isInteger(seen) && !(bs.done && bs.done[ch.n]) && !shownCh.has(`${book.id}/${ch.n}`)) {
+          const next = Math.min(seen + 1, n - 1);
+          pick.unfinished.push({ kind: 'unfinished', book: book.id, chapter: ch.n, card: next, title: `Ch ${ch.n}: ${strip(ch.title)}`, detail: `${seen + 1} of ${n} cards`, href: `#/read/${book.id}/${ch.n}/${next + 1}` });
+        }
+      }
+    }
+    pick.again.sort((a, b) => b.at - a.at);
+    return [...pick.mistakes, ...pick.difficult, ...pick.again, ...pick.unfinished].slice(0, limit);
+  }
+
+  const api = { needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

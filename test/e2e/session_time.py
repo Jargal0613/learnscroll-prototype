@@ -4,6 +4,9 @@ from common import *
 import datetime
 XK, SK = 'learnscroll-session-v1', 'learnscroll-study-v1'
 T0 = datetime.datetime(2026, 10, 27, 9, 0, 0, tzinfo=datetime.timezone.utc)
+def secs(t):  # '8:30 left' -> 510
+    m, s_ = t.split(' ')[0].split(':'); return int(m) * 60 + int(s_)
+def near(t, want, tol=3): return abs(secs(t) - want) <= tol  # real page-load time leaks into the fake clock a little
 def sess(pg): return pg.evaluate(f"JSON.parse(localStorage['{XK}'] || 'null')")
 def hide(pg, hidden):
     pg.evaluate("""h => { Object.defineProperty(document, 'visibilityState', { value: h ? 'hidden' : 'visible', configurable: true });
@@ -17,19 +20,19 @@ with sync_playwright() as p:
         pg.click('[data-book="heat-mass-transfer"]'); pg.click('[data-min="10"]'); pg.click('#sessGo'); pg.wait_for_selector('#left')
         ok(pg.inner_text('#left') == '10:00 left', f'{W} starts at 10:00 ({pg.inner_text("#left")})')
         pg.clock.run_for(60_000); pg.wait_for_timeout(100)
-        ok(pg.inner_text('#left') == '9:00 left', f'after 1 min: {pg.inner_text("#left")}')
+        ok(near(pg.inner_text('#left'), 540), f'after 1 min: {pg.inner_text("#left")}')
         # reload: remaining derived from start, not reset
         pg.clock.run_for(30_000); pg.reload(); pg.wait_for_selector('#left')
-        ok(pg.inner_text('#left') == '8:30 left', f'reload keeps remaining time: {pg.inner_text("#left")}')
+        ok(near(pg.inner_text('#left'), 510), f'reload keeps remaining time: {pg.inner_text("#left")}')
         # background tab: 2 min hidden do not count as active, but remaining time still runs
         pg.clock.run_for(30_000); hide(pg, True); pg.clock.run_for(120_000); hide(pg, False); pg.wait_for_timeout(50)
-        ok(pg.inner_text('#left') == '6:00 left', f'background: remaining recomputed on visible ({pg.inner_text("#left")})')
+        ok(near(pg.inner_text('#left'), 360), f'background: remaining recomputed on visible ({pg.inner_text("#left")})')
         act = sess(pg)['active']; ok(115_000 <= act <= 125_000, f'background time excluded from active ({act/1000:.0f}s ~ 120s)')
         pg.screenshot(path=f'{OUT}/{W}-running.png')
         # reopen in a fresh tab (same browser): same remaining time
         pg.clock.run_for(60_000)
         pg2 = ctx.new_page(); watch(pg2, errs); pg2.goto(BASE + '/#/'); pg2.wait_for_selector('#sessResume'); pg2.click('#sessResume'); pg2.wait_for_selector('#left')
-        ok(pg2.inner_text('#left') in ('5:00 left', '4:59 left', '4:58 left', '4:57 left', '4:56 left'), f'reopen in new tab: {pg2.inner_text("#left")}')
+        ok(near(pg2.inner_text('#left'), 300, 5), f'reopen in new tab: {pg2.inner_text("#left")}')
         pg2.close()
         # close everything; expire while closed (1 h later)
         before = sess(pg)['active']

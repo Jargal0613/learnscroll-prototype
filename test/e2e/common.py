@@ -12,7 +12,7 @@ def ok(cond, msg):
     results.append((bool(cond), msg)); print(('PASS ' if cond else 'FAIL ') + msg, flush=True)
 def watch(pg, errs):
     pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
-    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.on('pageerror', lambda e: errs.append(str(e) + ' @ ' + (e.stack or '')[:300]))
 def finish(errs):
     ok(not errs, 'no console errors' + (f': {errs[:3]}' if errs else ''))
     failed = [m for c, m in results if not c]

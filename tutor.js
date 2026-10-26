@@ -14,7 +14,7 @@
     try { if (!localStorage.getItem(KEY + '-corrupt-backup')) localStorage.setItem(KEY + '-corrupt-backup', raw); } catch (e) {}
     return {};
   };
-  const save = s => { try { if (window.StudyData) s._schema = window.StudyData.SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { if (window.lsSaveFailed) window.lsSaveFailed(e); } };
+  const save = s => { try { if (window.StudyData) s._schema = window.StudyData.SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); return true; } catch (e) { if (window.lsSaveFailed) window.lsSaveFailed(e); return false; } };
   const validConv = c => c && typeof c === 'object' && typeof c.conversationId === 'string' && Array.isArray(c.messages) && c.messages.every(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
   const newId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
@@ -61,7 +61,7 @@
     const c = all[ctx.book.id];
     return validConv(c) ? c : { conversationId: newId(), messages: [], draft: '', scope: 'card' };
   }
-  function store(c) { const all = load(); all[ctx.book.id] = c; save(all); }
+  function store(c) { const all = load(); all[ctx.book.id] = c; return save(all); }
   const MAX_SAVED = 10;
   // Where a conversation started: follow-ups keep this book/chapter/card/scope so the history stays on topic.
   function originNow() {
@@ -110,6 +110,12 @@
     $('t-form').addEventListener('submit', e => { e.preventDefault(); send(); });
     $('t-close').addEventListener('click', () => toggle(false));
     $('t-log').addEventListener('click', e => {
+      const fb = e.target.closest('[data-fb],[data-fbr]');
+      if (fb && !ctx.busy) {
+        const i = Number(fb.dataset.fb ?? fb.dataset.fbr);
+        if (fb.dataset.fb !== undefined) { const v = fb.dataset.v; return setFeedback(i, f => (f && f.rating === v ? null : { rating: v, reasons: v === 'needs_work' && f ? f.reasons : [], at: Date.now() }), `[data-v="${v}"]`); }
+        const r = fb.dataset.r; return setFeedback(i, f => f && { ...f, reasons: f.reasons.includes(r) ? f.reasons.filter(x => x !== r) : [...f.reasons, r], at: Date.now() }, `[data-r="${r}"]`);
+      }
       const b = e.target.closest('[data-check],[data-hint],[data-reveal]'); if (!b) return;
       if (b.dataset.check !== undefined) return runCheck(Number(b.dataset.check), b);
       const el = document.getElementById(b.getAttribute('aria-controls'));
@@ -194,7 +200,25 @@
       src = `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`;
     } else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
     const canCheck = typeof idx === 'number' && m.retrieval && !/^#{0,4}\s*$/.test(m.content);
-    return `<div class="t-msg bot" data-i="${idx}"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}${canCheck ? checkHTML(m, idx) : ''}</div>`;
+    return `<div class="t-msg bot" data-i="${idx}"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}${canCheck ? checkHTML(m, idx) : ''}${typeof idx === 'number' && m.retrieval ? fbHTML(m, idx) : ''}</div>`;
+  }
+  // Answer feedback: stored only on this message in this browser (and in exports). Nothing is sent anywhere.
+  const FB_REASONS = [['incorrect', 'Incorrect'], ['unclear', 'Unclear'], ['source', 'Wrong source'], ['units', 'Equation or units issue']];
+  function fbHTML(m, idx) {
+    const f = m.feedback || {}, r = f.rating;
+    const b = (v, l) => `<button type="button" class="t-link t-fb-b" data-fb="${idx}" data-v="${v}" aria-pressed="${r === v}">${l}</button>`;
+    const reasons = r === 'needs_work' ? `<div class="t-fb-r" role="group" aria-label="What was wrong? (optional)"><span>What was wrong? (optional)</span>${FB_REASONS.map(([k, l]) => `<button type="button" class="t-chip" data-fbr="${idx}" data-r="${k}" aria-pressed="${(f.reasons || []).includes(k)}">${l}</button>`).join('')}</div>` : '';
+    return `<div class="t-fb" role="group" aria-label="Was this answer helpful?"><div class="t-fb-row"><span class="t-fb-q">${r ? 'Feedback saved in this browser' : 'Was this helpful?'}</span>${b('helpful', 'Helpful')}${b('needs_work', 'Needs improvement')}</div>${reasons}</div>`;
+  }
+  function setFeedback(idx, fn, focusSel) {
+    const c = conv(), m = c.messages[idx]; if (!m || m.role !== 'assistant') return;
+    const prev = m.feedback; m.feedback = fn(prev ? { ...prev, reasons: [...(prev.reasons || [])] } : null);
+    if (!m.feedback) delete m.feedback;
+    const okSave = store(c), log = document.getElementById('t-log'), top = log.scrollTop;
+    if (okSave) { paintLog(); log.scrollTop = top; }
+    const row = log.querySelector(`.t-msg[data-i="${idx}"] .t-fb`); if (!row) return;
+    if (!okSave) row.insertAdjacentHTML('beforeend', '<div class="t-err" role="alert"><p>Couldn’t save your feedback: this browser’s storage is full or blocked. Nothing was changed.</p></div>');
+    else { const f = row.querySelector(focusSel); if (f) f.focus({ preventScroll: true }); }
   }
   // 'Check my understanding': one question about this answer, with Hint / Reveal answer. Stored on the message.
   function checkHTML(m, idx) {

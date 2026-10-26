@@ -117,6 +117,7 @@
     for (const k of ['chapterTitle', 'index', 'at']) if (o[k] !== undefined) r[k] = o[k];
     return r;
   }
+  const FB_REASONS = ['incorrect', 'unclear', 'source', 'units'];
   function validConvCore(c, w) {
         if (typeof c.conversationId !== 'string' || !CONV_RE.test(c.conversationId)) fail(`${w}.conversationId is invalid.`);
         if (!Array.isArray(c.messages) || c.messages.length > MAX_MSGS) fail(`${w}.messages must be a list (max ${MAX_MSGS}).`);
@@ -130,8 +131,9 @@
           if (m.retrieval !== undefined && m.retrieval !== null && !isObj(m.retrieval)) fail(`${mw}.retrieval must be an object.`);
           if (m.where !== undefined && typeof m.where !== 'string') fail(`${mw}.where must be text.`);
           if (m.check !== undefined && !(isObj(m.check) && ['question', 'hint', 'answer'].every(k => typeof m.check[k] === 'string' && m.check[k].length <= 2000) && Object.keys(m.check).length === 3)) fail(`${mw}.check must have question, hint and answer text.`);
+          if (m.feedback !== undefined) { const f = m.feedback; if (!(isObj(f) && ['helpful', 'needs_work'].includes(f.rating) && Array.isArray(f.reasons) && f.reasons.every(r => FB_REASONS.includes(r)) && (f.at === undefined || isTime(f.at)) && Object.keys(f).every(k => ['rating', 'reasons', 'at'].includes(k)))) fail(`${mw}.feedback is invalid.`); }
           const out = { role: m.role, content: m.content };
-          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check']) if (m[k] !== undefined) out[k] = m[k];
+          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check', 'feedback']) if (m[k] !== undefined) out[k] = m[k];
           return out;
         });
         const r = { conversationId: c.conversationId, messages, scope: c.scope || 'card' };

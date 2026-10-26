@@ -14,7 +14,7 @@ downloads one JSON file; **Import study data** reads one back. Nothing is upload
 | Quiz attempts | always | |
 | Recent history, study-session summaries | always | |
 | Preferences: tutor answer style, reading text size, session length/book | always | |
-| Tutor conversations (open one, saved ones, answer feedback, unsent draft) | optional | "include tutor conversations" checkbox, on by default |
+| Tutor conversations (open one, saved ones, your Helpful / Needs improvement feedback on answers, unsent draft) | optional | "include tutor conversations" checkbox, on by default |
 | Study session in progress | always | `null` when there is none |
 
 **Never exported or imported (intentionally):** copies of unreadable data kept for recovery

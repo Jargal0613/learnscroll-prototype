@@ -4,8 +4,7 @@
   const KEY = 'learnscroll-tutor-v1';
   const API = '/api/tutor';
   const MAX_HISTORY = 10;
-  const STYLES = [['default', 'Default'], ['simple', 'Explain simply'], ['math', 'Walk through the math'], ['example', 'Give an example']];
-  const SUGGEST = ['Explain this more simply', 'Walk me through the equation', 'Give me a similar example'];
+  const STYLES = [['default', 'Default'], ['simple', 'Simple'], ['math', 'Math walkthrough'], ['example', 'Example']];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
   const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} };
@@ -59,12 +58,11 @@
         <div class="t-actions"><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
       <div class="t-scope" role="radiogroup" aria-label="Question scope">
         <button role="radio" data-scope="card">This card</button><button role="radio" data-scope="chapter">This chapter</button><button role="radio" data-scope="book">Whole book</button></div>
-      <div class="t-style" role="radiogroup" aria-label="Answer style"><span>Style</span>${STYLES.map(([k, l]) => `<button role="radio" data-style="${k}">${l}</button>`).join('')}</div>
+      <div class="t-style" role="radiogroup" aria-label="Answer style">${STYLES.map(([k, l]) => `<button role="radio" data-style="${k}">${l}</button>`).join('')}</div>
       <div class="t-notice" id="t-notice" hidden></div>
       <div class="t-log" id="t-log" aria-live="polite"></div>
-      <div class="t-suggest" id="t-suggest">${SUGGEST.map(s => `<button>${s}</button>`).join('')}</div>
       <form class="t-form" id="t-form">
-        <textarea id="t-input" rows="3" maxlength="2000" placeholder="Ask about this card, chapter or book…" aria-label="Your question"></textarea>
+        <textarea id="t-input" rows="3" maxlength="2000" placeholder="Ask a question about this card, chapter or book, e.g. “Why is the minus sign in Fourier’s law?” or “Work a numeric example with SI units.”" aria-label="Your question"></textarea>
         <div class="t-row"><span class="t-tip">Enter to send · Shift+Enter for a new line</span><button type="submit" class="t-send" id="t-send">Send</button></div>
       </form>`;
     reader.appendChild(panel);
@@ -96,10 +94,6 @@
       const b = e.target.closest('[data-style]'); if (!b) return;
       const all = load(); all._prefs = { ...(all._prefs || {}), style: b.dataset.style }; save(all); paintStyle();
     });
-    $('t-suggest').addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b || ctx.busy) return;
-      input.value = b.textContent; send();
-    });
   }
 
   // Ask the server which books the tutor can answer for, and say so up front instead of after a failed send.
@@ -116,7 +110,7 @@
     n.innerHTML = msg; n.hidden = !msg;
     ctx.unavailable = !!msg;
     const dis = !!msg;
-    document.querySelectorAll('#t-input, #t-send, #t-suggest button').forEach(x => { x.disabled = dis; });
+    document.querySelectorAll('#t-input, #t-send').forEach(x => { x.disabled = dis; });
   }
 
   function effectiveScope() {
@@ -156,7 +150,7 @@
     const c = conv();
     log.innerHTML = c.messages.length || extra
       ? c.messages.map(msgHTML).join('') + extra
-      : `<div class="t-empty"><p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope above, or try a suggestion below.</p></div>`;
+      : `<div class="t-empty"><p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope and an answer style above, then type your question below.</p></div>`;
     renderMath(log);
     log.scrollTop = log.scrollHeight;
   }
@@ -207,7 +201,6 @@
   function setBusy(b) {
     const s = document.getElementById('t-send'); if (s) { s.disabled = b || !!(ctx && ctx.unavailable); s.textContent = b ? 'Thinking…' : 'Send'; }
     document.querySelectorAll('#t-new').forEach(x => { x.disabled = b; });
-    document.querySelectorAll('#t-suggest button').forEach(x => { x.disabled = b || !!(ctx && ctx.unavailable); });
   }
 
   function toggle(force) {

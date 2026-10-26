@@ -75,6 +75,7 @@ function route() {
   window.scrollTo(0, 0);
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
+  if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'review' && books[parts[1]]) return renderReview(books[parts[1]], parts[2]);
   if (parts[0] === 'read') {
     const b = books[parts[1]];
@@ -112,6 +113,7 @@ function renderHome() {
     <div class="topline"><div class="brand"><i></i>LearnScroll</div></div>
     <h1>Study, one card at a time.</h1>
     <p class="lead">Short study notes for five textbooks, chapter by chapter. Move through a chapter one idea per screen, then check yourself with a few practice questions. Progress is saved in this browser.</p>
+    ${flash ? `<div class="notice ok" role="status">${esc(flash)}</div>` : ''}
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
     ${recentHTML()}
@@ -137,7 +139,13 @@ function renderHome() {
         ${prog}
       </a>`;
     }).join('')}</div>
+    <footer class="lib-foot"><span>Study data is saved only in this browser.</span>
+      <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
+  flash = '';
+  document.getElementById('exp').onclick = () => exportData(document.getElementById('exp-conv').checked);
+  document.getElementById('imp').onclick = () => document.getElementById('imp-file').click();
+  document.getElementById('imp-file').onchange = e => { const f = e.target.files[0]; if (f) readImport(f); };
 }
 
 function recentHTML() {
@@ -156,6 +164,66 @@ function reviewHomeHTML(ids) {
     ? `<div class="review-row">${rows.map(r => `<a class="btn ghost sm" href="#/review/${r.b.id}">Review ${esc(r.b.short)} (${r.n})</a>`).join('')}</div>`
     : '<p class="empty-note">Nothing to review yet. Bookmark cards or mark them as difficult in the reader, then review them here.</p>';
   return `<div class="section-h"><span>Review</span><span>Marked cards</span></div>${body}`;
+}
+
+// ---------- export / import (all local; logic in studydata.js) ----------
+let flash = '', pendingImport = null;
+const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY));
+function download(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function exportData(conversations, suffix = '') {
+  const now = new Date();
+  const d = StudyData.build(localData(), { conversations, now });
+  const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  download(`learnscroll-study-${day}${suffix}.json`, JSON.stringify(d, null, 2));
+}
+function readImport(file) {
+  const done = text => { const r = StudyData.parse(text, { bookIds: BOOK_IDS }); pendingImport = { name: file.name, ...r }; go('#/import'); };
+  if (file.size > 5 * 1024 * 1024) return done(null);
+  file.text().then(done, () => done(null));
+}
+function countsHTML(c) {
+  const row = (k, v) => `<li><span>${k}</span><b>${v}</b></li>`;
+  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
+}
+function renderImport() {
+  document.title = 'Import study data · LearnScroll';
+  const p = pendingImport;
+  const head = '<a class="back" href="#/">← Library</a><h1>Import study data</h1>';
+  if (!p) { app.innerHTML = `<main class="page imp">${head}<p class="lead">Choose a file with <b>Import study data</b> at the bottom of the library.</p></main>`; return; }
+  if (!p.ok) {
+    app.innerHTML = `<main class="page imp">${head}<div class="imp-err" role="alert"><b>This file can’t be imported.</b><p>${esc(p.error || 'The file could not be read.')}</p><p class="imp-file">${esc(p.name)} · Nothing was changed.</p></div><div class="btns"><a class="btn ghost" href="#/" id="imp-back">Back to library</a></div></main>`;
+    pendingImport = null; return;
+  }
+  const inc = StudyData.counts(p.data), cur = StudyData.counts(localData());
+  app.innerHTML = `<main class="page imp">${head}
+    <p class="lead">${esc(p.name)} · exported ${esc(new Date(p.data.exportedAt).toLocaleString())}. Nothing changes until you confirm.</p>
+    <div class="imp-cols"><section><h2>In the file</h2>${countsHTML(inc)}</section><section><h2>In this browser now</h2>${countsHTML(cur)}</section></div>
+    <div class="imp-opts">
+      <section class="imp-opt"><h2>Merge</h2><p>Keeps everything from both. Bookmarks, difficult marks, notes, review results and completed chapters are combined; when the same note or result exists in both, the newer one wins; progress takes the furthest point.</p><button class="btn" id="imp-merge">Merge into this browser</button></section>
+      <section class="imp-opt warn"><h2>Overwrite</h2><p>Replaces this browser’s study data with the file.${p.data.tutor.conversations ? ' Tutor conversations are replaced too.' : ' Tutor conversations here are kept (the file has none).'} <b>Current data not in the file will be lost.</b></p>
+        <label class="imp-chk"><input type="checkbox" id="imp-backup" checked> First download a backup of this browser’s current data</label>
+        <button class="btn danger" id="imp-over">Overwrite this browser’s data</button></section>
+    </div>
+    <div class="btns"><a class="btn ghost" href="#/" id="imp-cancel">Cancel</a></div></main>`;
+  const apply = (mode) => {
+    const local = localData();
+    if (mode === 'overwrite' && document.getElementById('imp-backup').checked) exportData(true, '-backup');
+    const next = mode === 'merge' ? StudyData.merge(local, p.data) : StudyData.overwrite(local, p.data);
+    const out = StudyData.toStorage(next);
+    try { localStorage.setItem(StudyData.STUDY_KEY, out.study); localStorage.setItem(StudyData.TUTOR_KEY, out.tutor); }
+    catch (e) { flash = 'Import failed: browser storage is full or unavailable. Nothing was changed.'; localStorage.setItem(StudyData.STUDY_KEY, StudyData.toStorage(local).study); go('#/'); return; }
+    state = load(); pendingImport = null;
+    const c = StudyData.counts(next);
+    flash = `${mode === 'merge' ? 'Merged' : 'Imported'} study data: ${plural(c.bookmarks, 'bookmark')}, ${plural(c.difficult, 'difficult mark')}, ${plural(c.notes, 'note')}, ${plural(c.reviews, 'review result')}.`;
+    go('#/');
+  };
+  document.getElementById('imp-merge').onclick = () => apply('merge');
+  document.getElementById('imp-over').onclick = () => apply('overwrite');
+  document.getElementById('imp-cancel').onclick = () => { pendingImport = null; };
 }
 
 // ---------- review mode (no scheduling: just the cards you marked) ----------

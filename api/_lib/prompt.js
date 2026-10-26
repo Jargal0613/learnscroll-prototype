@@ -12,6 +12,8 @@ const STYLE_INSTRUCTIONS = {
 // Equation consistency rule shared by both prompts.
 const EQUATION_RULE = '- Equations: keep one consistent notation throughout the answer (same symbol always means the same quantity). Right after every equation, define each symbol it uses with its SI units (e.g. "where \\(k\\) is thermal conductivity, \\(\\mathrm{W/(m\\cdot K)}\\)"), then state the assumptions and limits of validity. For calculations, show intermediate steps with units.';
 const styleLine = s => (STYLE_INSTRUCTIONS[s] ? STYLE_INSTRUCTIONS[s] + STYLE_SUFFIX : '');
+// Temperature convention rule shared by both prompts.
+const TEMPERATURE_RULE = '- Temperatures: for temperature differences use K or °C consistently within an answer (a change of 1 K equals a change of 1 °C, so ΔT is numerically the same in both; say so when you switch or when it matters). Use absolute temperature in K wherever an equation needs it, such as temperature ratios, the ideal-gas law or radiation with T^4 (convert by adding 273.15 or 273 and show the conversion). Never silently change the textbook\'s convention or units; if you present something differently from the book, state that and explain why.';
 function contextLines({ titles, chapter, scope }) {
   return [
     `Book: "${titles.book}".`,
@@ -31,6 +33,7 @@ function buildPrompt({ book, chapter, card, scope, question, messages }, sources
     '- Never invent quotations, page numbers, equation numbers, formulas or references. Do not quote more than one short sentence from any source; explain in your own words.',
     '- Explain step by step.',
     EQUATION_RULE,
+    TEMPERATURE_RULE,
     '- Write math in LaTeX using \\( ... \\) inline and \\[ ... \\] for display. Use short paragraphs, **bold** and "-" lists; no tables or HTML.',
     '- Be concise: usually under 350 words.',
     styleLine(arguments[0].style),
@@ -62,6 +65,7 @@ function buildFileSearchPrompt({ book, chapter, card, scope, question, messages 
     '- Do not quote the book; explain in your own words.',
     '- Explain step by step.',
     EQUATION_RULE,
+    TEMPERATURE_RULE,
     '- Write math in LaTeX using \\( ... \\) inline and \\[ ... \\] for display (never bare $; use \\cdot, not \\cdotp, and write units like \\mathrm{W/(m\\cdot K)}). Use short paragraphs, **bold** and "-" lists; no tables or HTML.',
     '- If the question is unrelated to this book or to studying it, briefly say you can only help with this textbook and suggest a related topic (no headings). Do not search for it.',
     '- Be concise: usually under 350 words.',
@@ -74,4 +78,4 @@ function buildFileSearchPrompt({ book, chapter, card, scope, question, messages 
   const input = [...messages.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: `${ctx.join('\n')}\n\nQUESTION: ${question}` }];
   return { instructions, input };
 }
-module.exports = { buildPrompt, buildFileSearchPrompt, STYLE_INSTRUCTIONS, MAX_SOURCE_CHARS };
+module.exports = { buildPrompt, buildFileSearchPrompt, STYLE_INSTRUCTIONS, TEMPERATURE_RULE, MAX_SOURCE_CHARS };

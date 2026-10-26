@@ -148,6 +148,31 @@
   .rv-opts li.right { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
   .rv-card .feedback { margin-top: 16px; }
 
+  /* Export / import */
+  .notice.ok { border-left-color: var(--accent); }
+  .lib-foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--faint); font-size: 13px; }
+  .lib-foot-a { display: flex; align-items: center; gap: 10px; }
+  .lib-foot .t-link { font-size: 13px; color: var(--muted); }
+  .lib-foot .t-link:hover { color: var(--fg); }
+  .exp-conv { display: flex; align-items: center; gap: 5px; color: var(--faint); }
+  .imp { max-width: 980px; }
+  .imp h2 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+  .imp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+  .imp-cols section, .imp-opt { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .imp-counts { list-style: none; font-size: 14px; }
+  .imp-counts li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); color: var(--fg-2); }
+  .imp-counts li:last-child { border-bottom: 0; }
+  .imp-counts b { font-weight: 600; color: var(--fg); font-variant-numeric: tabular-nums; }
+  .imp-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .imp-opt p { color: var(--fg-2); font-size: 14px; line-height: 1.6; margin-bottom: 14px; }
+  .imp-opt.warn { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+  .imp-chk { display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--fg-2); margin-bottom: 14px; }
+  .btn.danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+  .imp-err { margin-top: 28px; padding: 18px 20px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--surface); }
+  .imp-err p { color: var(--fg-2); margin-top: 6px; font-size: 14.5px; }
+  .imp-file { color: var(--muted) !important; font-size: 13px !important; }
+  .imp .btns { margin-top: 24px; }
+
   /* Reader */
   .reader { position: fixed; inset: 0; background: var(--bg); }
   .feed { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
@@ -231,11 +256,11 @@
   .t-scope button:hover:not(:disabled) { color: var(--fg); background: var(--surface-2); }
   .t-scope button[aria-checked="true"] { color: var(--accent); background: var(--accent-soft); }
   .t-scope button:disabled { color: var(--faint); cursor: default; }
-  .t-style { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: -4px 20px 12px; font-size: 12px; }
-  .t-style > span { color: var(--faint); margin-right: 4px; }
-  .t-style button { padding: 3px 8px; border-radius: 999px; color: var(--muted); border: 1px solid transparent; }
-  .t-style button:hover { color: var(--fg); }
-  .t-style button[aria-checked="true"] { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+  .t-style { flex: none; display: flex; margin: -4px 20px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow-x: auto; scrollbar-width: thin; }
+  .t-style button { flex: 1 0 auto; padding: 6px 10px; font-size: 12.5px; white-space: nowrap; color: var(--muted); border-right: 1px solid var(--line-strong); }
+  .t-style button:last-child { border-right: 0; }
+  .t-style button:hover { color: var(--fg); background: var(--surface-2); }
+  .t-style button[aria-checked="true"] { color: var(--accent); background: var(--accent-soft); }
   .t-notice { flex: none; margin: 0 20px 12px; padding: 10px 12px; border: 1px solid var(--line-strong); border-left: 2px solid var(--muted); border-radius: var(--radius); font-size: 13px; line-height: 1.5; color: var(--fg-2); background: var(--bg); }
   .t-notice b { color: var(--fg); }
   .t-n { color: var(--faint); }
@@ -326,6 +351,7 @@
 </head>
 <body>
 <div id="app"><div class="loading">Loading…</div></div>
+<script defer src="studydata.js"></script>
 <script defer src="tutor.js"></script>
 <script defer src="app.js"></script>
 </body>

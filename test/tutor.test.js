@@ -296,3 +296,18 @@ test('each style adds its own instruction; default adds none; equation and secti
   assert.equal(STYLE_INSTRUCTIONS.default, '');
   assert.equal(new Set(Object.values(STYLE_INSTRUCTIONS)).size, 4);
 });
+test('temperature rule: ΔT in K or °C consistently, absolute K for ratios / T^4, no silent convention change', () => {
+  const { validate } = require('../api/_lib/validate');
+  const { buildFileSearchPrompt, buildPrompt, TEMPERATURE_RULE } = require('../api/_lib/prompt');
+  assert.match(TEMPERATURE_RULE, /differences use K or °C consistently/);
+  assert.match(TEMPERATURE_RULE, /change of 1 K equals a change of 1 °C/);
+  assert.match(TEMPERATURE_RULE, /absolute temperature in K/);
+  assert.match(TEMPERATURE_RULE, /ratios/); assert.match(TEMPERATURE_RULE, /T\^4/);
+  assert.match(TEMPERATURE_RULE, /Never silently change the textbook's convention/);
+  const r = validate({ bookId: 'heat-mass-transfer', chapterId: 1, question: 'x' });
+  for (const s of ['default', 'simple', 'math', 'example']) {
+    const rr = { ...r, style: s };
+    assert.ok(buildFileSearchPrompt(rr).instructions.includes(TEMPERATURE_RULE));
+    assert.ok(buildPrompt(rr, [], { bookIndexAvailable: false })[0].content.includes(TEMPERATURE_RULE));
+  }
+});

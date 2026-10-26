@@ -236,7 +236,8 @@ function renderReader(book, ch) {
       else b.classList.add('dim');
     });
     const fb = card.querySelector('.feedback');
-    fb.innerHTML = `<b class="${pick === q.answer ? 'ok' : 'no'}">${pick === q.answer ? 'Correct.' : 'Not quite.'}</b> ${q.why}`;
+    const letter = String.fromCharCode(65 + q.answer);
+    fb.innerHTML = `<b class="${pick === q.answer ? 'ok' : 'no'}">${pick === q.answer ? 'Correct.' : 'Not quite.'}</b> ${q.why}<span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span>`;
     renderMath(fb);
   });
   const onKey = e => {

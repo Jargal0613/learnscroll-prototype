@@ -23,7 +23,7 @@
         let m;
         if ((m = line.match(/^\s*[-*•]\s+(.*)/))) { if (list !== 'ul') { close(); out.push('<ul>'); list = 'ul'; } out.push(`<li>${inline(m[1])}</li>`); }
         else if ((m = line.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== 'ol') { close(); out.push('<ol>'); list = 'ol'; } out.push(`<li>${inline(m[1])}</li>`); }
-        else if ((m = line.match(/^#{1,4}\s+(.*)/))) { close(); out.push(`<h4>${inline(m[1])}</h4>`); }
+        else if ((m = line.match(/^#{1,4}\s+(.*)/))) { close(); const t = m[1].replace(/\*\*/g, '').trim(); const cls = /^from the textbook/i.test(t) ? ' class="sec-book"' : /^additional explanation/i.test(t) ? ' class="sec-extra"' : ''; out.push(`<h4${cls}>${inline(m[1])}</h4>`); }
         else if (line.trim()) { if (list) { out.push(`</${list}>`); list = null; } para.push(inline(line)); }
       }
       close();
@@ -132,9 +132,12 @@
   }
   function msgHTML(m) {
     if (m.role === 'user') return `<div class="t-msg user"><div class="t-who">You${m.where ? ` · ${esc(m.where)}` : ''}</div><div class="t-body">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`;
-    const src = (m.sources || []).length
-      ? `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}${s.citations > 1 ? ` <span class="t-n">· cited ${s.citations}×</span>` : ''}</li>`).join('')}</ol></div>`
-      : (m.retrieval ? '<div class="t-src none">No sources cited for this answer.</div>' : '');
+    let src = '';
+    if ((m.passages || []).length) {
+      src = `<details class="t-src"><summary>Sources retrieved from the textbook (${m.passages.length})</summary>${m.passages.map(x => `<div class="t-pass"><div class="t-pass-h">Retrieved passage <span>· ${esc(x.book)}${x.chapter ? ` · Ch ${x.chapter}` : ''}</span></div><p>${esc(x.excerpt)}</p></div>`).join('')}<div class="t-pass-note">Page number unavailable. This passage was retrieved as relevant context; it is not a sentence-by-sentence citation.</div></details>`;
+    } else if ((m.sources || []).length) {
+      src = `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`;
+    } else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
     return `<div class="t-msg bot"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}</div>`;
   }
   function paintLog(extra = '') {
@@ -173,7 +176,7 @@
         throw Object.assign(new Error(err && err.message || `The tutor service is unavailable (HTTP ${res.status}).`), { code: err && err.code });
       }
       const fresh = conv(); // re-read in case another tab changed it
-      fresh.messages.push({ role: 'user', content: q, where, at: Date.now() }, { role: 'assistant', content: data.answer, sources: data.sources || [], retrieval: data.retrieval || null, at: Date.now() });
+      fresh.messages.push({ role: 'user', content: q, where, at: Date.now() }, { role: 'assistant', content: data.answer, sources: data.sources || [], passages: (data.passages || []).slice(0, 3), retrieval: data.retrieval || null, at: Date.now() });
       fresh.messages = fresh.messages.slice(-60);
       fresh.draft = '';
       store(fresh);

@@ -162,9 +162,10 @@ const openaiProv = require('../api/_lib/providers/openai');
 const knowledge = require('../api/_lib/knowledge');
 const OpenAI = require('openai');
 const KB = { 'heat-mass-transfer': { status: 'completed', vectorStoreId: 'vs_test', fileId: 'file-real', filename: 'heat-mass-transfer.pdf' }, 'koretsky-thermo': { status: 'failed', vectorStoreId: 'vs_x', fileId: 'file-x' } };
+const PASS = 'Fig 3-2\nT1 T2\nUnder steady conditions the rate of heat conduction through a plane wall is constant, and the wall behaves like a thermal resistance to heat flow.\ncen98187_ch03_p142-236.indd 143 14/02/19 9:11 AM\n' + 'More synthetic words follow here to make the passage long enough for trimming purposes. '.repeat(8);
 const fakeResponse = (annotations, extra = {}) => ({
   status: 'completed', output_text: 'Plane wall resistance is \\(R = L/(kA)\\).',
-  output: [{ type: 'file_search_call', results: [{ file_id: 'file-real' }, { file_id: 'file-real' }] }, { type: 'message', content: [{ type: 'output_text', text: 'x', annotations }] }],
+  output: [{ type: 'file_search_call', results: [{ file_id: 'file-real', score: 0.9, text: PASS }, { file_id: 'file-real', score: 0.8, text: 'Short.' }, { file_id: 'file-other', score: 0.99, text: 'Other file text that must never be shown to the student in any case at all.' }] }, { type: 'message', content: [{ type: 'output_text', text: 'x', annotations }] }],
   usage: { input_tokens: 6000, input_tokens_details: { cached_tokens: 1000 }, output_tokens: 120, output_tokens_details: { reasoning_tokens: 40 } }, ...extra,
 });
 const fakeClient = impl => ({ responses: { create: impl } });
@@ -183,7 +184,7 @@ test('openai provider: request shape uses Responses API + file_search on the ser
   assert.equal(out.sources.length, 1);
   assert.equal(out.sources[0].filename, 'heat-mass-transfer.pdf');
   assert.ok(!('page' in out.sources[0]), 'no page claimed without verified metadata');
-  assert.equal(out.retrieval.passages, 2);
+  assert.equal(out.retrieval.passages, 3);
   assert.equal(out.retrieval.usage.input, 6000);
 });
 test('openai provider: citations to unknown files and duplicates are dropped; no citations -> no sources', async () => {
@@ -226,4 +227,27 @@ test('status lists only indexed books when openai is configured', () => {
   assert.equal(s.books['koretsky-thermo'], false);
   assert.equal(status({}).configured, false);
   knowledge.setKnowledge(null);
+});
+
+test('passages: only from this book file, short excerpts, chapter only from print footer, no pages', async () => {
+  knowledge.setKnowledge(KB);
+  const ann = [{ type: 'file_citation', file_id: 'file-real', filename: 'heat-mass-transfer.pdf' }];
+  const out = await answer({ ...base, question: 'plane wall thermal resistance' }, { provider: openaiProv({ model: 'm', client: fakeClient(async () => fakeResponse(ann)) }) });
+  assert.equal(out.passages.length, 1);
+  const p = out.passages[0];
+  assert.ok(p.excerpt.length <= 301);
+  assert.match(p.excerpt, /^Under steady conditions/);
+  assert.doesNotMatch(p.excerpt, /indd|Other file/);
+  assert.equal(p.chapter, 3);
+  assert.equal(p.page, null);
+  assert.equal(p.label, 'Retrieved passage');
+  const none = await answer(base, { provider: openaiProv({ model: 'm', client: fakeClient(async () => fakeResponse([])) }) });
+  assert.equal(none.passages.length, 0, 'no passages when the answer cites nothing');
+  knowledge.setKnowledge(null);
+});
+test('prompt asks for From the textbook / Additional explanation sections', () => {
+  const { buildFileSearchPrompt } = require('../api/_lib/prompt');
+  const { instructions } = buildFileSearchPrompt(validate(base));
+  assert.match(instructions, /### From the textbook/);
+  assert.match(instructions, /### Additional explanation/);
 });

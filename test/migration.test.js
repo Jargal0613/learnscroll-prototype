@@ -144,3 +144,22 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   const { session, ...v1 } = f; assert.ok(SD.parse(JSON.stringify({ ...v1, version: 1 }), { bookIds: IDS }).ok, 'v1 file imports');
   assert.match(SD.parse(JSON.stringify({ ...f, version: 3 }), { bookIds: IDS }).error, /newer version/);
 });
+
+test('tutor continuity data: origin + saved conversations validate, export and merge without loss', () => {
+  const origin = { chapter: 1, chapterTitle: 'Intro', index: 2, cardId: 'c1-3', label: 'Card 3: X', scope: 'card', at: T1 };
+  const conv = (id, q, at) => ({ conversationId: id, scope: 'card', origin, messages: [{ role: 'user', content: q, at }, { role: 'assistant', content: 'a', at: at + 1 }] });
+  const tut = { _schema: 2, 'heat-mass-transfer': { ...conv('cA', 'qA', T1), draft: '', saved: [conv('cOld', 'qOld', T1 - 1000)] } };
+  const local = SD.fromStorage(null, JSON.stringify(tut), null);
+  const f = SD.build(local, { conversations: true, now: new Date(T2) });
+  const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error);
+  const c = p.data.tutor.conversations['heat-mass-transfer'];
+  assert.deepEqual(c.origin, origin); assert.equal(c.saved[0].conversationId, 'cOld');
+  for (const bad of [{ ...origin, scope: 'x' }, { ...origin, chapter: 0 }, { ...origin, cardId: 'zz' }, { ...origin, extra: 1 }]) {
+    const o = JSON.parse(JSON.stringify(f)); o.tutor.conversations['heat-mass-transfer'].origin = bad; assert.equal(SD.parse(JSON.stringify(o), { bookIds: IDS }).ok, false);
+  }
+  const o = JSON.parse(JSON.stringify(f)); o.tutor.conversations['heat-mass-transfer'].saved = Array(11).fill(conv('cX', 'q', T1)); assert.equal(SD.parse(JSON.stringify(o), { bookIds: IDS }).ok, false);
+  // merge: the other device's active conversation is newer -> it becomes active; nothing is lost
+  const other = SD.fromStorage(null, JSON.stringify({ 'heat-mass-transfer': { ...conv('cB', 'qB', T2), draft: '' } }), null);
+  const m = SD.merge(other, p.data).tutor.conversations['heat-mass-transfer'];
+  assert.equal(m.conversationId, 'cB'); assert.deepEqual(m.saved.map(x => x.conversationId).sort(), ['cA', 'cOld']);
+});

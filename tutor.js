@@ -24,18 +24,24 @@
     let s = String(src).replace(/\uE200[^\uE201]{0,200}\uE201/g, '').replace(/[\uE200-\uE2FF]/g, '').replace(/\\u00[01][0-9a-fA-F]/g, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$/g, m => `\u0000${math.push(m) - 1}\u0000`);
     s = esc(s);
     const inline = t => t.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
-    const out = []; let list = null, para = [];
+    const out = []; let list = null, para = [], blk = false;
     const close = () => { if (list) { out.push(`</${list}>`); list = null; } if (para.length) { out.push(`<p>${para.join('<br>')}</p>`); para = []; } };
     for (const block of s.split(/\n{2,}/)) {
       for (const line of block.split('\n')) {
         let m;
         if ((m = line.match(/^\s*[-*•]\s+(.*)/))) { if (list !== 'ul') { close(); out.push('<ul>'); list = 'ul'; } out.push(`<li>${inline(m[1])}</li>`); }
         else if ((m = line.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== 'ol') { close(); out.push('<ol>'); list = 'ol'; } out.push(`<li>${inline(m[1])}</li>`); }
-        else if ((m = line.match(/^#{1,4}\s+(.*)/))) { close(); const t = m[1].replace(/\*\*/g, '').trim(); const cls = /^from the textbook/i.test(t) ? ' class="sec-book"' : /^additional explanation/i.test(t) ? ' class="sec-extra"' : ''; out.push(`<h4${cls}>${inline(m[1])}</h4>`); }
+        else if ((m = line.match(/^#{1,4}\s+(.*)/))) {
+          close(); const t = m[1].replace(/\*\*/g, '').trim();
+          const kind = /^from the textbook/i.test(t) ? 'book' : /^additional explanation/i.test(t) ? 'extra' : '';
+          if (kind) { if (blk) out.push('</div>'); out.push(`<div class="t-sec t-sec-${kind}">`); blk = true; } // textbook vs extra explanation, visibly separate
+          out.push(`<h4${kind ? ` class="sec-${kind}"` : ''}>${inline(m[1])}</h4>`);
+        }
         else if (line.trim()) { if (list) { out.push(`</${list}>`); list = null; } para.push(inline(line)); }
       }
       close();
     }
+    if (blk) out.push('</div>');
     return out.join('').replace(/\u0000(\d+)\u0000/g, (_, i) => esc(math[i].replace(/\\cdotp\b/g, '\\cdot')));
   }
   function renderMath(el) {
@@ -56,6 +62,18 @@
     return validConv(c) ? c : { conversationId: newId(), messages: [], draft: '', scope: 'card' };
   }
   function store(c) { const all = load(); all[ctx.book.id] = c; save(all); }
+  const MAX_SAVED = 10;
+  // Where a conversation started: follow-ups keep this book/chapter/card/scope so the history stays on topic.
+  function originNow() {
+    const card = cardAt(ctx.index), scope = effectiveScope();
+    return { chapter: ctx.ch.n, chapterTitle: ctx.ch.title, index: ctx.index, cardId: card ? card.id : null, label: card ? card.label : 'End of chapter', scope, at: Date.now() };
+  }
+  const scopeLabel = s => (s === 'book' ? 'Whole book' : s === 'chapter' ? 'This chapter' : 'This card');
+  function archive(c) { // keep a finished conversation so it can be reopened
+    const saved = (c.saved || []).filter(x => x.conversationId !== c.conversationId);
+    if (c.messages.length) saved.unshift({ conversationId: c.conversationId, messages: c.messages, scope: c.scope, origin: c.origin || null });
+    return saved.slice(0, MAX_SAVED);
+  }
 
   function mount(reader, book, ch, index) {
     ctx = { reader, book, ch, index, open: false, busy: false };
@@ -64,10 +82,11 @@
     panel.setAttribute('aria-label', 'Ask your tutor');
     panel.innerHTML = `
       <div class="t-head"><div><h2>Ask your tutor</h2><div class="t-ctx" id="t-ctx"></div></div>
-        <div class="t-actions"><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
+        <div class="t-actions"><button class="t-link" id="t-saved" aria-expanded="false" aria-controls="t-saved-list" title="Reopen an earlier conversation for this book">Saved</button><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
       <div class="t-scope" role="radiogroup" aria-label="Question scope">
         <button role="radio" data-scope="card">This card</button><button role="radio" data-scope="chapter">This chapter</button><button role="radio" data-scope="book">Whole book</button></div>
       <div class="t-style" role="radiogroup" aria-label="Answer style">${STYLES.map(([k, l]) => `<button role="radio" data-style="${k}">${l}</button>`).join('')}</div>
+      <div class="t-saved-list" id="t-saved-list" hidden></div>
       <div class="t-notice" id="t-notice" hidden></div>
       <div class="t-log" id="t-log" aria-live="polite"></div>
       <form class="t-form" id="t-form">
@@ -78,7 +97,7 @@
     const $ = id => panel.querySelector('#' + id);
     const input = $('t-input');
     const c = conv(); input.value = c.draft || '';
-    paintScope(); paintStyle(); paintLog(); paintCtx();
+    paintAll();
     checkStatus(book.id);
 
     panel.addEventListener('keydown', e => {
@@ -101,8 +120,15 @@
     });
     $('t-new').addEventListener('click', () => {
       if (ctx.busy) return;
-      const c = conv(); store({ conversationId: newId(), messages: [], draft: input.value, scope: c.scope });
-      paintLog(); input.focus();
+      const c = conv(); store({ conversationId: newId(), messages: [], draft: input.value, scope: c.scope, saved: archive(c) });
+      paintAll(); input.focus();
+    });
+    $('t-saved').addEventListener('click', () => { const l = $('t-saved-list'); l.hidden = !l.hidden; $('t-saved').setAttribute('aria-expanded', String(!l.hidden)); paintSaved(); if (!l.hidden) { const f = l.querySelector('button'); if (f) f.focus(); } });
+    $('t-saved-list').addEventListener('click', e => {
+      const b = e.target.closest('[data-open]'); if (!b || ctx.busy) return;
+      const c = conv(), saved = archive(c), pick = saved.find(x => x.conversationId === b.dataset.open); if (!pick) return;
+      store({ conversationId: pick.conversationId, messages: pick.messages, scope: pick.scope || 'card', origin: pick.origin || null, draft: '', saved: saved.filter(x => x !== pick) });
+      $('t-saved-list').hidden = true; $('t-saved').setAttribute('aria-expanded', 'false'); paintAll(); input.focus();
     });
     panel.querySelector('.t-scope').addEventListener('click', e => {
       const b = e.target.closest('[data-scope]'); if (!b || b.disabled) return;
@@ -132,16 +158,18 @@
   }
 
   function effectiveScope() {
-    const s = conv().scope || 'card';
+    const c = conv(); if (c.messages.length && c.origin) return c.origin.scope;
+    const s = c.scope || 'card';
     return s === 'card' && !cardAt(ctx.index) ? 'chapter' : s;
   }
   function paintScope() {
     const panel = document.getElementById('tutor'); if (!panel) return;
-    const s = effectiveScope(), noCard = !cardAt(ctx.index);
+    const s = effectiveScope(), noCard = !cardAt(ctx.index), c = conv(), pinned = !!(c.messages.length && c.origin);
     panel.querySelectorAll('[data-scope]').forEach(b => {
       b.setAttribute('aria-checked', String(b.dataset.scope === s));
-      b.disabled = b.dataset.scope === 'card' && noCard;
+      b.disabled = pinned ? b.dataset.scope !== s : b.dataset.scope === 'card' && noCard;
     });
+    panel.querySelector('.t-scope').title = pinned ? 'Scope is fixed for this conversation. Start a new conversation to change it.' : '';
   }
   function getStyle() { const s = (load()._prefs || {}).style; return STYLES.some(x => x[0] === s) ? s : 'default'; }
   function paintStyle() {
@@ -150,7 +178,11 @@
   }
   function paintCtx() {
     const el = document.getElementById('t-ctx'); if (!el) return;
-    const card = cardAt(ctx.index);
+    const card = cardAt(ctx.index), c = conv(), o = c.messages.length && c.origin;
+    if (o) { // a reopened or ongoing conversation shows where it started, not where the reader is now
+      el.innerHTML = `<span class="t-orig">Conversation from ${esc(ctx.book.short)} · Ch ${o.chapter}: ${esc(o.chapterTitle || '')}</span><br><span>${esc(o.label)} · ${scopeLabel(o.scope)}</span>`;
+      return;
+    }
     el.innerHTML = `${esc(ctx.book.short)} · Ch ${ctx.ch.n}: ${esc(ctx.ch.title)}<br><span>${card ? esc(card.label) : 'End of chapter'}</span>`;
   }
   function msgHTML(m, idx) {
@@ -183,7 +215,7 @@
     try {
       const ac = new AbortController(); const t = setTimeout(() => ac.abort(), window.__lsTutorTimeoutMs || 45000);
       let res, data;
-      try { res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ac.signal, body: JSON.stringify({ bookId: ctx.book.id, chapterId: ctx.ch.n, cardId: card ? card.id : null, scope: effectiveScope(), conversationId: c.conversationId, mode: 'check', explanation: m.content.slice(0, 8000) }) }); }
+      try { res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ac.signal, body: JSON.stringify({ bookId: ctx.book.id, chapterId: c.origin ? c.origin.chapter : ctx.ch.n, cardId: c.origin ? c.origin.cardId : card ? card.id : null, scope: effectiveScope(), conversationId: c.conversationId, mode: 'check', explanation: m.content.slice(0, 8000) }) }); }
       finally { clearTimeout(t); }
       try { data = await res.json(); } catch (e) { data = null; }
       const ch = data && data.check;
@@ -197,6 +229,17 @@
       const msg = e.name === 'AbortError' ? 'The request timed out.' : e.message === 'Failed to fetch' ? 'Could not reach the tutor service.' : e.message;
       row.insertAdjacentHTML('beforeend', `<div class="t-err" role="alert"><p>${esc(msg)}</p></div>`);
     }
+  }
+  function paintAll() { paintScope(); paintStyle(); paintLog(); paintCtx(); paintSaved(); }
+  function paintSaved() {
+    const l = document.getElementById('t-saved-list'), btn = document.getElementById('t-saved'); if (!l) return;
+    const saved = conv().saved || [];
+    btn.textContent = saved.length ? `Saved (${saved.length})` : 'Saved'; btn.disabled = !saved.length && l.hidden;
+    if (l.hidden) return;
+    l.innerHTML = saved.length ? `<div class="t-saved-h">Earlier conversations in this book</div><ul>${saved.map(x => {
+      const q = (x.messages.find(m => m.role === 'user') || {}).content || 'Conversation', o = x.origin, when = (x.messages[x.messages.length - 1] || {}).at;
+      return `<li><button class="t-saved-item" data-open="${esc(x.conversationId)}"><span class="t-saved-q">${esc(q.slice(0, 90))}</span><span class="t-saved-m">${o ? `Ch ${o.chapter} · ${esc(o.label)} · ${scopeLabel(o.scope)}` : 'Started before origins were saved'}${when ? ` · ${new Date(when).toLocaleDateString()}` : ''} · ${x.messages.length} messages</span></button></li>`;
+    }).join('')}</ul>` : '<p class="t-saved-h">No earlier conversations yet.</p>';
   }
   function paintLog(extra = '') {
     const log = document.getElementById('t-log'); if (!log) return;
@@ -212,14 +255,14 @@
     if (!ctx || ctx.busy || ctx.unavailable) return;
     const input = document.getElementById('t-input');
     const q = input.value.trim(); if (!q) { input.focus(); return; }
-    const c = conv(), card = cardAt(ctx.index), scope = effectiveScope();
-    const where0 = scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${ctx.ch.n}` : card.label;
+    const c = conv(), o = (c.messages.length && c.origin) || originNow(), scope = o.scope;
+    const where0 = scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${o.chapter}` : o.label;
     const style = getStyle();
     const styleLabel = style === 'default' ? '' : STYLES.find(x => x[0] === style)[1];
     const where = [where0, styleLabel].filter(Boolean).join(' · ');
     // Ids only: the server resolves book, chapter and card titles from its own data.
     const payload = {
-      bookId: ctx.book.id, chapterId: ctx.ch.n, cardId: card ? card.id : null,
+      bookId: ctx.book.id, chapterId: o.chapter, cardId: o.cardId,
       conversationId: c.conversationId, scope, style, question: q,
       messages: c.messages.slice(-MAX_HISTORY).map(m => ({ role: m.role, content: m.content })),
     };
@@ -237,11 +280,12 @@
         throw Object.assign(new Error(err && err.message || `The tutor service is unavailable (HTTP ${res.status}).`), { code: err && err.code });
       }
       const fresh = conv(); // re-read in case another tab changed it
+      if (!fresh.messages.length || !fresh.origin) fresh.origin = o;
       fresh.messages.push({ role: 'user', content: q, where, at: Date.now() }, { role: 'assistant', content: data.answer, sources: data.sources || [], passages: (data.passages || []).slice(0, 3), retrieval: data.retrieval || null, at: Date.now() });
       fresh.messages = fresh.messages.slice(-60);
       fresh.draft = '';
       store(fresh);
-      ctx.busy = false; setBusy(false); paintLog();
+      ctx.busy = false; setBusy(false); paintAll();
     } catch (e) {
       ctx.busy = false; setBusy(false);
       // Keep the user's question: put it back in the box (and the saved draft) so nothing is lost.
@@ -253,7 +297,7 @@
   }
   function setBusy(b) {
     const s = document.getElementById('t-send'); if (s) { s.disabled = b || !!(ctx && ctx.unavailable); s.textContent = b ? 'Thinking…' : 'Send'; }
-    document.querySelectorAll('#t-new').forEach(x => { x.disabled = b; });
+    document.querySelectorAll('#t-new, #t-saved').forEach(x => { x.disabled = b; });
   }
 
   function toggle(force) {

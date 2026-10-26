@@ -100,22 +100,19 @@
     if (sessionPrefs) out.sessionPrefs = sessionPrefs;
     return out;
   }
-  function validTutor(t, bookIds) {
-    if (!isObj(t)) fail('"tutor" must be an object.');
-    onlyKeys(t, ['prefs', 'conversations'], 'tutor');
-    const prefs = {};
-    if (t.prefs !== undefined) {
-      if (!isObj(t.prefs)) fail('tutor.prefs must be an object.'); onlyKeys(t.prefs, ['style'], 'tutor.prefs');
-      if (t.prefs.style !== undefined) { if (!STYLES.includes(t.prefs.style)) fail('tutor.prefs.style is not a known answer style.'); prefs.style = t.prefs.style; }
-    }
-    let conversations;
-    if (t.conversations !== undefined) {
-      conversations = mapOf(t.conversations, BOOK_RE, 'tutor.conversations', (c, w) => {
-        if (bookIds && !bookIds.includes(w.split('.').pop())) fail(`Unknown book in ${w}.`);
-        if (!isObj(c)) fail(`${w} must be an object.`); onlyKeys(c, ['conversationId', 'messages', 'draft', 'scope'], w);
+  // One conversation: id, messages, scope and (optional) where it started.
+  function validOrigin(o, w) {
+    if (o === undefined || o === null) return null;
+    if (!isObj(o)) fail(`${w} must be an object.`); onlyKeys(o, ['chapter', 'chapterTitle', 'index', 'cardId', 'label', 'scope', 'at'], w);
+    if (!isInt(o.chapter, 1) || (o.index !== undefined && !isInt(o.index)) || !SCOPES.includes(o.scope) || typeof o.label !== 'string' || o.label.length > 300
+      || (o.chapterTitle !== undefined && (typeof o.chapterTitle !== 'string' || o.chapterTitle.length > 300)) || !(o.cardId === null || o.cardId === undefined || (typeof o.cardId === 'string' && CARD_RE.test(o.cardId))) || (o.at !== undefined && !isTime(o.at))) fail(`${w} is invalid.`);
+    const r = { chapter: o.chapter, label: o.label, scope: o.scope, cardId: o.cardId ?? null };
+    for (const k of ['chapterTitle', 'index', 'at']) if (o[k] !== undefined) r[k] = o[k];
+    return r;
+  }
+  function validConvCore(c, w) {
         if (typeof c.conversationId !== 'string' || !CONV_RE.test(c.conversationId)) fail(`${w}.conversationId is invalid.`);
         if (!Array.isArray(c.messages) || c.messages.length > MAX_MSGS) fail(`${w}.messages must be a list (max ${MAX_MSGS}).`);
-        if (c.draft !== undefined && (typeof c.draft !== 'string' || c.draft.length > 2000)) fail(`${w}.draft is invalid.`);
         if (c.scope !== undefined && !SCOPES.includes(c.scope)) fail(`${w}.scope is invalid.`);
         const messages = c.messages.map((m, i) => {
           const mw = `${w}.messages[${i}]`;
@@ -130,7 +127,31 @@
           for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check']) if (m[k] !== undefined) out[k] = m[k];
           return out;
         });
-        return { conversationId: c.conversationId, messages, draft: c.draft || '', scope: c.scope || 'card' };
+        const r = { conversationId: c.conversationId, messages, scope: c.scope || 'card' };
+        const origin = validOrigin(c.origin, `${w}.origin`); if (origin) r.origin = origin;
+        return r;
+  }
+  function validTutor(t, bookIds) {
+    if (!isObj(t)) fail('"tutor" must be an object.');
+    onlyKeys(t, ['prefs', 'conversations'], 'tutor');
+    const prefs = {};
+    if (t.prefs !== undefined) {
+      if (!isObj(t.prefs)) fail('tutor.prefs must be an object.'); onlyKeys(t.prefs, ['style'], 'tutor.prefs');
+      if (t.prefs.style !== undefined) { if (!STYLES.includes(t.prefs.style)) fail('tutor.prefs.style is not a known answer style.'); prefs.style = t.prefs.style; }
+    }
+    let conversations;
+    if (t.conversations !== undefined) {
+      conversations = mapOf(t.conversations, BOOK_RE, 'tutor.conversations', (c, w) => {
+        if (bookIds && !bookIds.includes(w.split('.').pop())) fail(`Unknown book in ${w}.`);
+        if (!isObj(c)) fail(`${w} must be an object.`); onlyKeys(c, ['conversationId', 'messages', 'draft', 'scope', 'origin', 'saved'], w);
+        const out = validConvCore(c, w);
+        if (c.draft !== undefined && (typeof c.draft !== 'string' || c.draft.length > 2000)) fail(`${w}.draft is invalid.`);
+        out.draft = c.draft || '';
+        if (c.saved !== undefined) {
+          if (!Array.isArray(c.saved) || c.saved.length > 10) fail(`${w}.saved must be a list (max 10).`);
+          out.saved = c.saved.map((x, i) => { const sw = `${w}.saved[${i}]`; if (!isObj(x)) fail(`${sw} must be an object.`); onlyKeys(x, ['conversationId', 'messages', 'scope', 'origin'], sw); return validConvCore(x, sw); });
+        }
+        return out;
       });
     }
     return conversations ? { prefs, conversations } : { prefs };
@@ -262,7 +283,11 @@
     const conversations = { ...(local.tutor.conversations || {}) };
     for (const [id, c] of Object.entries(incoming.tutor.conversations || {})) {
       const mine = conversations[id], at = x => Math.max(0, ...((x && x.messages) || []).map(m => m.at || 0));
-      if (!mine || !(mine.messages || []).length || at(c) > at(mine)) conversations[id] = c;
+      const pool = new Map(); // every conversation from both sides, by id; newest copy wins
+      for (const x of [mine, ...((mine && mine.saved) || []), c, ...(c.saved || [])]) if (x && (x.messages || []).length) { const prev = pool.get(x.conversationId); if (!prev || at(x) >= at(prev)) pool.set(x.conversationId, { conversationId: x.conversationId, messages: x.messages, scope: x.scope, ...(x.origin ? { origin: x.origin } : {}) }); }
+      const active = !mine || !(mine.messages || []).length || at(c) > at(mine) ? c : mine;
+      const saved = [...pool.values()].filter(x => x.conversationId !== active.conversationId).sort((x, y) => at(y) - at(x)).slice(0, 10);
+      const { saved: _old, ...act } = active; conversations[id] = saved.length ? { ...act, saved } : act;
     }
     const smap = new Map();
     for (const x of [...(L.sessions || []), ...(I.sessions || [])]) smap.set(x.book + '/' + x.start, x);

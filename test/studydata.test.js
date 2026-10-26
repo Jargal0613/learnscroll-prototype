@@ -106,3 +106,19 @@ test('study sessions: validated, merged by start time, counted', () => {
   const m = SD.merge(local, SD.parse(file({ study: { books: {}, recent: [], sessions: [sess(T1, 5), sess(T2, 9)] } }), { bookIds: IDS }).data);
   assert.deepEqual(m.study.sessions.map(x => x.seen), [9, 5]);
 });
+
+test('sanitizeStudy: valid data untouched; malformed pieces dropped and flagged; never throws', () => {
+  const good = JSON.parse(SD.fromStorage(JSON.stringify({ books: { 'heat-mass-transfer': { chapter: 1, card: 3, done: { 1: true }, marks: { 'c1-2': { b: true } }, seen: { 1: 4 }, notes: { 'c1-2': { text: 'n', at: T1 } }, review: {} } }, last: 'heat-mass-transfer', recent: [{ book: 'heat-mass-transfer', chapter: 1, card: 3, at: T1 }], sessions: [] }), '{}').study && JSON.stringify(localSample().study));
+  const r = SD.sanitizeStudy(good);
+  assert.equal(r.repaired, false);
+  assert.deepEqual(r.study.books['heat-mass-transfer'].notes, good.books['heat-mass-transfer'].notes);
+  assert.deepEqual(SD.sanitizeStudy({}), { study: { books: {}, last: null, recent: [], sessions: [] }, repaired: false });
+  const bad = SD.sanitizeStudy({ books: { 'heat-mass-transfer': { chapter: 'x', card: -3, marks: 'oops', notes: { 'c1-2': { text: 5 }, 'c1-3': { text: 'ok', at: T1 } }, seen: { 1: 'far' } }, 'bad id!': {}, 'koretsky-thermo': 7 }, recent: 'nope', last: 42 });
+  assert.equal(bad.repaired, true);
+  const h = bad.study.books['heat-mass-transfer'];
+  assert.deepEqual([h.chapter, h.card, h.marks, h.seen, Object.keys(h.notes)], [null, 0, {}, {}, ['c1-3']]);
+  assert.deepEqual(Object.keys(bad.study.books), ['heat-mass-transfer']);
+  assert.deepEqual([bad.study.recent, bad.study.last], [[], null]);
+  for (const x of [null, 5, 'str', [], [1, 2]]) assert.doesNotThrow(() => SD.sanitizeStudy(x));
+  assert.equal(SD.sanitizeStudy([1]).repaired, true);
+});

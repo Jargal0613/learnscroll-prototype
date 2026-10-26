@@ -5,14 +5,32 @@ const app = document.getElementById('app');
 const books = {};
 
 // ---------- saved progress ----------
+// Reliability: unreadable saved data is never silently discarded. It is copied to a backup key first,
+// the app starts from whatever could be recovered, and a banner offers the backup for download.
+const BACKUP_SUFFIX = '-corrupt-backup';
+function backupRaw(key, raw) {
+  try { if (!localStorage.getItem(key + BACKUP_SUFFIX)) localStorage.setItem(key + BACKUP_SUFFIX, raw); return true; } catch (e) { return false; }
+}
 function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { books: (s && typeof s.books === 'object' && s.books) || {}, last: (s && s.last) || null, recent: (s && Array.isArray(s.recent) && s.recent) || [], sessions: (s && Array.isArray(s.sessions) && s.sessions) || [], ...(s && s.sessionPrefs && typeof s.sessionPrefs === 'object' ? { sessionPrefs: s.sessionPrefs } : {}) };
-  } catch (e) { return { books: {}, last: null, recent: [], sessions: [] }; }
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { raw = null; }
+  if (raw === null) return StudyData.sanitizeStudy({}).study;
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) { backupRaw(KEY, raw); return StudyData.sanitizeStudy({}).study; }
+  const { study, repaired } = StudyData.sanitizeStudy(parsed);
+  if (repaired) backupRaw(KEY, raw);
+  return study;
 }
 let state = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+(function checkTutorStore() { // back up an unreadable tutor store at start-up, before anything rewrites it
+  let raw = null; try { raw = localStorage.getItem(StudyData.TUTOR_KEY); } catch (e) { return; }
+  if (raw === null) return;
+  let ok = false; try { const v = JSON.parse(raw); ok = !!v && typeof v === 'object' && !Array.isArray(v); } catch (e) {}
+  if (!ok) { backupRaw(StudyData.TUTOR_KEY, raw); try { localStorage.setItem(StudyData.TUTOR_KEY, '{}'); } catch (e) {} }
+})();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); return true; } catch (e) { saveFailed(e); return false; }
+}
 function bookState(id) {
   const b = state.books[id] || (state.books[id] = { chapter: null, card: 0, done: {} });
   if (!b.marks) b.marks = {};   // cardId -> { b: bookmarked, d: difficult }
@@ -117,6 +135,7 @@ function renderHome() {
     <h1>Study, one card at a time.</h1>
     <p class="lead">Short study notes for five textbooks, chapter by chapter. Move through a chapter one idea per screen, then check yourself with a few practice questions. Progress is saved in this browser.</p>
     ${flash ? `<div class="notice ok" role="status">${esc(flash)}</div>` : ''}
+    ${recoveryHTML()}
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
     ${recentHTML()}
@@ -147,6 +166,7 @@ function renderHome() {
       <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
   flash = '';
+  wireRecovery();
   mountSearch();
   document.getElementById('exp').onclick = () => exportData(document.getElementById('exp-conv').checked);
   document.getElementById('imp').onclick = () => document.getElementById('imp-file').click();
@@ -277,7 +297,33 @@ function mountSearch() {
   cleanup = () => { document.removeEventListener('keydown', onDoc); document.removeEventListener('click', onClick); clearTimeout(timer); };
 }
 
-let saveFailed = () => {};
+// Visible, non-blocking warning when the browser refuses to store data (quota exceeded, storage disabled).
+function saveFailed(e) {
+  let el = document.getElementById('save-warn');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'save-warn'; el.className = 'save-warn'; el.setAttribute('role', 'status');
+    el.innerHTML = `<span><b>Couldn’t save in this browser.</b> Storage is full or disabled, so recent changes may be lost when you leave. Free up space or allow site storage, or export your study data from the library.</span><button class="t-link" id="save-warn-x" aria-label="Dismiss warning">Dismiss</button>`;
+    document.body.appendChild(el);
+    el.querySelector('#save-warn-x').onclick = () => { el.hidden = true; };
+  }
+  el.hidden = false;
+}
+window.lsSaveFailed = saveFailed;
+function recoveryHTML() {
+  const keys = [KEY, StudyData.TUTOR_KEY].filter(k => { try { return localStorage.getItem(k + BACKUP_SUFFIX) !== null; } catch (e) { return false; } });
+  if (!keys.length) return '';
+  return `<div class="notice" id="recover" role="alert"><b>Some saved data couldn’t be read.</b> LearnScroll kept everything it could and saved the unreadable data as a backup in this browser${keys.includes(StudyData.TUTOR_KEY) ? ' (including tutor conversations)' : ''}. <span class="rec-a"><button class="t-link" id="rec-dl">Download backup</button> · <button class="t-link" id="rec-x">Remove backup</button></span></div>`;
+}
+function wireRecovery() {
+  const dl = document.getElementById('rec-dl'); if (!dl) return;
+  const keys = [KEY, StudyData.TUTOR_KEY];
+  dl.onclick = () => { const o = {}; for (const k of keys) { const v = localStorage.getItem(k + BACKUP_SUFFIX); if (v !== null) o[k] = v; } download('learnscroll-unreadable-backup.json', JSON.stringify(o, null, 2)); dl.dataset.done = '1'; };
+  document.getElementById('rec-x').onclick = () => {
+    if (!dl.dataset.done && !confirm('Remove the backup without downloading it? The unreadable data will be gone.')) return;
+    for (const k of keys) try { localStorage.removeItem(k + BACKUP_SUFFIX); } catch (e) {}
+    document.getElementById('recover').remove();
+  };
+}
 
 // ---------- focused study session (no streaks, no notifications) ----------
 const SESSION_KEY = 'learnscroll-session-v1'; // the session in progress (this tab/browser), not exported
@@ -709,9 +755,9 @@ function renderReader(book, ch, at = null, sess = null) {
   function saveNote(id, text) {
     const t = text.replace(/\s+$/, '');
     if (t.trim()) bs.notes[id] = { text: t, at: Date.now() }; else delete bs.notes[id];
-    save(); paintMarks();
+    const stored = save(); paintMarks();
     const ed = feed.querySelector(`.note-ed[data-note="${id}"]`);
-    if (ed) { ed.querySelector('.note-status').textContent = t.trim() ? 'Saved' : 'Note removed'; ed.querySelector('.note-del').hidden = !t.trim(); }
+    if (ed) { ed.querySelector('.note-status').textContent = !stored ? 'Not saved: browser storage unavailable' : t.trim() ? 'Saved' : 'Note removed'; ed.querySelector('.note-del').hidden = !t.trim(); }
   }
   function closeNote(ed) {
     const id = ed.dataset.note;

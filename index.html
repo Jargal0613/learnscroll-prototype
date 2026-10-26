@@ -148,6 +148,12 @@
   .rv-opts li.right { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
   .rv-card .feedback { margin-top: 16px; }
 
+  /* Reliability */
+  .save-warn { position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); z-index: 30; max-width: min(720px, 92vw); display: flex; gap: 16px; align-items: center; padding: 12px 16px; background: var(--surface); border: 1px solid var(--danger); border-radius: var(--radius); font-size: 13.5px; color: var(--fg-2); box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+  .save-warn[hidden] { display: none; }
+  .save-warn .t-link { flex: none; }
+  #recover .rec-a { white-space: nowrap; }
+
   /* Study session */
   .sess { max-width: 860px; }
   .sess-form { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; }

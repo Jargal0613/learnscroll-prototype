@@ -223,6 +223,37 @@
     };
   }
 
-  const api = { APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  // Repairs whatever is in localStorage into the shape the app expects, dropping only malformed pieces.
+  // Returns { study, repaired } where repaired is true if anything had to be dropped or reset.
+  function sanitizeStudy(raw) {
+    let repaired = false;
+    const s = isObj(raw) ? raw : (repaired = raw !== undefined && raw !== null, {});
+    const books = {};
+    const objOr = (v, f) => { if (v === undefined) return {}; if (!isObj(v)) { repaired = true; return {}; } const o = {}; for (const [k, x] of Object.entries(v)) { if (f(k, x)) o[k] = x; else repaired = true; } return o; };
+    if (s.books !== undefined && !isObj(s.books)) repaired = true;
+    for (const [id, b] of Object.entries(isObj(s.books) ? s.books : {})) {
+      if (!BOOK_RE.test(id) || !isObj(b)) { repaired = true; continue; }
+      const chapter = b.chapter === null || b.chapter === undefined || isInt(b.chapter, 1) ? (b.chapter ?? null) : (repaired = true, null);
+      const card = b.card === undefined || isInt(b.card) ? (b.card || 0) : (repaired = true, 0);
+      books[id] = {
+        chapter, card,
+        done: objOr(b.done, (k, v) => CH_RE.test(k) && v === true),
+        marks: objOr(b.marks, (k, v) => CARD_RE.test(k) && isObj(v)),
+        seen: objOr(b.seen, (k, v) => CH_RE.test(k) && isInt(v)),
+        notes: objOr(b.notes, (k, v) => CARD_RE.test(k) && isObj(v) && typeof v.text === 'string' && isTime(v.at)),
+        review: objOr(b.review, (k, v) => CARD_RE.test(k) && isObj(v) && (v.r === 'got' || v.r === 'again') && isTime(v.at)),
+      };
+    }
+    const arr = (v, f) => { if (v === undefined) return []; if (!Array.isArray(v)) { repaired = true; return []; } const a = v.filter(f); if (a.length !== v.length) repaired = true; return a; };
+    const recent = arr(s.recent, r => isObj(r) && typeof r.book === 'string' && isInt(r.chapter, 1) && isInt(r.card) && isTime(r.at));
+    const sessions = arr(s.sessions, x => isObj(x) && typeof x.book === 'string' && isTime(x.start) && isInt(x.seen) && isInt(x.seconds));
+    let last = s.last === undefined || s.last === null ? null : s.last;
+    if (last !== null && typeof last !== 'string') { repaired = true; last = null; }
+    const study = { books, last, recent, sessions };
+    if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
+    return { study, repaired };
+  }
+
+  const api = { sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

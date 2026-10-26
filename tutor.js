@@ -6,8 +6,16 @@
   const MAX_HISTORY = 10;
   const STYLES = [['default', 'Default'], ['simple', 'Simple'], ['math', 'Math walkthrough'], ['example', 'Example']];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
-  const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} };
+  const load = () => {
+    let raw = null; try { raw = localStorage.getItem(KEY); } catch (e) { return {}; }
+    if (raw === null) return {};
+    try { const v = JSON.parse(raw); if (v && typeof v === 'object' && !Array.isArray(v)) return v; } catch (e) {}
+    // unreadable: keep a backup before anything overwrites it (the library offers it for download)
+    try { if (!localStorage.getItem(KEY + '-corrupt-backup')) localStorage.setItem(KEY + '-corrupt-backup', raw); } catch (e) {}
+    return {};
+  };
+  const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { if (window.lsSaveFailed) window.lsSaveFailed(e); } };
+  const validConv = c => c && typeof c === 'object' && typeof c.conversationId === 'string' && Array.isArray(c.messages) && c.messages.every(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
   const newId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   // Markdown-lite: paragraphs, **bold**, *italic*, `code`, "-"/"1." lists, ### headings. Math is protected first.
@@ -44,7 +52,8 @@
   }
   function conv() {
     const all = load();
-    return all[ctx.book.id] || { conversationId: newId(), messages: [], draft: '', scope: 'card' };
+    const c = all[ctx.book.id];
+    return validConv(c) ? c : { conversationId: newId(), messages: [], draft: '', scope: 'card' };
   }
   function store(c) { const all = load(); all[ctx.book.id] = c; save(all); }
 
@@ -175,7 +184,7 @@
     paintLog(msgHTML({ role: 'user', content: q, where }) + '<div class="t-msg bot loading"><div class="t-who">Tutor</div><div class="t-dots" aria-label="Generating answer"><i></i><i></i><i></i></div></div>');
     let res, data;
     try {
-      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 45000);
+      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), window.__lsTutorTimeoutMs || 45000);
       try { res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: ac.signal }); }
       finally { clearTimeout(t); }
       try { data = await res.json(); } catch (e) { data = null; }

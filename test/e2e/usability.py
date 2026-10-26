@@ -13,9 +13,9 @@ with sync_playwright() as p:
         pg.goto(BASE + '/#/usability'); pg.wait_for_selector('#helpBtn')
         ok('Usability test kit' not in pg.inner_text('body'), f'{W}: kit hidden without the dev flag')
         pg.evaluate("([k, v]) => { localStorage.clear(); localStorage[k] = JSON.stringify(v); }", [SK, REAL])
-        real_raw = pg.evaluate(f"localStorage['{SK}']")
         U = BASE + '/?usability=1#/usability'
         pg.goto(U); pg.reload(); pg.wait_for_selector('.ut-list')
+        real_raw = pg.evaluate(f"localStorage['{SK}']")  # after load (older saved data is upgraded on load)
         ok(pg.locator('.ut-list > li').count() == 5 and all(t in pg.inner_text('.ut-list') for t in ('Start:', 'Task:', 'Done when:')), f'{W}: five scenarios with start state, task and completion criteria')
         ok('real study data' in pg.inner_text('.ut-state') and pg.is_visible('#ut-reset'), f'{W}: real data detected; RESET confirmation required')
         if W != 1728: pg.screenshot(path=f'{OUT}/{W}-kit.png', full_page=True)

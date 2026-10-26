@@ -1253,7 +1253,9 @@ function renderUsability(msg = '') {
 })();
 
 // ---------- boot ----------
-Promise.all(BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })))
+// Wait for the book data AND for every deferred script (formulas.js, sheets.js run after this file).
+const domReady = new Promise(r => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', r, { once: true }) : r()));
+Promise.all([...BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })), domReady])
   .then(route);
 
 // ---- Keyboard shortcuts reference ('?') ----

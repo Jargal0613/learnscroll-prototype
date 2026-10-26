@@ -166,12 +166,18 @@ function renderHome() {
       </a>`;
     }).join('')}</div>
     <footer class="lib-foot"><span>Study data is saved only in this browser.</span>
-      <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
+      <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="expMd">Export notes (.md)</button><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
   flash = '';
   wireRecovery();
   mountSearch();
   document.getElementById('exp').onclick = () => exportData(document.getElementById('exp-conv').checked);
+  document.getElementById('expMd').onclick = () => {
+    const { markdown, count } = StudyData.notesMarkdown(state, BOOK_IDS.filter(id => books[id]).map(id => books[id]));
+    if (!count) { flash = 'No notes to export yet. Add a note on any card in the reader.'; renderHome(); return; }
+    const d = new Date(), day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    download(`learnscroll-notes-${day}.md`, markdown, 'text/markdown');
+  };
   document.getElementById('imp').onclick = () => document.getElementById('imp-file').click();
   document.getElementById('imp-file').onchange = e => { const f = e.target.files[0]; if (f) readImport(f); };
 }
@@ -533,8 +539,8 @@ function runSession() {
 // ---------- export / import (all local; logic in studydata.js) ----------
 let flash = '', pendingImport = null;
 const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY));
-function download(name, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function download(name, text, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

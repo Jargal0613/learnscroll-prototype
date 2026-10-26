@@ -145,3 +145,29 @@ test('quiz attempts: validated strictly, merged as a union by time, counted as a
   const s = SD.sanitizeStudy({ books: { 'heat-mass-transfer': { attempts: { 'c1-q1': [A(1, false, T1)], 'c1-q2': 'bad' } } } });
   assert.equal(s.repaired, true); assert.deepEqual(Object.keys(s.study.books['heat-mass-transfer'].attempts), ['c1-q1']);
 });
+
+test('notes as Markdown: grouped by book > chapter > card heading, equation as $$latex$$, book order', () => {
+  const books = [require('../data/heat-mass-transfer.json'), require('../data/koretsky-thermo.json')];
+  const hm = books[0].chapters[0];
+  const eqIdx = hm.cards.findIndex(c => c.eq), plainIdx = hm.cards.findIndex(c => !c.eq);
+  const study = { books: {
+    'heat-mass-transfer': { notes: { [`c1-${eqIdx + 1}`]: { text: 'eq note\nline 2', at: T1 }, [`c1-${plainIdx + 1}`]: { text: 'plain note', at: T1 }, 'c1-q1': { text: 'quiz note', at: T1 }, 'c99-1': { text: 'orphan', at: T1 } } },
+    'koretsky-thermo': { notes: {} },
+  } };
+  const { markdown, count } = SD.notesMarkdown(study, books, { now: new Date(T1) });
+  assert.equal(count, 4);
+  assert.match(markdown, /^# LearnScroll notes\n/);
+  assert.match(markdown, new RegExp(`## ${books[0].title.replace(/[()]/g, '.')}`));
+  assert.ok(!markdown.includes(books[1].title), 'books without notes are skipped');
+  assert.match(markdown, /### Chapter 1: Introduction and Basic Concepts/);
+  const eqCard = hm.cards[eqIdx];
+  const block = `#### ${eqCard.h}\n\n$$${eqCard.eq}$$\n\neq note\nline 2\n`;
+  assert.ok(markdown.includes(block), 'heading, equation, note text in order');
+  assert.ok(!markdown.includes(`#### ${hm.cards[plainIdx].h}\n\n$$`), 'no equation block for cards without eq');
+  assert.match(markdown, /#### Practice question 1: .+\n\nquiz note/);
+  assert.match(markdown, /### Other notes\n\n#### Card c99-1\n\norphan/);
+  assert.ok(markdown.indexOf(`c1-${Math.min(eqIdx, plainIdx) + 1}`) === -1, 'card ids not used as headings for known cards');
+  const pos = [hm.cards[Math.min(eqIdx, plainIdx)].h, hm.cards[Math.max(eqIdx, plainIdx)].h].map(h => markdown.indexOf(`#### ${h}`));
+  assert.ok(pos[0] < pos[1], 'card order follows the book');
+  assert.equal(SD.notesMarkdown({ books: {} }, books).count, 0);
+});

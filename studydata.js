@@ -274,6 +274,38 @@
     return { study, repaired };
   }
 
-  const api = { sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  // Notes as Markdown: grouped by book, chapter and card heading (in book order); card equation as $$latex$$.
+  function notesMarkdown(study, books, { now = new Date() } = {}) {
+    const plain = s => String(s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const out = ['# LearnScroll notes', '', `Exported ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.`, ''];
+    let count = 0;
+    for (const book of books) {
+      const notes = ((study.books || {})[book.id] || {}).notes || {};
+      if (!Object.keys(notes).length) continue;
+      const used = new Set(), parts = [];
+      for (const ch of book.chapters) {
+        const items = [];
+        (ch.cards || []).forEach((c, i) => { const id = `c${ch.n}-${i + 1}`; if (notes[id]) items.push({ id, h: plain(c.h), eq: c.eq }); });
+        (ch.quiz || []).forEach((q, i) => { const id = `c${ch.n}-q${i + 1}`; if (notes[id]) items.push({ id, h: `Practice question ${i + 1}: ${plain(q.q)}` }); });
+        if (!items.length) continue;
+        parts.push(`### Chapter ${ch.n}: ${plain(ch.title)}`, '');
+        for (const it of items) {
+          used.add(it.id); count++;
+          parts.push(`#### ${it.h}`, '');
+          if (it.eq) parts.push(`$$${it.eq}$$`, '');
+          parts.push(notes[it.id].text.replace(/\r\n?/g, '\n').trim(), '');
+        }
+      }
+      const other = Object.keys(notes).filter(id => !used.has(id)).sort();
+      if (other.length) {
+        parts.push('### Other notes', '');
+        for (const id of other) { count++; parts.push(`#### Card ${id}`, '', notes[id].text.trim(), ''); }
+      }
+      out.push(`## ${plain(book.title)}`, '', ...parts);
+    }
+    return { markdown: out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n', count };
+  }
+
+  const api = { notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -66,7 +66,26 @@ function renderMath(el) {
     try { katex.render(n.dataset.eq, n, { displayMode: true, throwOnError: false }); } catch (e) {}
   });
   if (window.renderMathInElement) renderMathInElement(el, { delimiters: [{ left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }], throwOnError: false });
+  // Keep trailing punctuation on the same line as inline math ("r²." never leaves the "." alone on a line).
+  el.querySelectorAll('.katex').forEach(k => {
+    if (k.closest('.katex-display') || (k.parentElement && k.parentElement.classList.contains('m-nb'))) return;
+    const t = k.nextSibling; if (!t || t.nodeType !== 3) return;
+    const m = t.textContent.match(/^[.,;:!?)\]]+/); if (!m) return;
+    const w = document.createElement('span'); w.className = 'm-nb'; k.replaceWith(w); w.appendChild(k);
+    w.appendChild(document.createTextNode(m[0])); t.textContent = t.textContent.slice(m[0].length);
+  });
+  el.querySelectorAll('.eq').forEach(n => { markEqScroll(n); if (!n.dataset.sw) { n.dataset.sw = '1'; n.addEventListener('scroll', () => markEqScroll(n), { passive: true }); } });
 }
+// A display equation wider than its block scrolls inside the block; fade the edge that has more formula behind it.
+function markEqScroll(n) {
+  const more = n.scrollWidth - n.clientWidth > 2;
+  n.classList.toggle('eq-more-r', more && n.scrollLeft + n.clientWidth < n.scrollWidth - 2);
+  n.classList.toggle('eq-more-l', more && n.scrollLeft > 2);
+  if (more) { n.tabIndex = 0; n.setAttribute('role', 'group'); n.setAttribute('aria-label', 'Equation, scrolls sideways'); }
+}
+const remarkEqs = () => document.querySelectorAll('.eq').forEach(markEqScroll);
+window.addEventListener('resize', remarkEqs);
+if (document.fonts) document.fonts.addEventListener('loadingdone', remarkEqs); // KaTeX fonts change equation widths
 // Real, stored progress only. Returns null when nothing has been stored for this book.
 function bookProgress(book) {
   const bs = state.books[book.id];

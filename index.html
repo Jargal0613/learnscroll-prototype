@@ -287,7 +287,13 @@
   .opt.right { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
   .opt.right::before { color: var(--accent); }
   .opt.wrong { border-color: var(--danger); color: #ffc2c2; }
-  .opt.dim { opacity: .45; }
+  .opt.dim { color: var(--muted); border-color: var(--line); }
+  .opt.right::after, .opt.wrong::after { margin-left: auto; padding-left: 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .opt.right::after { content: '✓ Correct'; color: var(--accent); }
+  .opt.wrong::after { content: '✗ Your answer'; color: #ffc2c2; }
+  /* Contrast (WCAG AA): field boundaries 3:1, placeholders 4.5:1. */
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+  .search input, .tutor .t-form textarea, .card .note-ed textarea { border-color: #6b6b73; }
   .feedback { margin-top: 20px; font-size: 17px; line-height: 1.6; color: var(--fg-2); }
   .feedback:not(:empty) { padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
   .feedback b { font-weight: 600; }

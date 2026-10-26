@@ -1,9 +1,9 @@
 // LearnScroll study data export / import: pure, testable logic (browser global StudyData + CommonJS).
 // Nothing here touches the network; the app reads/writes localStorage and calls these functions.
 (function (root) {
-  const APP = 'learnscroll', VERSION = 1; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
+  const APP = 'learnscroll', VERSION = 2, VERSIONS = [1, 2]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
   const SCHEMA = 2, JOURNAL_KEY = 'learnscroll-write-journal';
-  const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1';
+  const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1', SESSION_KEY = 'learnscroll-session-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
   const SCOPES = ['card', 'chapter', 'book'];
   const MAX_BYTES = 5 * 1024 * 1024, MAX_RECENT = 10, MAX_NOTE = 4000, MAX_MSGS = 60, MAX_MSG = 20000;
@@ -136,6 +136,34 @@
     return conversations ? { prefs, conversations } : { prefs };
   }
 
+  // The study session in progress (stored separately; card ids only, resolved against the book data on load).
+  const ID_FLAGS = (o, w) => mapOf(o || {}, CARD_RE, w, (v, x) => (v === true ? true : fail(`${x} must be true.`)));
+  function validSession(x, bookIds) {
+    const w = 'session';
+    if (!isObj(x)) fail('session must be an object.');
+    onlyKeys(x, ['schema', 'book', 'minutes', 'start', 'ids', 'pos', 'viewed', 'marked', 'active', 'visibleSince', 'lastSeen'], w);
+    if (typeof x.book !== 'string' || (bookIds && !bookIds.includes(x.book))) fail('session.book must be a known book id.');
+    if (![10, 20, 30].includes(x.minutes) || !isTime(x.start)) fail('session needs minutes (10/20/30) and a start time.');
+    if (!Array.isArray(x.ids) || !x.ids.length || x.ids.length > 500 || !x.ids.every(i => typeof i === 'string' && CARD_RE.test(i))) fail('session.ids must be a list of card ids.');
+    if (x.pos !== undefined && !isInt(x.pos)) fail('session.pos must be a whole number.');
+    if (x.active !== undefined && !isInt(x.active)) fail('session.active must be a whole number.');
+    for (const k of ['visibleSince', 'lastSeen']) if (x[k] !== undefined && x[k] !== null && !isTime(x[k])) fail(`session.${k} must be a timestamp or null.`);
+    if (x.marked !== undefined && !isObj(x.marked)) fail('session.marked must be an object.');
+    const marked = mapOf(x.marked || {}, CARD_RE, 'session.marked', (v, mw) => (isObj(v) ? flags(v.b === true, v.d === true) : fail(`${mw} must be an object.`)));
+    return { schema: SCHEMA, book: x.book, minutes: x.minutes, start: x.start, ids: x.ids.slice(), pos: x.pos || 0, viewed: ID_FLAGS(x.viewed, 'session.viewed'), marked, active: x.active || 0, visibleSince: x.visibleSince ?? null, lastSeen: x.lastSeen ?? null };
+  }
+  // Tutor store and session store share the study store's schema number. Version 1 = saved before schemas.
+  function migrateMarked(raw, key) {
+    if (!isObj(raw)) return { data: raw, from: null, migrated: false, future: false, invalid: raw !== null && raw !== undefined };
+    const from = raw[key] === undefined ? 1 : raw[key];
+    if (!Number.isInteger(from) || from < 1) return { data: raw, from, migrated: false, future: false, invalid: true };
+    if (from > SCHEMA) return { data: raw, from, migrated: false, future: true };
+    if (from === SCHEMA) return { data: raw, from, migrated: false, future: false };
+    return { data: { ...JSON.parse(JSON.stringify(raw)), [key]: SCHEMA }, from, migrated: true, future: false };
+  }
+  const migrateTutor = raw => migrateMarked(raw, '_schema'); // 1 -> 2: adds the marker; conversations untouched
+  const migrateSession = raw => migrateMarked(raw, 'schema'); // 1 -> 2: adds the marker; fields untouched
+
   // Parses and strictly validates an export file. Returns { ok: true, data } or { ok: false, error }.
   function parse(text, { bookIds } = {}) {
     try {
@@ -144,10 +172,12 @@
       let obj; try { obj = JSON.parse(text); } catch (e) { fail('The file is not valid JSON.'); }
       if (!isObj(obj)) fail('The file is not a LearnScroll export.');
       if (obj.app !== APP) fail('The file is not a LearnScroll export (missing app id).');
-      if (obj.version !== VERSION) fail(`Unsupported export version ${JSON.stringify(obj.version)}; this app reads version ${VERSION}.`);
-      onlyKeys(obj, ['app', 'version', 'exportedAt', 'study', 'tutor'], 'the file');
+      if (Number.isInteger(obj.version) && obj.version > VERSION) fail(`This file was made by a newer version of LearnScroll (format ${obj.version}); this app reads up to ${VERSION}. Nothing was changed.`);
+      if (!VERSIONS.includes(obj.version)) fail(`Unsupported export version ${JSON.stringify(obj.version)}; this app reads versions ${VERSIONS.join(' and ')}.`);
+      onlyKeys(obj, obj.version === 1 ? ['app', 'version', 'exportedAt', 'study', 'tutor'] : ['app', 'version', 'exportedAt', 'study', 'tutor', 'session'], 'the file');
       if (typeof obj.exportedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(obj.exportedAt) || isNaN(Date.parse(obj.exportedAt))) fail('exportedAt must be an ISO date.');
       const data = { app: APP, version: VERSION, exportedAt: obj.exportedAt, study: validStudy(obj.study, bookIds), tutor: validTutor(obj.tutor === undefined ? {} : obj.tutor, bookIds) };
+      if (obj.session !== undefined && obj.session !== null) data.session = validSession(obj.session, bookIds);
       return { ok: true, data };
     } catch (e) {
       if (e instanceof Invalid) return { ok: false, error: e.message };
@@ -156,25 +186,29 @@
   }
 
   // Normalises raw localStorage values into export-shaped objects (tolerant: local data is ours).
-  function fromStorage(studyRaw, tutorRaw) {
-    let s = {}, t = {};
+  function fromStorage(studyRaw, tutorRaw, sessionRaw) {
+    let s = {}, t = {}, session = null;
+    try { const x = JSON.parse(sessionRaw || 'null'); if (isObj(x) && !(Number.isInteger(x.schema) && x.schema > SCHEMA)) { const { schema, ...rest } = x; session = validSession({ ...rest, schema: SCHEMA }); } } catch (e) { session = null; }
     try { s = JSON.parse(studyRaw || '{}') || {}; } catch (e) { s = {}; }
     try { t = JSON.parse(tutorRaw || '{}') || {}; } catch (e) { t = {}; }
     const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [], sessions: Array.isArray(s.sessions) ? s.sessions : [] };
     if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
-    return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations } };
+    return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
   }
-  function toStorage({ study, tutor }) {
+  function toStorage({ study, tutor, session }) {
     const t = { ...(tutor.conversations || {}) };
     if (tutor.prefs && Object.keys(tutor.prefs).length) t._prefs = tutor.prefs;
-    return { study: JSON.stringify({ schema: SCHEMA, ...study }), tutor: JSON.stringify(t) };
+    t._schema = SCHEMA;
+    return { study: JSON.stringify({ schema: SCHEMA, ...study }), tutor: JSON.stringify(t), session: session ? JSON.stringify({ ...session, schema: SCHEMA }) : null };
   }
   function build(local, { conversations = false, now = new Date() } = {}) {
     const tutor = { prefs: local.tutor.prefs || {} };
     if (conversations) tutor.conversations = local.tutor.conversations || {};
-    return { app: APP, version: VERSION, exportedAt: now.toISOString(), study: local.study, tutor };
+    const out = { app: APP, version: VERSION, exportedAt: now.toISOString(), study: local.study, tutor };
+    if (local.session) out.session = local.session;
+    return out;
   }
 
   function counts(data) {
@@ -190,6 +224,7 @@
     c.recent = (data.study.recent || []).length;
     c.conversations = Object.values((data.tutor && data.tutor.conversations) || {}).filter(x => x.messages && x.messages.length).length;
     c.style = (data.tutor && data.tutor.prefs && data.tutor.prefs.style) || null;
+    c.activeSession = data.session ? 1 : 0;
     return c;
   }
 
@@ -234,13 +269,15 @@
     const sessions = [...smap.values()].sort((x, y) => y.start - x.start).slice(0, 20);
     const study = { books, last, recent, sessions };
     const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
-    return { study, tutor: { prefs, conversations } };
+    // a session in progress here wins; otherwise take the file's
+    return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
   }
   // Overwrite: study data and style come from the file. Conversations are replaced only if the file has them.
   function overwrite(local, incoming) {
     return {
       study: incoming.study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
+      session: incoming.session || null, // Replace: the file's session in progress, or none
     };
   }
 
@@ -276,7 +313,7 @@
   // Before a multi-key write (import), the previous values are journaled; if the page dies mid-write the journal is
   // still there on next start and the previous, consistent data is restored.
   function journalStart(storage) {
-    try { storage.setItem(JOURNAL_KEY, JSON.stringify({ at: Date.now(), keys: { [STUDY_KEY]: storage.getItem(STUDY_KEY), [TUTOR_KEY]: storage.getItem(TUTOR_KEY) } })); return true; } catch (e) { return false; }
+    try { storage.setItem(JOURNAL_KEY, JSON.stringify({ at: Date.now(), keys: { [STUDY_KEY]: storage.getItem(STUDY_KEY), [TUTOR_KEY]: storage.getItem(TUTOR_KEY), [SESSION_KEY]: storage.getItem(SESSION_KEY) } })); return true; } catch (e) { return false; }
   }
   function journalEnd(storage) { try { storage.removeItem(JOURNAL_KEY); } catch (e) {} }
   // Returns true if an interrupted write was rolled back.
@@ -286,7 +323,7 @@
     let j = null; try { j = JSON.parse(raw); } catch (e) {}
     if (!j || !isObj(j.keys)) { journalEnd(storage); return false; }
     try {
-      for (const k of [STUDY_KEY, TUTOR_KEY]) { if (!(k in j.keys)) continue; const v = j.keys[k]; if (v === null) storage.removeItem(k); else storage.setItem(k, v); }
+      for (const k of [STUDY_KEY, TUTOR_KEY, SESSION_KEY]) { if (!(k in j.keys)) continue; const v = j.keys[k]; if (v === null) storage.removeItem(k); else storage.setItem(k, v); }
     } catch (e) { return false; } // keep the journal; try again next start
     journalEnd(storage); return true;
   }
@@ -390,6 +427,6 @@
     return [...pick.mistakes, ...pick.difficult, ...pick.again, ...pick.unfinished].slice(0, limit);
   }
 
-  const api = { SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

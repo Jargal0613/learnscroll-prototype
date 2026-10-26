@@ -28,7 +28,7 @@ with sync_playwright() as p:
     pg.check('#exp-conv')
     with pg.expect_download() as dl: pg.click('#exp')
     path=tempfile.gettempdir()+f'/exp-{TAG}-{W}.json'; dl.value.save_as(path); d=json.load(open(path))
-    ok(d['app']=='learnscroll' and d['version']==1 and 'exportedAt' in d and d['tutor']['prefs'].get('style')=='simple' and 'conversations' in d['tutor'], 'export file versioned, has prefs+conversations '+dl.value.suggested_filename)
+    ok(d['app']=='learnscroll' and d['version']==2 and 'exportedAt' in d and d['tutor']['prefs'].get('style')=='simple' and 'conversations' in d['tutor'], 'export file versioned, has prefs+conversations '+dl.value.suggested_filename)
     ok(d['study']['books']['heat-mass-transfer']['notes']['c1-13']['text'].startswith('Fourier'), 'export has note')
     # clear + import (round-trip)
     pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(600)
@@ -60,7 +60,7 @@ with sync_playwright() as p:
     pg.screenshot(path=f'{OUT}/{TAG}-{W}-after-overwrite.png')
     # malformed
     before=pg.evaluate(f"localStorage['{SK}']"); bt=pg.evaluate(f"localStorage['{TK}']")
-    for i,(txt) in enumerate(['{"app":"learnscroll","version":1,', json.dumps({**o,'version':2}), json.dumps({**o,'study':{'books':{'koretsky-thermo':{'notes':{'c1-1':{'text':5,'at':1}}}}}})]):
+    for i,(txt) in enumerate(['{"app":"learnscroll","version":1,', json.dumps({**o,'version':3}), json.dumps({**o,'study':{'books':{'koretsky-thermo':{'notes':{'c1-1':{'text':5,'at':1}}}}}})]):
       bp=tempfile.gettempdir()+f'/bad{i}.json'; open(bp,'w').write(txt); pg.goto(BASE+'/#/'); pg.wait_for_timeout(300); pg.set_input_files('#imp-file', bp); pg.wait_for_timeout(400)
       msg=pg.inner_text('.imp-err') if pg.locator('.imp-err').count() else ''
       ok('can’t be imported' in msg and pg.evaluate(f"localStorage['{SK}']")==before and pg.evaluate(f"localStorage['{TK}']")==bt, f'malformed {i} rejected: '+msg.split('\n')[1] if msg else 'malformed missing')

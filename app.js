@@ -34,8 +34,11 @@ let state = load();
 (function checkTutorStore() { // back up an unreadable tutor store at start-up, before anything rewrites it
   let raw = null; try { raw = localStorage.getItem(StudyData.TUTOR_KEY); } catch (e) { return; }
   if (raw === null) return;
-  let ok = false; try { const v = JSON.parse(raw); ok = !!v && typeof v === 'object' && !Array.isArray(v); } catch (e) {}
-  if (!ok) { backupRaw(StudyData.TUTOR_KEY, raw); try { localStorage.setItem(StudyData.TUTOR_KEY, '{}'); } catch (e) {} }
+  let ok = false, v = null; try { v = JSON.parse(raw); ok = !!v && typeof v === 'object' && !Array.isArray(v); } catch (e) {}
+  if (!ok) { backupRaw(StudyData.TUTOR_KEY, raw); try { localStorage.setItem(StudyData.TUTOR_KEY, JSON.stringify({ _schema: StudyData.SCHEMA })); } catch (e) {} return; }
+  const m = StudyData.migrateTutor(v);
+  if (m.future || m.invalid) { backupRaw(StudyData.TUTOR_KEY, raw); startNotice = startNotice || 'Your tutor conversations were saved by a different version of LearnScroll. They are kept as a backup you can download below.'; return; }
+  if (m.migrated) { try { if (localStorage.getItem(`${StudyData.TUTOR_KEY}-pre-schema-${m.from}`) === null) localStorage.setItem(`${StudyData.TUTOR_KEY}-pre-schema-${m.from}`, raw); localStorage.setItem(StudyData.TUTOR_KEY, JSON.stringify(m.data)); } catch (e) {} }
 })();
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); return true; } catch (e) { saveFailed(e); return false; }
@@ -195,7 +198,7 @@ function renderHome() {
       </a>`;
     }).join('')}</div>
     <footer class="lib-foot"><span>Study data is saved only in this browser.</span>
-      <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="expMd">Export notes (.md)</button><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
+      <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv" checked> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="expMd">Export notes (.md)</button><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
   flash = '';
   wireRecovery();
@@ -357,13 +360,13 @@ function saveFailed(e) {
 }
 window.lsSaveFailed = saveFailed;
 function recoveryHTML() {
-  const keys = [KEY, StudyData.TUTOR_KEY].filter(k => { try { return localStorage.getItem(k + BACKUP_SUFFIX) !== null; } catch (e) { return false; } });
+  const keys = [KEY, StudyData.TUTOR_KEY, StudyData.SESSION_KEY].filter(k => { try { return localStorage.getItem(k + BACKUP_SUFFIX) !== null; } catch (e) { return false; } });
   if (!keys.length) return '';
   return `<div class="notice" id="recover" role="alert"><b>Some saved data couldn’t be read.</b> LearnScroll kept everything it could and saved the unreadable data as a backup in this browser${keys.includes(StudyData.TUTOR_KEY) ? ' (including tutor conversations)' : ''}. <span class="rec-a"><button class="t-link" id="rec-dl">Download backup</button> · <button class="t-link" id="rec-x">Remove backup</button></span></div>`;
 }
 function wireRecovery() {
   const dl = document.getElementById('rec-dl'); if (!dl) return;
-  const keys = [KEY, StudyData.TUTOR_KEY];
+  const keys = [KEY, StudyData.TUTOR_KEY, StudyData.SESSION_KEY];
   dl.onclick = () => { const o = {}; for (const k of keys) { const v = localStorage.getItem(k + BACKUP_SUFFIX); if (v !== null) o[k] = v; } download('learnscroll-unreadable-backup.json', JSON.stringify(o, null, 2)); dl.dataset.done = '1'; };
   document.getElementById('rec-x').onclick = () => {
     if (!dl.dataset.done && !confirm('Remove the backup without downloading it? The unreadable data will be gone.')) return;
@@ -446,11 +449,15 @@ function sessionQueue(book) {
   return { items: out, difficult: nd, again: na, unstudied: out.length - nd - na };
 }
 function storeSession(s) {
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ book: s.book, minutes: s.minutes, start: s.start, ids: s.items.map(x => screenId(x.ch, x.i)), pos: s.pos, viewed: s.viewed, marked: s.marked, active: s.active || 0, visibleSince: s.visibleSince ?? null, lastSeen: s.lastSeen ?? null })); } catch (e) { saveFailed(e); }
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ schema: StudyData.SCHEMA, book: s.book, minutes: s.minutes, start: s.start, ids: s.items.map(x => screenId(x.ch, x.i)), pos: s.pos, viewed: s.viewed, marked: s.marked, active: s.active || 0, visibleSince: s.visibleSince ?? null, lastSeen: s.lastSeen ?? null })); } catch (e) { saveFailed(e); }
 }
 function loadSession() {
   try {
-    const r = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    const raw = localStorage.getItem(SESSION_KEY);
+    const m = StudyData.migrateSession(JSON.parse(raw || 'null'));
+    if (m.future || m.invalid) { backupRaw(SESSION_KEY, raw); return null; } // newer/unknown: kept, never overwritten silently
+    const r = m.data;
+    if (m.migrated) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(r)); } catch (e) {} }
     if (!r || !books[r.book] || !Array.isArray(r.ids)) return null;
     const b = books[r.book], items = [];
     for (const id of r.ids) {
@@ -576,7 +583,7 @@ function runSession() {
 
 // ---------- export / import (all local; logic in studydata.js) ----------
 let flash = startNotice, pendingImport = null;
-const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY));
+const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY), localStorage.getItem(StudyData.SESSION_KEY));
 function download(name, text, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
@@ -595,7 +602,7 @@ function readImport(file) {
 }
 function countsHTML(c) {
   const row = (k, v) => `<li><span>${k}</span><b>${v}</b></li>`;
-  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Quiz attempts', c.attempts)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Study sessions', c.sessions)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
+  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Quiz attempts', c.attempts)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Study sessions', c.sessions)}${row('Tutor conversations', c.conversations)}${row('Session in progress', c.activeSession ? 'yes' : '—')}${row('Answer style', c.style || '—')}</ul>`;
 }
 function renderImport() {
   document.title = 'Import study data · LearnScroll';
@@ -612,9 +619,9 @@ function renderImport() {
     <div class="imp-cols"><section><h2>In the file</h2>${countsHTML(inc)}</section><section><h2>In this browser now</h2>${countsHTML(cur)}</section></div>
     <div class="imp-opts">
       <section class="imp-opt"><h2>Merge</h2><p>Keeps everything from both. Bookmarks, difficult marks, notes, review results and completed chapters are combined; when the same note or result exists in both, the newer one wins; progress takes the furthest point.</p><button class="btn" id="imp-merge">Merge into this browser</button></section>
-      <section class="imp-opt warn"><h2>Overwrite</h2><p>Replaces this browser’s study data with the file.${p.data.tutor.conversations ? ' Tutor conversations are replaced too.' : ' Tutor conversations here are kept (the file has none).'} <b>Current data not in the file will be lost.</b></p>
+      <section class="imp-opt warn"><h2>Replace</h2><p>Replaces this browser’s study data and any session in progress with the file’s.${p.data.tutor.conversations ? ' Tutor conversations are replaced too.' : ' Tutor conversations here are kept (the file has none).'} <b>Current data not in the file will be lost.</b></p>
         <label class="imp-chk"><input type="checkbox" id="imp-backup" checked> First download a backup of this browser’s current data</label>
-        <button class="btn danger" id="imp-over">Overwrite this browser’s data</button></section>
+        <button class="btn danger" id="imp-over">Replace this browser’s data</button></section>
     </div>
     <div class="btns"><a class="btn ghost" href="#/" id="imp-cancel">Cancel</a></div></main>`;
   const apply = (mode) => {
@@ -622,13 +629,15 @@ function renderImport() {
     if (mode === 'overwrite' && document.getElementById('imp-backup').checked) exportData(true, '-backup');
     const next = mode === 'merge' ? StudyData.merge(local, p.data) : StudyData.overwrite(local, p.data);
     const out = StudyData.toStorage(next);
-    const prev = { study: localStorage.getItem(StudyData.STUDY_KEY), tutor: localStorage.getItem(StudyData.TUTOR_KEY) };
+    const prev = { study: localStorage.getItem(StudyData.STUDY_KEY), tutor: localStorage.getItem(StudyData.TUTOR_KEY), session: localStorage.getItem(StudyData.SESSION_KEY) };
     StudyData.journalStart(localStorage); // if the tab dies between the two writes, the next start restores `prev`
-    try { localStorage.setItem(StudyData.STUDY_KEY, out.study); localStorage.setItem(StudyData.TUTOR_KEY, out.tutor); }
+    let wrote = 0;
+    try { localStorage.setItem(StudyData.STUDY_KEY, out.study); wrote = 1; localStorage.setItem(StudyData.TUTOR_KEY, out.tutor); wrote = 2; if (out.session) localStorage.setItem(StudyData.SESSION_KEY, out.session); else localStorage.removeItem(StudyData.SESSION_KEY); }
     catch (e) {
       // The failed write left its key unchanged, so only the study key can differ; put it back. If even that fails the
       // journal stays and the next start restores both keys.
-      try { if (prev.study === null) localStorage.removeItem(StudyData.STUDY_KEY); else localStorage.setItem(StudyData.STUDY_KEY, prev.study); StudyData.journalEnd(localStorage); } catch (e2) {}
+      const put = (k, v) => { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); };
+      try { if (wrote >= 2) put(StudyData.TUTOR_KEY, prev.tutor); if (wrote >= 1) put(StudyData.STUDY_KEY, prev.study); StudyData.journalEnd(localStorage); } catch (e2) {}
       flash = 'Import failed: browser storage is full or unavailable. Nothing was changed.'; state = load(); go('#/'); return;
     }
     StudyData.journalEnd(localStorage);

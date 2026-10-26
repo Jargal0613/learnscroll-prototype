@@ -14,7 +14,7 @@
     try { if (!localStorage.getItem(KEY + '-corrupt-backup')) localStorage.setItem(KEY + '-corrupt-backup', raw); } catch (e) {}
     return {};
   };
-  const save = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { if (window.lsSaveFailed) window.lsSaveFailed(e); } };
+  const save = s => { try { if (window.StudyData) s._schema = window.StudyData.SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { if (window.lsSaveFailed) window.lsSaveFailed(e); } };
   const validConv = c => c && typeof c === 'object' && typeof c.conversationId === 'string' && Array.isArray(c.messages) && c.messages.every(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
   const newId = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 

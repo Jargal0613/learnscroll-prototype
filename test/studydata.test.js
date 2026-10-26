@@ -15,7 +15,7 @@ const file = (over = {}) => JSON.stringify({ app: 'learnscroll', version: 1, exp
 test('export round-trip: build -> parse gives the same data back', () => {
   const local = localSample();
   const out = SD.build(local, { conversations: true, now: new Date(T2) });
-  assert.equal(out.app, 'learnscroll'); assert.equal(out.version, 1); assert.equal(out.exportedAt, new Date(T2).toISOString());
+  assert.equal(out.app, 'learnscroll'); assert.equal(out.version, 2); assert.equal(out.exportedAt, new Date(T2).toISOString());
   const r = SD.parse(JSON.stringify(out), { bookIds: IDS });
   assert.ok(r.ok, r.error);
   assert.deepEqual(r.data.study.books['heat-mass-transfer'].notes, local.study.books['heat-mass-transfer'].notes);
@@ -30,7 +30,7 @@ test('parse rejects malformed files with a clear message', () => {
   const bad = [
     ['not json {', /not valid JSON/], ['[]', /not a LearnScroll export/], ['null', /not a LearnScroll export/],
     [JSON.stringify({ version: 1 }), /app id/], [file({ app: 'other' }), /app id/],
-    [file({ version: 2 }), /Unsupported export version 2/], [file({ version: '1' }), /Unsupported export version/],
+    [file({ version: 3 }), /newer version of LearnScroll/], [file({ version: '1' }), /Unsupported export version/],
     [file({ exportedAt: 'yesterday' }), /ISO date/], [file({ extra: 1 }), /Unexpected field "extra"/],
     [file({ study: [] }), /"study" must be an object/],
     [file({ study: { books: { 'nope-book': {} } } }), /Unknown book/],

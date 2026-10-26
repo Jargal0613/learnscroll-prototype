@@ -13,6 +13,7 @@ TUT = {'_prefs': {'style': 'simple'}, B: {'conversationId': 'c1', 'messages': [{
 def seed(pg, study, tutor=None, extra=None):
     pg.goto(BASE + '/#/'); pg.evaluate("([s, t, e, SK, TK]) => { localStorage.clear(); localStorage.setItem(SK, typeof s === 'string' ? s : JSON.stringify(s)); if (t) localStorage.setItem(TK, JSON.stringify(t)); for (const [k, v] of Object.entries(e || {})) localStorage.setItem(k, v); }", [study, tutor, extra, SK, TK])
     pg.reload(); pg.wait_for_timeout(700)
+T = lambda pg: {k: v for k, v in json.loads(pg.evaluate(f"localStorage['{TK}']")).items() if k != '_schema'}
 S = lambda pg: json.loads(pg.evaluate(f"localStorage['{SK}']"))
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []
@@ -37,7 +38,7 @@ with sync_playwright() as p:
         # 3. interrupted import (journal left behind, half-written new data)
         old = json.dumps(dict(LEGACY, schema=2)); journal = json.dumps({'at': T1, 'keys': {SK: old, TK: json.dumps(TUT)}})
         seed(pg, {'schema': 2, 'books': {}, 'last': None, 'recent': [], 'sessions': []}, None, {JK: journal})
-        ok(pg.evaluate(f"localStorage['{JK}']") is None and S(pg)['books'][B]['notes'] == LEGACY['books'][B]['notes'] and json.loads(pg.evaluate(f"localStorage['{TK}']")) == TUT, f'{W}: interrupted import rolled back to previous data')
+        ok(pg.evaluate(f"localStorage['{JK}']") is None and S(pg)['books'][B]['notes'] == LEGACY['books'][B]['notes'] and T(pg) == TUT, f'{W}: interrupted import rolled back to previous data')
         ok('interrupted' in pg.inner_text('main'), f'{W}: interrupted-import notice shown'); pg.screenshot(path=f'{OUT}/{W}-interrupted-import.png')
         # 4. UI round trip: export everything -> wipe -> overwrite import -> identical
         seed(pg, LEGACY, TUT); pg.check('#exp-conv')
@@ -46,7 +47,7 @@ with sync_playwright() as p:
         pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(500)
         pg.set_input_files('#imp-file', d.value.path()); pg.wait_for_timeout(500); pg.uncheck('#imp-backup'); pg.click('#imp-over'); pg.wait_for_timeout(500)
         after = S(pg); ok(after == before, f'{W}: export -> overwrite import restores identical study data')
-        ok(json.loads(pg.evaluate(f"localStorage['{TK}']")) == TUT, f'{W}: tutor conversations + prefs restored identically')
+        ok(T(pg) == TUT, f'{W}: tutor conversations + prefs restored identically')
         ok(pg.evaluate(f"localStorage['{JK}']") is None, f'{W}: journal cleared after a successful import')
         pg.goto(BASE + '/#/'); pg.wait_for_timeout(300); pg.check('#exp-conv')
         with pg.expect_download() as d2: pg.click('#exp')

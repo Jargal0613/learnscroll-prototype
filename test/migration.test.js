@@ -73,7 +73,7 @@ test('malformed backups are rejected with a message and never throw', () => {
   const g = () => JSON.parse(good);
   const cases = {
     truncated: good.slice(0, good.length / 2), empty: '', bom_garbage: '\uFEFF{not json', array: '[]', number: '42',
-    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 2 }),
+    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 3 }),
     extraKey: JSON.stringify({ ...g(), evil: 1 }), badDate: JSON.stringify({ ...g(), exportedAt: 'yesterday' }),
     noteNotText: (() => { const o = g(); o.study.books['heat-mass-transfer'].notes['c1-2'].text = 5; return JSON.stringify(o); })(),
     attemptBad: (() => { const o = g(); o.study.books['heat-mass-transfer'].attempts['c1-q1'] = [{ k: 'a' }]; return JSON.stringify(o); })(),
@@ -112,4 +112,35 @@ test('quota: journal start reports failure instead of throwing; recovery that hi
   const full = fakeStorage({ quotaAfter: 0 }); assert.equal(SD.journalStart(full), false);
   const st = fakeStorage({ quotaAfter: 3 }); st.setItem(SD.STUDY_KEY, 'OLD'); assert.equal(SD.journalStart(st), true); st.setItem(SD.STUDY_KEY, 'NEW');
   assert.equal(SD.journalRecover(st), false, 'restore failed (quota)'); assert.notEqual(st.getItem(SD.JOURNAL_KEY), null, 'journal kept for the next start');
+});
+
+test('tutor + session stores share the schema: legacy upgraded, future/invalid flagged, data untouched', () => {
+  const t = SD.migrateTutor(clone(TUTOR)); assert.equal(t.migrated, true); assert.equal(t.data._schema, SD.SCHEMA);
+  const { _schema, ...rest } = t.data; assert.deepEqual(rest, TUTOR);
+  assert.equal(SD.migrateTutor({ ...TUTOR, _schema: 9 }).future, true);
+  const sess = { book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: {}, active: 30, visibleSince: null, lastSeen: T2 };
+  const s = SD.migrateSession(clone(sess)); assert.equal(s.migrated, true); assert.equal(s.data.schema, SD.SCHEMA); assert.equal(s.data.active, 30);
+  assert.equal(SD.migrateSession({ ...sess, schema: 5 }).future, true);
+  assert.equal(SD.migrateSession('x').invalid, true);
+});
+test('export v2 carries the session in progress; round trip, merge and replace semantics; v1 files still import', () => {
+  const sess = { schema: 2, book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: { 'c1-1': { b: true } }, active: 30, visibleSince: null, lastSeen: T2 };
+  const study = SD.sanitizeStudy(SD.migrateStudy(clone(LEGACY)).data).study;
+  const local = SD.fromStorage(JSON.stringify(study), JSON.stringify(TUTOR), JSON.stringify(sess));
+  const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, 2); assert.deepEqual(f.session, sess);
+  assert.deepEqual(Object.keys(f).sort(), ['app', 'exportedAt', 'session', 'study', 'tutor', 'version']);
+  assert.doesNotMatch(JSON.stringify(f), /sk-[A-Za-z0-9]|OPENAI|api[_-]?key|vs_[A-Za-z0-9]|vector_store/i, 'no secrets/server data');
+  const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error); assert.deepEqual(p.data.session, sess);
+  const st = SD.toStorage(SD.overwrite(SD.fromStorage(null, null, null), p.data)); assert.deepEqual(JSON.parse(st.session), sess);
+  assert.equal(JSON.parse(st.tutor)._schema, SD.SCHEMA);
+  const other = { ...sess, start: T2, book: 'koretsky-thermo' };
+  assert.equal(SD.merge(SD.fromStorage(null, null, JSON.stringify(other)), p.data).session.book, 'koretsky-thermo', 'merge keeps the session in progress here');
+  assert.equal(SD.merge(SD.fromStorage(null, null, null), p.data).session.book, 'heat-mass-transfer', 'merge takes the file session when none here');
+  assert.equal(SD.overwrite(SD.fromStorage(null, null, JSON.stringify(other)), { ...p.data, session: undefined }).session, null, 'replace with a file without a session clears it');
+  for (const bad of [{ ...sess, ids: ['nope'] }, { ...sess, minutes: 15 }, { ...sess, book: 'x' }, { ...sess, extra: 1 }, { ...sess, viewed: { 'c1-1': 'yes' } }]) {
+    const r = SD.parse(JSON.stringify({ ...f, session: bad }), { bookIds: IDS }); assert.equal(r.ok, false, JSON.stringify(bad)); assert.match(r.error, /session/);
+  }
+  assert.equal(SD.parse(JSON.stringify({ ...f, version: 1 }), { bookIds: IDS }).ok, false, 'v1 files cannot carry a session');
+  const { session, ...v1 } = f; assert.ok(SD.parse(JSON.stringify({ ...v1, version: 1 }), { bookIds: IDS }).ok, 'v1 file imports');
+  assert.match(SD.parse(JSON.stringify({ ...f, version: 3 }), { bookIds: IDS }).error, /newer version/);
 });

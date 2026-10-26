@@ -110,7 +110,9 @@ function renderHome() {
     if (ch && ready(ch)) cont = `<a class="continue" id="continue" href="#/read/${last.id}/${ch.n}/${Math.min(bs.card, screens(ch) - 1) + 1}"><div><div class="k">Continue studying</div><div class="t">${esc(last.short)} · Ch ${ch.n}: ${esc(ch.title)}</div><div class="s">Card ${bs.card + 1} of ${screens(ch)}</div></div><span class="go">Resume →</span></a>`;
   }
   app.innerHTML = `<main class="page">
-    <div class="topline"><div class="brand"><i></i>LearnScroll</div></div>
+    <div class="topline"><div class="brand"><i></i>LearnScroll</div>
+      <div class="search" role="search"><label class="sr" for="q">Search the library</label><input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search cards, chapters, books" aria-controls="q-res" aria-expanded="false" aria-autocomplete="list"><kbd class="q-key" aria-hidden="true">/</kbd>
+        <div class="q-res" id="q-res" role="listbox" aria-label="Search results" hidden></div></div></div>
     <h1>Study, one card at a time.</h1>
     <p class="lead">Short study notes for five textbooks, chapter by chapter. Move through a chapter one idea per screen, then check yourself with a few practice questions. Progress is saved in this browser.</p>
     ${flash ? `<div class="notice ok" role="status">${esc(flash)}</div>` : ''}
@@ -143,6 +145,7 @@ function renderHome() {
       <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv"> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
   flash = '';
+  mountSearch();
   document.getElementById('exp').onclick = () => exportData(document.getElementById('exp-conv').checked);
   document.getElementById('imp').onclick = () => document.getElementById('imp-file').click();
   document.getElementById('imp-file').onchange = e => { const f = e.target.files[0]; if (f) readImport(f); };
@@ -164,6 +167,112 @@ function reviewHomeHTML(ids) {
     ? `<div class="review-row">${rows.map(r => `<a class="btn ghost sm" href="#/review/${r.b.id}">Review ${esc(r.b.short)} (${r.n})</a>`).join('')}</div>`
     : '<p class="empty-note">Nothing to review yet. Bookmark cards or mark them as difficult in the reader, then review them here.</p>';
   return `<div class="section-h"><span>Review</span><span>Marked cards</span></div>${body}`;
+}
+
+// ---------- library search (local; all book JSON is already loaded once at start) ----------
+let searchIndex = null;
+const plainText = s => stripTags(String(s || '')).replace(/\\[()[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+function buildIndex() {
+  const out = [];
+  for (const id of BOOK_IDS) {
+    const b = books[id]; if (!b) continue;
+    out.push({ book: b, kind: 'book', title: b.title, text: `${b.author} ${b.description || ''}`, href: `#/book/${b.id}` });
+    for (const ch of b.chapters) {
+      const ok = ready(ch);
+      out.push({ book: b, ch, kind: 'chapter', title: `Ch ${ch.n}: ${ch.title}`, text: ok ? '' : 'Coming soon', href: ok ? `#/read/${b.id}/${ch.n}/1` : `#/book/${b.id}` });
+      if (!ok) continue;
+      ch.cards.forEach((c, i) => out.push({ book: b, ch, i, kind: 'card', title: plainText(c.h), text: plainText([c.t, c.def, c.ex].filter(Boolean).join(' ')), href: `#/read/${b.id}/${ch.n}/${i + 1}` }));
+      (ch.quiz || []).forEach((q, k) => out.push({ book: b, ch, i: ch.cards.length + k, kind: 'quiz', title: `Practice: ${plainText(q.q)}`, text: plainText(q.options.join(' · ')), href: `#/read/${b.id}/${ch.n}/${ch.cards.length + k + 1}` }));
+    }
+  }
+  for (const e of out) { e.lt = e.title.toLowerCase(); e.lx = e.text.toLowerCase(); }
+  return out;
+}
+function searchLibrary(q, limit = 40) {
+  const terms = q.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  if (!terms.length) return [];
+  if (!searchIndex) searchIndex = buildIndex();
+  const hits = [];
+  for (const e of searchIndex) {
+    let score = 0, all = true;
+    for (const t of terms) {
+      const inT = e.lt.includes(t), inX = !inT && e.lx.includes(t);
+      if (!inT && !inX) { all = false; break; }
+      score += inT ? 3 : 1;
+    }
+    if (!all) continue;
+    if (e.lt.startsWith(terms[0])) score += 2;
+    score += e.kind === 'book' ? 2 : e.kind === 'chapter' ? 1 : 0;
+    hits.push({ e, score });
+  }
+  // keep library order within the best results
+  const top = hits.sort((a, b) => b.score - a.score).slice(0, limit);
+  const order = new Map(searchIndex.map((e, k) => [e, k]));
+  return top.sort((a, b) => order.get(a.e) - order.get(b.e)).map(h => h.e);
+}
+function highlight(text, terms) {
+  const re = new RegExp(`(${terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+  return esc(text).replace(re, '<mark>$1</mark>');
+}
+function snippet(text, terms, len = 140) {
+  const lx = text.toLowerCase();
+  let at = -1; for (const t of terms) { const k = lx.indexOf(t); if (k >= 0 && (at < 0 || k < at)) at = k; }
+  if (at < 0) return text.length > len ? text.slice(0, len).replace(/\s+\S*$/, '') + '…' : text;
+  let s = Math.max(0, at - 50); if (s > 0) { const sp = text.indexOf(' ', s); s = sp >= 0 && sp < at ? sp + 1 : s; }
+  let out = text.slice(s, s + len); if (s + len < text.length) out = out.replace(/\s+\S*$/, '') + '…';
+  return (s > 0 ? '…' : '') + out;
+}
+function mountSearch() {
+  const input = document.getElementById('q'), box = document.getElementById('q-res');
+  if (!input) return;
+  let timer = null, items = [], active = -1;
+  const kindLabel = { book: 'Book', chapter: 'Chapter', card: 'Card', quiz: 'Practice' };
+  function paint() {
+    const q = input.value.trim();
+    if (!q) { box.hidden = true; box.innerHTML = ''; items = []; active = -1; input.setAttribute('aria-expanded', 'false'); return; }
+    const t0 = performance.now();
+    const res = searchLibrary(q), terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const ms = Math.round(performance.now() - t0);
+    input.setAttribute('aria-expanded', 'true'); box.hidden = false; active = res.length ? 0 : -1;
+    if (!res.length) { box.innerHTML = `<div class="q-empty">No results for “${esc(q)}”. Try a different word, or fewer words.</div>`; items = []; return; }
+    let html = '', lastBook = null, lastCh = null, n = 0;
+    for (const e of res) {
+      if (e.book !== lastBook) { html += `<div class="q-book">${esc(e.book.short)}</div>`; lastBook = e.book; lastCh = null; }
+      if (e.ch && e.ch !== lastCh && e.kind !== 'chapter') { html += `<div class="q-ch">Ch ${e.ch.n} · ${esc(e.ch.title)}</div>`; lastCh = e.ch; }
+      if (e.kind === 'chapter') lastCh = e.ch;
+      const snip = e.text ? snippet(e.text, terms) : '';
+      html += `<a class="q-item" role="option" id="qr-${n}" href="${e.href}" data-k="${n++}"><span class="q-kind">${kindLabel[e.kind]}</span><span class="q-main"><span class="q-t">${highlight(e.title, terms)}</span>${snip ? `<span class="q-s">${highlight(snip, terms)}</span>` : ''}</span></a>`;
+    }
+    box.innerHTML = html + `<div class="q-foot">${plural(res.length, 'result')}${res.length >= 40 ? ' (top 40)' : ''} · ↑ ↓ to move · Enter to open · Esc to clear<span class="q-ms" data-ms="${ms}"></span></div>`;
+    items = [...box.querySelectorAll('.q-item')]; mark();
+  }
+  function mark() {
+    items.forEach((a, k) => a.setAttribute('aria-selected', String(k === active)));
+    if (items[active]) { items[active].scrollIntoView({ block: 'nearest' }); input.setAttribute('aria-activedescendant', items[active].id); }
+    else input.removeAttribute('aria-activedescendant');
+  }
+  let stale = false; // input changed but results not painted yet
+  input.addEventListener('input', () => { stale = true; clearTimeout(timer); timer = setTimeout(() => { stale = false; paint(); }, 120); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (stale || box.hidden) { clearTimeout(timer); stale = false; paint(); }
+      if (items.length) { active = (active + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; mark(); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); if (stale) { clearTimeout(timer); stale = false; paint(); }
+      if (items[active]) location.hash = items[active].getAttribute('href');
+    } else if (e.key === 'Escape') {
+      e.preventDefault(); if (input.value) { input.value = ''; paint(); } else input.blur();
+    }
+  });
+  box.addEventListener('mousemove', e => { const a = e.target.closest('.q-item'); if (a) { active = Number(a.dataset.k); mark(); } });
+  const onDoc = e => {
+    const t = e.target;
+    if (e.key === '/' && !(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) { e.preventDefault(); input.focus(); input.select(); }
+  };
+  const onClick = e => { if (!e.target.closest('.search')) { box.hidden = true; input.setAttribute('aria-expanded', 'false'); } };
+  input.addEventListener('focus', () => { if (input.value.trim()) paint(); });
+  document.addEventListener('keydown', onDoc); document.addEventListener('click', onClick);
+  cleanup = () => { document.removeEventListener('keydown', onDoc); document.removeEventListener('click', onClick); clearTimeout(timer); };
 }
 
 // ---------- export / import (all local; logic in studydata.js) ----------

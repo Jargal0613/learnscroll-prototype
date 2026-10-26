@@ -57,7 +57,7 @@ with sync_playwright() as p:
         ok(ALL(pg) == before, f'{W}: Cancel changes nothing')
         bad = tempfile.gettempdir() + '/r9-bad.json'; f = json.load(open(file(2, 'populated', 'populated'))); f['study']['books'][B]['notes']['c1-5']['text'] = 5; json.dump(f, open(bad, 'w'))
         pg.goto(BASE + '/#/'); pg.wait_for_selector('#imp'); open_file(bad); ok(ALL(pg) == before and pg.locator('#imp-merge').count() == 0, f'{W}: invalid file: no options, nothing changed')
-        newer = tempfile.gettempdir() + '/r9-newer.json'; f['version'] = 3; json.dump(f, open(newer, 'w'))
+        newer = tempfile.gettempdir() + '/r9-newer.json'; f['version'] = 99; json.dump(f, open(newer, 'w'))
         pg.goto(BASE + '/#/'); pg.wait_for_selector('#imp'); open_file(newer); ok(ALL(pg) == before and 'newer version' in pg.inner_text('main'), f'{W}: newer file: refused, nothing changed')
         pg.goto(BASE + '/#/'); pg.wait_for_selector('#imp'); open_file(file(2, 'populated', 'populated'))
         ok('Never imported or exported' in pg.inner_text('main') and 'Merge conflicts' in pg.inner_text('main'), f'{W}: excluded data and merge conflict rule shown')

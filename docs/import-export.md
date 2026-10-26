@@ -3,7 +3,7 @@
 Everything LearnScroll stores lives in this browser's `localStorage`. **Export study data** (library footer)
 downloads one JSON file; **Import study data** reads one back. Nothing is uploaded anywhere.
 
-## What a backup contains (export format version 2)
+## What a backup contains (export format version 3)
 
 | Category | Included | Notes |
 |---|---|---|
@@ -16,6 +16,7 @@ downloads one JSON file; **Import study data** reads one back. Nothing is upload
 | Preferences: tutor answer style, reading text size, session length/book | always | |
 | Tutor conversations (open one, saved ones, your Helpful / Needs improvement feedback on answers, unsent draft) | optional | "include tutor conversations" checkbox, on by default |
 | Study session in progress | always | `null` when there is none |
+| Formula notebook (equations saved from cards, your own formulas and notes) | always | since format 3 |
 
 **Never exported or imported (intentionally):** copies of unreadable data kept for recovery
 (`*-corrupt-backup`), pre-upgrade copies (`*-pre-schema-N`), the interrupted-import journal, whether the getting-started guide was dismissed, and anything on the
@@ -25,7 +26,7 @@ server (the server stores nothing about you; API keys and vector-store ids never
 
 Choosing a file only *reads* it. The import page shows, per category, what is in the file and what **Merge** and
 **Replace** would do. **Cancel** (or leaving the page) changes nothing. Invalid, truncated or newer-version files
-are rejected as a whole; nothing is partially written. Files from the older format (version 1) still import; for
+are rejected as a whole; nothing is partially written. Files from older formats (versions 1 and 2) still import; for
 categories they cannot contain (the session in progress) the page says what happens.
 
 ## Merge
@@ -42,6 +43,7 @@ Keeps everything from both sides. Conflict rules:
 - Tutor conversations (only if the file has them): the most recent conversation per book stays open, all others go to
   Saved (max 10 per book).
 - Session in progress: this browser's is kept; if there is none here, the file's is taken.
+- Formula notebook: combined. The same formula on both sides (same card, or same custom formula id): the copy edited most recently wins.
 
 ## Replace
 
@@ -50,6 +52,7 @@ Every category **included in the file** replaces this browser's, even when the f
 - Study data, history, summaries, preferences: replaced.
 - Tutor conversations: if the file includes conversations (even zero), this browser's are replaced (an empty list
   removes them). If the file was exported without conversations, this browser's are kept.
+- Formula notebook: replaced by the file's (an empty list removes yours). Files from before format 3 have no formula data, so yours are kept.
 - Session in progress: replaced by the file's; if the file says there is none (`null`), the session here ends. A
   version-1 file has no session data, so the session here is kept.
 

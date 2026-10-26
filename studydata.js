@@ -1,8 +1,8 @@
 // LearnScroll study data export / import: pure, testable logic (browser global StudyData + CommonJS).
 // Nothing here touches the network; the app reads/writes localStorage and calls these functions.
 (function (root) {
-  const APP = 'learnscroll', VERSION = 2, VERSIONS = [1, 2]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
-  const SCHEMA = 2, JOURNAL_KEY = 'learnscroll-write-journal';
+  const APP = 'learnscroll', VERSION = 3, VERSIONS = [1, 2, 3]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
+  const SCHEMA = 3, JOURNAL_KEY = 'learnscroll-write-journal';
   const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1', SESSION_KEY = 'learnscroll-session-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
   const TEXT_SIZES = ['small', 'default', 'large'];
@@ -67,9 +67,34 @@
       }),
     };
   }
+  // Formula notebook (schema 3). Card formulas have the deterministic id f-<book>-<cardId> (one per card);
+  // custom ones fc-<random>. TeX is kept as typed; nothing here is rendered.
+  const FORMULA_RE = /^f(-[a-z0-9-]{1,40}-c\d{1,3}-\d{1,4}|c-[a-z0-9]{4,24})$/, MAX_FORMULAS = 500, MAX_TEX = 2000, MAX_TITLE = 200;
+  function validFormula(f, w, bookIds) {
+    if (!isObj(f)) fail(`${w} must be an object.`);
+    onlyKeys(f, ['kind', 'title', 'tex', 'notes', 'book', 'chapter', 'card', 'heading', 'at', 'updated'], w);
+    if (f.kind !== 'card' && f.kind !== 'custom') fail(`${w}.kind must be "card" or "custom".`);
+    if (typeof f.title !== 'string' || !f.title.trim() || f.title.length > MAX_TITLE) fail(`${w}.title must be text (max ${MAX_TITLE}).`);
+    if (typeof f.tex !== 'string' || !f.tex.trim() || f.tex.length > MAX_TEX) fail(`${w}.tex must be LaTeX text (max ${MAX_TEX}).`);
+    if (f.notes !== undefined && (typeof f.notes !== 'string' || f.notes.length > MAX_NOTE)) fail(`${w}.notes must be text (max ${MAX_NOTE}).`);
+    if (!isTime(f.at) || (f.updated !== undefined && !isTime(f.updated))) fail(`${w} needs at/updated timestamps.`);
+    const out = { kind: f.kind, title: f.title, tex: f.tex, at: f.at, updated: f.updated || f.at };
+    if (f.notes) out.notes = f.notes;
+    if (f.kind === 'card') {
+      if (typeof f.book !== 'string' || (bookIds && !bookIds.includes(f.book)) || !isInt(f.chapter, 1) || typeof f.card !== 'string' || !CARD_RE.test(f.card) || (f.heading !== undefined && (typeof f.heading !== 'string' || f.heading.length > 300))) fail(`${w} needs book, chapter and card.`);
+      Object.assign(out, { book: f.book, chapter: f.chapter, card: f.card }); if (f.heading) out.heading = f.heading;
+    }
+    return out;
+  }
+  function validFormulas(o, bookIds) {
+    const out = mapOf(o, FORMULA_RE, 'study.formulas', (v, w) => validFormula(v, w, bookIds));
+    if (Object.keys(out).length > MAX_FORMULAS) fail(`study.formulas has more than ${MAX_FORMULAS} entries.`);
+    for (const [id, f] of Object.entries(out)) if (f.kind === 'card' && id !== `f-${f.book}-${f.card}`) fail(`study.formulas.${id} does not match its card.`);
+    return out;
+  }
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -105,6 +130,7 @@
       if (!TEXT_SIZES.includes(r.textSize)) fail('study.readPrefs.textSize must be small, default or large.');
       out.readPrefs = { textSize: r.textSize };
     }
+    if (s.formulas !== undefined) out.formulas = validFormulas(s.formulas, bookIds); // absent in files before format 3
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -224,6 +250,7 @@
     const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [], sessions: Array.isArray(s.sessions) ? s.sessions : [] };
     if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
     if (isObj(s.readPrefs)) study.readPrefs = s.readPrefs;
+    study.formulas = isObj(s.formulas) ? s.formulas : {};
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
@@ -305,8 +332,15 @@
     const study = { books, last, recent, sessions };
     const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
     const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
+    study.formulas = mergeById(L.formulas, I.formulas);
     // a session in progress here wins; otherwise take the file's
     return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
+  }
+  // Same id on both sides: the copy edited most recently ('updated') wins; everything else is kept.
+  function mergeById(a = {}, b = {}) {
+    const out = { ...(a || {}) };
+    for (const [id, x] of Object.entries(b || {})) if (!out[id] || (x.updated || x.at) > (out[id].updated || out[id].at)) out[id] = x;
+    return out;
   }
   // What Merge and Replace will do to each category, shown before anything is written.
   function importPlan(local, incoming) {
@@ -317,6 +351,10 @@
       { key: 'progress', label: 'Progress, marks, notes, review results, quiz attempts', file: `${n(ic.notes, 'note')}, ${n(ic.bookmarks + ic.difficult, 'mark')}, ${n(ic.attempts, 'attempt')}`, merge: 'Combined', replace: 'Replaced by the file' },
       { key: 'history', label: 'Recent history and session summaries', file: `${n(ic.recent, 'entry')}, ${n(ic.sessions, 'summary')}`.replace('entrys', 'entries').replace('summarys', 'summaries'), merge: 'Combined', replace: 'Replaced by the file' },
       { key: 'prefs', label: 'Preferences (answer style, text size, session length)', file: 'Included', merge: 'This browser\u2019s choices kept', replace: 'Replaced by the file' },
+      { key: 'formulas', label: 'Formula notebook',
+        file: incoming.study.formulas === undefined ? 'Not in the file (older export format)' : n(Object.keys(incoming.study.formulas).length, 'formula'),
+        merge: incoming.study.formulas === undefined ? 'Kept as they are' : 'Combined (same formula: most recently edited copy kept)',
+        replace: incoming.study.formulas === undefined ? 'Kept (the file has no formula data)' : Object.keys(incoming.study.formulas).length ? 'Replaced by the file' : Object.keys(local.study.formulas || {}).length ? `Removed (${n(Object.keys(local.study.formulas).length, 'formula')} here; the file has none)` : 'None before or after' },
       { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
         file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
         merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
@@ -331,8 +369,10 @@
   const EXCLUDED = ['Copies of unreadable data kept for recovery', 'Pre-upgrade copies of saved data', 'Interrupted-import safety journal', 'Whether the getting-started guide was dismissed (a display setting)', 'Usability-test profile markers and the copy of real data kept during a test (developer tool)', 'Anything stored on the server (nothing about you is)'];
   // Overwrite: study data and style come from the file. Conversations are replaced only if the file has them.
   function overwrite(local, incoming) {
+    const study = { ...incoming.study };
+    if (study.formulas === undefined) study.formulas = local.study.formulas || {}; // older file: not part of it, kept
     return {
-      study: incoming.study,
+      study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
       session: incoming.session === undefined ? (local.session || null) : incoming.session, // missing (v1 file): kept; null: cleared
     };
@@ -351,6 +391,7 @@
         }
       }
     } },
+    { from: 2, note: 'Add the formula notebook (empty); nothing else changes.', run(s) { if (!isObj(s.formulas)) s.formulas = {}; } },
   ];
   // Returns { data, from, migrated, future }. `future` means the data came from a newer app version: it is returned
   // unchanged so the caller can back it up before reading what it can.
@@ -414,6 +455,8 @@
     if (last !== null && typeof last !== 'string') { repaired = true; last = null; }
     if (s.schema !== undefined && s.schema !== SCHEMA) repaired = true;
     const study = { schema: SCHEMA, books, last, recent, sessions };
+    if (s.formulas !== undefined && !isObj(s.formulas)) repaired = true;
+    study.formulas = objOr(s.formulas, (k, v) => { try { return FORMULA_RE.test(k) && !!validFormula(v, k); } catch (e) { return false; } });
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
     if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
@@ -495,6 +538,6 @@
     return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
-  const api = { importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

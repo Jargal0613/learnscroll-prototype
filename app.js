@@ -134,6 +134,7 @@ function route() {
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'import') return renderImport();
+  if (parts[0] === 'formulas') return Formulas.render(parts[1]);
   if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
   if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
@@ -233,6 +234,7 @@ function renderHome() {
     ${attentionHTML()}
     ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
+    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span></p>
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
       const b = books[id], p = bookProgress(b);
@@ -856,7 +858,7 @@ function cardHTML(c, i, ch) {
     <div class="sec"><span>${esc(c.s)}</span>${tags}${markBtns(screenId(ch, i))}</div>
     <h2>${esc(c.h)}</h2>
     <p>${c.t}</p>
-    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>` : ''}
+    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i))}` : ''}
     ${c.def ? `<div class="note"><span class="label">Definition</span>${c.def}</div>` : ''}
     ${c.ex ? `<div class="note example"><span class="label">Example</span>${c.ex}</div>` : ''}
     ${noteEditor(screenId(ch, i))}
@@ -973,6 +975,7 @@ function renderReader(book, ch, at = null, sess = null) {
       b.setAttribute('aria-pressed', String(on));
       b.textContent = b.dataset.mark === 'b' ? (on ? 'Bookmarked' : 'Bookmark') : 'Difficult';
     });
+    Formulas.paint(feed, book);
   }
   function toggleMark(id, kind) {
     const m = bs.marks[id] || {};
@@ -1025,6 +1028,8 @@ function renderReader(book, ch, at = null, sess = null) {
       else if (e.target.closest('.note-del')) { clearTimeout(noteTimer); ned.querySelector('textarea').value = ''; saveNote(ned.dataset.note, ''); ned.hidden = true; feed.querySelector(`.mark[data-mark="n"][data-id="${ned.dataset.note}"]`).setAttribute('aria-expanded', 'false'); }
       return;
     }
+    const fsb = e.target.closest('.f-save');
+    if (fsb) { const fch = book.chapters.find(c => c.n === Number(fsb.dataset.fsave.slice(1).split('-')[0])) || ch; Formulas.fromCard(book, fch, fsb.dataset.fsave, fsb); return; }
     const mk = e.target.closest('.mark');
     if (mk && mk.dataset.mark === 'n') { const ed = feed.querySelector(`.note-ed[data-note="${mk.dataset.id}"]`); if (ed && !ed.hidden) closeNote(ed); else openNote(mk.dataset.id); return; }
     if (mk) { toggleMark(mk.dataset.id, mk.dataset.mark); return; }

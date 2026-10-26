@@ -33,7 +33,7 @@ test('migration 1 -> 2: legacy data upgraded without losing any user value', () 
   assert.deepEqual(h.marks, { 'c1-2': { b: true }, 'c2-q1': { d: true } }, 'false flags dropped, empty mark removed');
   for (const k of ['notes', 'review', 'attempts', 'done', 'seen']) assert.deepEqual(h[k], LEGACY.books['heat-mass-transfer'][k], k);
   for (const k of ['last', 'recent', 'sessions', 'sessionPrefs']) assert.deepEqual(m.data[k], LEGACY[k], k);
-  const s = SD.sanitizeStudy(m.data); assert.equal(s.repaired, false, 'migrated data is clean'); assert.equal(s.study.schema, 2);
+  const s = SD.sanitizeStudy(m.data); assert.equal(s.repaired, false, 'migrated data is clean'); assert.equal(s.study.schema, SD.SCHEMA);
   assert.deepEqual(s.study.books['heat-mass-transfer'].notes, LEGACY.books['heat-mass-transfer'].notes);
 });
 test('migration is idempotent, never mutates input; current, future and invalid schemas', () => {
@@ -73,7 +73,7 @@ test('malformed backups are rejected with a message and never throw', () => {
   const g = () => JSON.parse(good);
   const cases = {
     truncated: good.slice(0, good.length / 2), empty: '', bom_garbage: '\uFEFF{not json', array: '[]', number: '42',
-    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 3 }),
+    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 4 }),
     extraKey: JSON.stringify({ ...g(), evil: 1 }), badDate: JSON.stringify({ ...g(), exportedAt: 'yesterday' }),
     noteNotText: (() => { const o = g(); o.study.books['heat-mass-transfer'].notes['c1-2'].text = 5; return JSON.stringify(o); })(),
     attemptBad: (() => { const o = g(); o.study.books['heat-mass-transfer'].attempts['c1-q1'] = [{ k: 'a' }]; return JSON.stringify(o); })(),
@@ -124,10 +124,10 @@ test('tutor + session stores share the schema: legacy upgraded, future/invalid f
   assert.equal(SD.migrateSession('x').invalid, true);
 });
 test('export v2 carries the session in progress; round trip, merge and replace semantics; v1 files still import', () => {
-  const sess = { schema: 2, book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: { 'c1-1': { b: true } }, active: 30, visibleSince: null, lastSeen: T2 };
+  const sess = { schema: SD.SCHEMA, book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: { 'c1-1': { b: true } }, active: 30, visibleSince: null, lastSeen: T2 };
   const study = SD.sanitizeStudy(SD.migrateStudy(clone(LEGACY)).data).study;
   const local = SD.fromStorage(JSON.stringify(study), JSON.stringify(TUTOR), JSON.stringify(sess));
-  const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, 2); assert.deepEqual(f.session, sess);
+  const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, 3); assert.deepEqual(f.session, sess);
   assert.deepEqual(Object.keys(f).sort(), ['app', 'exportedAt', 'session', 'study', 'tutor', 'version']);
   assert.equal(SD.build(SD.fromStorage(null, null, null), { now: new Date(T2) }).session, null, 'v2 always states the session (null = none)');
   assert.doesNotMatch(JSON.stringify(f), /sk-[A-Za-z0-9]|OPENAI|api[_-]?key|vs_[A-Za-z0-9]|vector_store/i, 'no secrets/server data');
@@ -144,7 +144,7 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   }
   assert.equal(SD.parse(JSON.stringify({ ...f, version: 1 }), { bookIds: IDS }).ok, false, 'v1 files cannot carry a session');
   const { session, ...v1 } = f; assert.ok(SD.parse(JSON.stringify({ ...v1, version: 1 }), { bookIds: IDS }).ok, 'v1 file imports');
-  assert.match(SD.parse(JSON.stringify({ ...f, version: 3 }), { bookIds: IDS }).error, /newer version/);
+  assert.match(SD.parse(JSON.stringify({ ...f, version: 4 }), { bookIds: IDS }).error, /newer version/);
 });
 
 test('tutor continuity data: origin + saved conversations validate, export and merge without loss', () => {
@@ -175,4 +175,30 @@ test('reading text size preference: exported, validated, sanitized, merged (this
   const local = SD.fromStorage(JSON.stringify({ ...st, readPrefs: { textSize: 'small' } }), null, null);
   assert.equal(SD.merge(local, p.data).study.readPrefs.textSize, 'small');
   assert.equal(SD.merge(SD.fromStorage(null, null, null), p.data).study.readPrefs.textSize, 'large');
+});
+
+test('schema 3: formula notebook migrates, validates, exports, merges and replaces predictably', () => {
+  const v2 = { schema: 2, books: { 'heat-mass-transfer': { chapter: 1, card: 2, done: {}, marks: {}, seen: {}, notes: {}, review: {}, attempts: {} } }, last: null, recent: [], sessions: [] };
+  const m = SD.migrateStudy(clone(v2)); assert.equal(m.migrated, true); assert.equal(m.from, 2); assert.deepEqual(m.data.formulas, {}); assert.equal(m.data.schema, 3);
+  assert.deepEqual(m.data.books, v2.books, 'nothing else changes');
+  const F = { 'f-heat-mass-transfer-c1-13': { kind: 'card', title: 'Conduction', tex: '\\dot Q = -kA\\,dT/dx', book: 'heat-mass-transfer', chapter: 1, card: 'c1-13', heading: 'Conduction', at: T1, updated: T1 },
+    'fc-abc123': { kind: 'custom', title: 'Mine', tex: 'a^2+b^2', notes: 'n', at: T1, updated: T1 } };
+  const study = { ...SD.sanitizeStudy(m.data).study, formulas: F };
+  assert.deepEqual(SD.sanitizeStudy(study).study.formulas, F); assert.equal(SD.sanitizeStudy(study).repaired, false);
+  const local = SD.fromStorage(JSON.stringify(study), '{}', null);
+  const f = SD.build(local, { now: new Date(T2) }); const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error); assert.deepEqual(p.data.study.formulas, F);
+  for (const bad of [{ 'f-heat-mass-transfer-c1-13': { ...F['f-heat-mass-transfer-c1-13'], card: 'c1-14' } }, { 'fc-abc123': { ...F['fc-abc123'], tex: '' } }, { 'x': F['fc-abc123'] }, { 'fc-abc123': { ...F['fc-abc123'], kind: 'web' } }]) {
+    const r = SD.parse(JSON.stringify({ ...f, study: { ...f.study, formulas: bad } }), { bookIds: IDS }); assert.equal(r.ok, false); assert.match(r.error, /formulas/);
+  }
+  // merge: union; same id -> most recently edited wins
+  const edited = { ...F['fc-abc123'], notes: 'newer', updated: T2 };
+  const mg = SD.merge(local, { ...p.data, study: { ...p.data.study, formulas: { 'fc-abc123': edited, 'fc-zzz999': { ...F['fc-abc123'], title: 'Other' } } } });
+  assert.equal(Object.keys(mg.study.formulas).length, 3); assert.equal(mg.study.formulas['fc-abc123'].notes, 'newer');
+  // replace: an older file (no formulas) keeps them; a v3 file with none removes them
+  const { formulas: _f, ...oldStudy } = p.data.study;
+  assert.deepEqual(SD.overwrite(local, { ...p.data, study: oldStudy }).study.formulas, F);
+  assert.deepEqual(SD.overwrite(local, { ...p.data, study: { ...p.data.study, formulas: {} } }).study.formulas, {});
+  const plan = SD.importPlan(local, { ...p.data, study: oldStudy }).find(r => r.key === 'formulas'); assert.match(plan.replace, /Kept/);
+  // v2 files still import
+  const { formulas: _g, ...s2 } = f.study; assert.ok(SD.parse(JSON.stringify({ ...f, version: 2, study: s2 }), { bookIds: IDS }).ok);
 });

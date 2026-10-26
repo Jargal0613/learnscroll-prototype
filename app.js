@@ -626,9 +626,13 @@ function renderImport() {
   app.innerHTML = `<main class="page imp">${head}
     <p class="lead">${esc(p.name)} · exported ${esc(new Date(p.data.exportedAt).toLocaleString())}. Nothing changes until you confirm.</p>
     <div class="imp-cols"><section><h2>In the file</h2>${countsHTML(inc)}</section><section><h2>In this browser now</h2>${countsHTML(cur)}</section></div>
+    <h2 class="imp-plan-h">What each choice does</h2>
+    <div class="imp-plan-wrap"><table class="imp-plan"><thead><tr><th scope="col">Data</th><th scope="col">In the file</th><th scope="col">Merge</th><th scope="col">Replace</th></tr></thead>
+      <tbody>${StudyData.importPlan(localData(), p.data).map(r => `<tr data-cat="${r.key}"><th scope="row">${esc(r.label)}</th><td>${esc(r.file)}</td><td>${esc(r.merge)}</td><td>${esc(r.replace)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="imp-note"><b>Merge conflicts:</b> marks are combined; for the same note or review result the newer one wins; reading progress follows whichever side studied that book most recently; quiz attempts are combined. <b>Never imported or exported:</b> ${StudyData.EXCLUDED.join('; ')}.</p>
     <div class="imp-opts">
-      <section class="imp-opt"><h2>Merge</h2><p>Keeps everything from both. Bookmarks, difficult marks, notes, review results and completed chapters are combined; when the same note or result exists in both, the newer one wins; progress takes the furthest point.</p><button class="btn" id="imp-merge">Merge into this browser</button></section>
-      <section class="imp-opt warn"><h2>Replace</h2><p>Replaces this browser’s study data and any session in progress with the file’s.${p.data.tutor.conversations ? ' Tutor conversations are replaced too.' : ' Tutor conversations here are kept (the file has none).'} <b>Current data not in the file will be lost.</b></p>
+      <section class="imp-opt"><h2>Merge</h2><p>Keeps everything from both, as listed above.</p><button class="btn" id="imp-merge">Merge into this browser</button></section>
+      <section class="imp-opt warn"><h2>Replace</h2><p>Every category in the file replaces this browser’s, as listed above. <b>Data in those categories that is not in the file is lost.</b></p>
         <label class="imp-chk"><input type="checkbox" id="imp-backup" checked> First download a backup of this browser’s current data</label>
         <button class="btn danger" id="imp-over">Replace this browser’s data</button></section>
     </div>

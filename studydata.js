@@ -205,7 +205,7 @@
       onlyKeys(obj, obj.version === 1 ? ['app', 'version', 'exportedAt', 'study', 'tutor'] : ['app', 'version', 'exportedAt', 'study', 'tutor', 'session'], 'the file');
       if (typeof obj.exportedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(obj.exportedAt) || isNaN(Date.parse(obj.exportedAt))) fail('exportedAt must be an ISO date.');
       const data = { app: APP, version: VERSION, exportedAt: obj.exportedAt, study: validStudy(obj.study, bookIds), tutor: validTutor(obj.tutor === undefined ? {} : obj.tutor, bookIds) };
-      if (obj.session !== undefined && obj.session !== null) data.session = validSession(obj.session, bookIds);
+      if (obj.session === null) data.session = null; else if (obj.session !== undefined) data.session = validSession(obj.session, bookIds);
       return { ok: true, data };
     } catch (e) {
       if (e instanceof Invalid) return { ok: false, error: e.message };
@@ -236,7 +236,7 @@
     const tutor = { prefs: local.tutor.prefs || {} };
     if (conversations) tutor.conversations = local.tutor.conversations || {};
     const out = { app: APP, version: VERSION, exportedAt: now.toISOString(), study: local.study, tutor };
-    if (local.session) out.session = local.session;
+    out.session = local.session || null; // always present in v2: null means "no session in progress"
     return out;
   }
 
@@ -306,12 +306,33 @@
     // a session in progress here wins; otherwise take the file's
     return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
   }
+  // What Merge and Replace will do to each category, shown before anything is written.
+  function importPlan(local, incoming) {
+    const n = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+    const lc = counts(local), ic = counts(incoming);
+    const lconv = lc.conversations, iconv = incoming.tutor.conversations;
+    const rows = [
+      { key: 'progress', label: 'Progress, marks, notes, review results, quiz attempts', file: `${n(ic.notes, 'note')}, ${n(ic.bookmarks + ic.difficult, 'mark')}, ${n(ic.attempts, 'attempt')}`, merge: 'Combined', replace: 'Replaced by the file' },
+      { key: 'history', label: 'Recent history and session summaries', file: `${n(ic.recent, 'entry')}, ${n(ic.sessions, 'summary')}`.replace('entrys', 'entries').replace('summarys', 'summaries'), merge: 'Combined', replace: 'Replaced by the file' },
+      { key: 'prefs', label: 'Preferences (answer style, text size, session length)', file: 'Included', merge: 'This browser\u2019s choices kept', replace: 'Replaced by the file' },
+      { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
+        file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
+        merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
+        replace: iconv === undefined ? 'Kept as they are (not in the file)' : ic.conversations ? 'Replaced by the file' : lconv ? `Removed (${n(lconv, 'conversation')} here; the file has none)` : 'None before or after' },
+      { key: 'session', label: 'Study session in progress',
+        file: incoming.session === undefined ? 'Not in the file (older export format)' : incoming.session ? 'Included' : 'None',
+        merge: local.session ? 'This browser\u2019s session kept' : incoming.session ? 'Taken from the file' : 'None',
+        replace: incoming.session === undefined ? (local.session ? 'Kept (the file has no session data)' : 'None') : incoming.session ? 'Replaced by the file' : local.session ? 'Ended (the file has none)' : 'None' },
+    ];
+    return rows;
+  }
+  const EXCLUDED = ['Copies of unreadable data kept for recovery', 'Pre-upgrade copies of saved data', 'Interrupted-import safety journal', 'Anything stored on the server (nothing about you is)'];
   // Overwrite: study data and style come from the file. Conversations are replaced only if the file has them.
   function overwrite(local, incoming) {
     return {
       study: incoming.study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
-      session: incoming.session || null, // Replace: the file's session in progress, or none
+      session: incoming.session === undefined ? (local.session || null) : incoming.session, // missing (v1 file): kept; null: cleared
     };
   }
 
@@ -472,6 +493,6 @@
     return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
-  const api = { TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

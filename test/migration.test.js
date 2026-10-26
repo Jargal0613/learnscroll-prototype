@@ -129,6 +129,7 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   const local = SD.fromStorage(JSON.stringify(study), JSON.stringify(TUTOR), JSON.stringify(sess));
   const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, 2); assert.deepEqual(f.session, sess);
   assert.deepEqual(Object.keys(f).sort(), ['app', 'exportedAt', 'session', 'study', 'tutor', 'version']);
+  assert.equal(SD.build(SD.fromStorage(null, null, null), { now: new Date(T2) }).session, null, 'v2 always states the session (null = none)');
   assert.doesNotMatch(JSON.stringify(f), /sk-[A-Za-z0-9]|OPENAI|api[_-]?key|vs_[A-Za-z0-9]|vector_store/i, 'no secrets/server data');
   const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error); assert.deepEqual(p.data.session, sess);
   const st = SD.toStorage(SD.overwrite(SD.fromStorage(null, null, null), p.data)); assert.deepEqual(JSON.parse(st.session), sess);
@@ -136,7 +137,8 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   const other = { ...sess, start: T2, book: 'koretsky-thermo' };
   assert.equal(SD.merge(SD.fromStorage(null, null, JSON.stringify(other)), p.data).session.book, 'koretsky-thermo', 'merge keeps the session in progress here');
   assert.equal(SD.merge(SD.fromStorage(null, null, null), p.data).session.book, 'heat-mass-transfer', 'merge takes the file session when none here');
-  assert.equal(SD.overwrite(SD.fromStorage(null, null, JSON.stringify(other)), { ...p.data, session: undefined }).session, null, 'replace with a file without a session clears it');
+  assert.equal(SD.overwrite(SD.fromStorage(null, null, JSON.stringify(other)), { ...p.data, session: null }).session, null, 'replace with a file whose session is empty ends it');
+  assert.equal(SD.overwrite(SD.fromStorage(null, null, JSON.stringify(other)), { ...p.data, session: undefined }).session.book, 'koretsky-thermo', 'a file without session data (v1) keeps it');
   for (const bad of [{ ...sess, ids: ['nope'] }, { ...sess, minutes: 15 }, { ...sess, book: 'x' }, { ...sess, extra: 1 }, { ...sess, viewed: { 'c1-1': 'yes' } }]) {
     const r = SD.parse(JSON.stringify({ ...f, session: bad }), { bookIds: IDS }); assert.equal(r.ok, false, JSON.stringify(bad)); assert.match(r.error, /session/);
   }

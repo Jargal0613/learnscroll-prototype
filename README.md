@@ -7,6 +7,10 @@ A minimal study feed for five textbooks. Pick a book, pick a chapter, scroll thr
 
 Cards are original study notes summarizing each section; no textbook text, figures or problems are included.
 
+## Study data
+
+Export, import, Merge and Replace are documented in [docs/import-export.md](docs/import-export.md).
+
 ## Tutor
 
 The reader has an "Ask tutor" panel backed by `api/tutor.js` (Vercel function). It uses OpenAI File Search (Heat and Mass Transfer indexed so far) and needs `OPENAI_API_KEY` on the server; see [TUTOR.md](TUTOR.md). Tests: `node --test test/`.

@@ -122,3 +122,26 @@ test('sanitizeStudy: valid data untouched; malformed pieces dropped and flagged;
   for (const x of [null, 5, 'str', [], [1, 2]]) assert.doesNotThrow(() => SD.sanitizeStudy(x));
   assert.equal(SD.sanitizeStudy([1]).repaired, true);
 });
+
+test('quiz attempts: validated strictly, merged as a union by time, counted as attempts and mistakes', () => {
+  const A = (k, ok, at) => ({ k, ok, at });
+  const f = attempts => file({ study: { books: { 'heat-mass-transfer': { attempts } } } });
+  const good = SD.parse(f({ 'c1-q1': [A(1, false, T1), A(2, true, T2)], 'c1-q2': [A(0, false, T1)] }), { bookIds: IDS });
+  assert.ok(good.ok, good.error);
+  const c = SD.counts(good.data); assert.equal(c.attempts, 3); assert.equal(c.mistakes, 1);
+  for (const [bad, re] of [
+    [{ 'c1-2': [A(0, true, T1)] }, /Invalid key "c1-2"/],            // not a quiz id
+    [{ 'c1-q1': A(0, true, T1) }, /must be a list/],
+    [{ 'c1-q1': [A(10, true, T1)] }, /option number/],
+    [{ 'c1-q1': [A(0, 'yes', T1)] }, /true\/false/],
+    [{ 'c1-q1': [A(0, true, 'now')] }, /timestamp/],
+    [{ 'c1-q1': [{ ...A(0, true, T1), extra: 1 }] }, /Unexpected field "extra"/],
+    [{ 'c1-q1': Array(51).fill(A(0, true, T1)) }, /max 50/],
+  ]) { const r = SD.parse(f(bad), { bookIds: IDS }); assert.equal(r.ok, false); assert.match(r.error, re); }
+  const local = SD.fromStorage(JSON.stringify({ books: { 'heat-mass-transfer': { attempts: { 'c1-q1': [A(1, false, T1)] } } } }), '{}');
+  const m = SD.merge(local, good.data).study.books['heat-mass-transfer'].attempts;
+  assert.deepEqual(m['c1-q1'], [A(1, false, T1), A(2, true, T2)], 'duplicates removed, sorted by time');
+  assert.deepEqual(m['c1-q2'], [A(0, false, T1)]);
+  const s = SD.sanitizeStudy({ books: { 'heat-mass-transfer': { attempts: { 'c1-q1': [A(1, false, T1)], 'c1-q2': 'bad' } } } });
+  assert.equal(s.repaired, true); assert.deepEqual(Object.keys(s.study.books['heat-mass-transfer'].attempts), ['c1-q1']);
+});

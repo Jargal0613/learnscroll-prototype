@@ -6,6 +6,7 @@
   const STYLES = ['default', 'simple', 'math', 'example'];
   const SCOPES = ['card', 'chapter', 'book'];
   const MAX_BYTES = 5 * 1024 * 1024, MAX_RECENT = 10, MAX_NOTE = 4000, MAX_MSGS = 60, MAX_MSG = 20000;
+  const QUIZ_RE = /^c\d{1,3}-q\d{1,4}$/, MAX_ATTEMPTS = 50;
   const CARD_RE = /^c\d{1,3}-q?\d{1,4}$/, CH_RE = /^\d{1,3}$/, BOOK_RE = /^[a-z0-9-]{1,40}$/, CONV_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
   // Same shape the app stores: only true flags are kept ({ b: true } / { d: true } / both).
@@ -27,7 +28,7 @@
 
   function validBook(b, where) {
     if (!isObj(b)) fail(`${where} must be an object.`);
-    onlyKeys(b, ['chapter', 'card', 'done', 'marks', 'seen', 'notes', 'review'], where);
+    onlyKeys(b, ['chapter', 'card', 'done', 'marks', 'seen', 'notes', 'review', 'attempts'], where);
     if (!(b.chapter === null || b.chapter === undefined || isInt(b.chapter, 1))) fail(`${where}.chapter must be a chapter number or null.`);
     if (b.card !== undefined && !isInt(b.card)) fail(`${where}.card must be a whole number.`);
     return {
@@ -50,6 +51,17 @@
         if (v.r !== 'got' && v.r !== 'again') fail(`${w}.r must be "got" or "again".`);
         if (!isTime(v.at)) fail(`${w}.at must be a timestamp.`);
         return { r: v.r, at: v.at };
+      }),
+      attempts: mapOf(b.attempts || {}, QUIZ_RE, `${where}.attempts`, (v, w) => {
+        if (!Array.isArray(v) || v.length > MAX_ATTEMPTS) fail(`${w} must be a list (max ${MAX_ATTEMPTS}).`);
+        return v.map((a, i) => {
+          const aw = `${w}[${i}]`;
+          if (!isObj(a)) fail(`${aw} must be an object.`); onlyKeys(a, ['k', 'ok', 'at'], aw);
+          if (!Number.isInteger(a.k) || a.k < 0 || a.k > 9) fail(`${aw}.k must be an option number 0-9.`);
+          if (typeof a.ok !== 'boolean') fail(`${aw}.ok must be true/false.`);
+          if (!isTime(a.at)) fail(`${aw}.at must be a timestamp.`);
+          return { k: a.k, ok: a.ok, at: a.at };
+        });
       }),
     };
   }
@@ -164,12 +176,13 @@
   }
 
   function counts(data) {
-    const c = { sessions: (data.study.sessions || []).length, books: 0, bookmarks: 0, difficult: 0, notes: 0, reviews: 0, chaptersDone: 0, recent: 0, conversations: 0, style: null };
+    const c = { attempts: 0, mistakes: 0, sessions: (data.study.sessions || []).length, books: 0, bookmarks: 0, difficult: 0, notes: 0, reviews: 0, chaptersDone: 0, recent: 0, conversations: 0, style: null };
     for (const b of Object.values(data.study.books || {})) {
       c.books++;
       for (const m of Object.values(b.marks || {})) { if (m.b) c.bookmarks++; if (m.d) c.difficult++; }
       c.notes += Object.keys(b.notes || {}).length;
       c.reviews += Object.keys(b.review || {}).length;
+      for (const l of Object.values(b.attempts || {})) { c.attempts += l.length; if (l.length && !l[l.length - 1].ok) c.mistakes++; }
       c.chaptersDone += Object.keys(b.done || {}).length;
     }
     c.recent = (data.study.recent || []).length;
@@ -191,6 +204,12 @@
         out.marks[k] = flags(!!(x.b || y.b), !!(x.d || y.d));
       }
       for (const [k, v] of Object.entries(b.seen || {})) out.seen[k] = Math.max(out.seen[k] || 0, v);
+      out.attempts = {};
+      for (const k of new Set([...Object.keys(a.attempts || {}), ...Object.keys(b.attempts || {})])) {
+        const seenA = new Set(), all = [];
+        for (const x of [...((a.attempts || {})[k] || []), ...((b.attempts || {})[k] || [])]) { const key = x.at + ':' + x.k; if (!seenA.has(key)) { seenA.add(key); all.push(x); } }
+        out.attempts[k] = all.sort((x, y) => x.at - y.at).slice(-MAX_ATTEMPTS);
+      }
       for (const f of ['notes', 'review']) for (const k of new Set([...Object.keys(a[f] || {}), ...Object.keys(b[f] || {})])) out[f][k] = newer((a[f] || {})[k], (b[f] || {})[k]);
       // resume position: from whichever side studied this book most recently
       const useB = b.chapter != null && (a.chapter == null || lastAt(I.recent || [], id) > lastAt(L.recent || [], id));
@@ -241,6 +260,7 @@
         marks: objOr(b.marks, (k, v) => CARD_RE.test(k) && isObj(v)),
         seen: objOr(b.seen, (k, v) => CH_RE.test(k) && isInt(v)),
         notes: objOr(b.notes, (k, v) => CARD_RE.test(k) && isObj(v) && typeof v.text === 'string' && isTime(v.at)),
+        attempts: objOr(b.attempts, (k, v) => QUIZ_RE.test(k) && Array.isArray(v) && v.every(a => isObj(a) && Number.isInteger(a.k) && typeof a.ok === 'boolean' && isTime(a.at))),
         review: objOr(b.review, (k, v) => CARD_RE.test(k) && isObj(v) && (v.r === 'got' || v.r === 'again') && isTime(v.at)),
       };
     }

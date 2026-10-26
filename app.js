@@ -36,6 +36,7 @@ function bookState(id) {
   if (!b.marks) b.marks = {};   // cardId -> { b: bookmarked, d: difficult }
   if (!b.seen) b.seen = {};     // chapter -> furthest screen index reached (recorded from Phase 1 on)
   if (!b.notes) b.notes = {};   // cardId -> { text, at }  (plain text, Phase 2)
+  if (!b.attempts) b.attempts = {}; // quiz id -> [{ k: chosen option, ok, at }] (oldest first, last 50)
   if (!b.review) b.review = {}; // cardId -> { r: 'got' | 'again', at }  (last review result, Phase 2)
   return b;
 }
@@ -94,6 +95,7 @@ function route() {
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'import') return renderImport();
+  if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
   if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
   if (parts[0] === 'review' && books[parts[1]]) return renderReview(books[parts[1]], parts[2]);
   if (parts[0] === 'read') {
@@ -326,6 +328,65 @@ function wireRecovery() {
   };
 }
 
+// ---------- quiz attempts and mistakes ----------
+function recordAttempt(bs, qid, k, ok) {
+  const list = bs.attempts[qid] || (bs.attempts[qid] = []);
+  list.push({ k, ok, at: Date.now() });
+  if (list.length > 50) list.splice(0, list.length - 50);
+  save();
+}
+const lastAttempt = (bs, qid) => { const l = bs.attempts && bs.attempts[qid]; return l && l.length ? l[l.length - 1] : null; };
+// A question counts as a mistake while its most recent attempt is wrong.
+function chapterMistakes(bs, ch) {
+  return (ch.quiz || []).map((q, i) => ({ q, i, id: `c${ch.n}-q${i + 1}` })).filter(x => { const a = lastAttempt(bs, x.id); return a && !a.ok; });
+}
+function renderMistakes(book, ch) {
+  document.title = `Review mistakes · Ch ${ch.n}`;
+  const bs = bookState(book.id);
+  const list = chapterMistakes(bs, ch);
+  const head = `<a class="back" href="#/read/${book.id}/${ch.n}">← Chapter ${ch.n}</a>`;
+  if (!list.length) {
+    app.innerHTML = `<main class="page review">${head}<h1>Review mistakes</h1><div class="marked-empty"><p>No mistakes to review in this chapter.</p><p>Questions you answer wrong in the chapter quiz show up here until you get them right.</p></div></main>`;
+    return;
+  }
+  let pos = 0; const res = [];
+  app.innerHTML = `<main class="page review">${head}<div class="rv-top"><span class="sec-l">Review mistakes · Ch ${ch.n}: ${esc(ch.title)}</span><span class="rv-count" id="mx-count"></span></div><div class="rv-track"><i id="mx-line"></i></div><section class="rv-card" id="mx-card" aria-live="polite"></section></main>`;
+  const el = document.getElementById('mx-card');
+  function show() {
+    document.getElementById('mx-line').style.width = `${(pos / list.length) * 100}%`;
+    if (pos >= list.length) {
+      document.getElementById('mx-count').textContent = 'Done';
+      const right = res.filter(Boolean).length, left = chapterMistakes(bs, ch).length;
+      el.innerHTML = `<div class="sec"><span>Summary</span></div><h2>${right} of ${res.length} right this time</h2><p>${left ? `${plural(left, 'question')} still to get right.` : 'No mistakes left in this chapter.'}</p>
+        <div class="btns">${left ? `<button class="btn" id="mx-again">Retry remaining mistakes</button>` : ''}<a class="btn ghost" href="#/read/${book.id}/${ch.n}">Back to chapter</a></div>`;
+      const a = document.getElementById('mx-again'); if (a) a.onclick = () => renderMistakes(book, ch);
+      (a || el.querySelector('a')).focus();
+      return;
+    }
+    const { q, i, id } = list[pos], prev = lastAttempt(bs, id);
+    document.getElementById('mx-count').textContent = `${pos + 1} / ${list.length}`;
+    el.innerHTML = `<div class="sec"><span class="tag q-t">Practice</span><span>Question ${i + 1}</span></div><h2>${q.q}</h2>
+      ${prev ? `<p class="rv-last">Last time you chose ${String.fromCharCode(65 + prev.k)} · ${esc(fmtWhen(prev.at))}</p>` : ''}
+      <div class="opts" role="group" aria-label="Options">${q.options.map((o, k) => `<button class="opt" data-k="${k}">${o}</button>`).join('')}</div>
+      <div class="feedback" aria-live="polite"></div><div class="rv-actions" id="mx-next" hidden><button class="btn" id="mx-go">${pos + 1 < list.length ? 'Next question' : 'See summary'}</button></div>`;
+    renderMath(el);
+    el.querySelector('.opt').focus({ preventScroll: true });
+    el.querySelector('.opts').onclick = e => {
+      const opt = e.target.closest('.opt'); if (!opt || opt.disabled) return;
+      const pick = Number(opt.dataset.k), good = pick === q.answer;
+      el.querySelectorAll('.opt').forEach((b, k) => { b.disabled = true; b.classList.add(k === q.answer ? 'right' : k === pick ? 'wrong' : 'dim'); });
+      el.querySelector('.feedback').innerHTML = `<b class="${good ? 'ok' : 'no'}">${good ? 'Correct.' : 'Not quite.'}</b> ${q.why}<span class="answer-line">Correct answer: <span class="k">${String.fromCharCode(65 + q.answer)}</span> — ${q.options[q.answer]}</span>`;
+      renderMath(el.querySelector('.feedback'));
+      recordAttempt(bs, id, pick, good); res.push(good);
+      document.getElementById('mx-next').hidden = false;
+      const go_ = document.getElementById('mx-go'); go_.focus(); go_.onclick = () => { pos++; show(); };
+    };
+  }
+  const onKey = e => { if (e.key === 'Escape' && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) { e.preventDefault(); go(`#/read/${book.id}/${ch.n}`); } };
+  document.addEventListener('keydown', onKey); cleanup = () => document.removeEventListener('keydown', onKey);
+  show();
+}
+
 // ---------- focused study session (no streaks, no notifications) ----------
 const SESSION_KEY = 'learnscroll-session-v1'; // the session in progress (this tab/browser), not exported
 function sessionQueue(book) {
@@ -490,7 +551,7 @@ function readImport(file) {
 }
 function countsHTML(c) {
   const row = (k, v) => `<li><span>${k}</span><b>${v}</b></li>`;
-  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Study sessions', c.sessions)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
+  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Quiz attempts', c.attempts)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Study sessions', c.sessions)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
 }
 function renderImport() {
   document.title = 'Import study data · LearnScroll';
@@ -708,7 +769,8 @@ function renderReader(book, ch, at = null, sess = null) {
         <div class="sec"><span>End of chapter ${ch.n}</span></div>
         <h2>${esc(ch.title)}</h2>
         <p>${nextReady ? `Next up: Chapter ${next.n}, ${esc(next.title)}.` : next ? `Chapter ${next.n} is coming soon.` : 'That’s the last chapter.'}</p>
-        <div class="btns">${nextReady ? `<a class="btn" href="#/read/${book.id}/${next.n}">Next chapter →</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">All chapters</a></div>
+        <p class="mist-line" id="mistLine" hidden></p>
+        <div class="btns"><a class="btn ghost" id="mistakesBtn" href="#/mistakes/${book.id}/${ch.n}" hidden>Review mistakes</a>${nextReady ? `<a class="btn" href="#/read/${book.id}/${next.n}">Next chapter →</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">All chapters</a></div>
       </div></section>`}
     </main>
     <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> ${sess ? 'end session' : 'chapters'} · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult</span>
@@ -849,7 +911,17 @@ function renderReader(book, ch, at = null, sess = null) {
     const letter = String.fromCharCode(65 + q.answer);
     fb.innerHTML = `<b class="${pick === q.answer ? 'ok' : 'no'}">${pick === q.answer ? 'Correct.' : 'Not quite.'}</b> ${q.why}<span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span>`;
     renderMath(fb);
+    recordAttempt(bs, `c${qch.n}-q${Number(card.dataset.q) + 1}`, pick, pick === q.answer);
+    paintMistakes();
   });
+  function paintMistakes() {
+    const btn = document.getElementById('mistakesBtn'); if (!btn) return;
+    const n = chapterMistakes(bs, ch).length;
+    btn.hidden = !n; btn.textContent = `Review mistakes (${n})`;
+    const line = document.getElementById('mistLine');
+    line.hidden = !n; line.textContent = n ? `You missed ${plural(n, 'practice question')} in this chapter. Retry just those.` : '';
+  }
+  paintMistakes();
   const onKey = e => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
     const el = e.target;

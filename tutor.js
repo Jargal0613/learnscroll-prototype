@@ -314,8 +314,18 @@
     else if (btn && had) btn.focus({ preventScroll: true }); // return focus to the opener
     else { const f = document.getElementById('feed'); if (f && !f.contains(document.activeElement)) f.focus({ preventScroll: true }); }
   }
+  // 'Explain with tutor' from a practice question: a fresh conversation about that question, text filled in, not sent.
+  function prepare(text, ch, index) {
+    if (!ctx || ctx.busy) return;
+    ctx.ch = ch; ctx.index = index;
+    const c = conv();
+    if (c.messages.length) store({ conversationId: newId(), messages: [], draft: text, scope: 'card', saved: archive(c) });
+    else { c.draft = text; c.scope = 'card'; delete c.origin; store(c); }
+    toggle(true);
+    const input = document.getElementById('t-input'); input.value = text; paintAll(); input.focus(); input.setSelectionRange(text.length, text.length);
+  }
   function setIndex(i, ch) { if (!ctx) return; if (ch) ctx.ch = ch; ctx.index = i; paintCtx(); paintScope(); }
   function unmount() { ctx = null; }
 
-  window.Tutor = { mount, toggle, setIndex, unmount, isOpen: () => !!(ctx && ctx.open), _md: md };
+  window.Tutor = { mount, toggle, setIndex, prepare, unmount, isOpen: () => !!(ctx && ctx.open), _md: md };
 })();

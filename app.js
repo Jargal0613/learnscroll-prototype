@@ -979,7 +979,20 @@ function renderReader(book, ch, at = null, sess = null) {
     });
     const fb = card.querySelector('.feedback');
     const letter = String.fromCharCode(65 + q.answer);
-    fb.innerHTML = `<b class="${pick === q.answer ? 'ok' : 'no'}">${pick === q.answer ? 'Correct.' : 'Not quite.'}</b> ${q.why}<span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span>`;
+    const good = pick === q.answer, chose = String.fromCharCode(65 + pick);
+    // Grounded only in the question's own data: the stored explanation ("why") and the options.
+    fb.innerHTML = good
+      ? `<b class="ok">Correct.</b> <span class="fb-why">${q.why}</span><span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span>`
+      : `<b class="no">Not quite.</b> <span class="fb-chose">You chose <span class="k">${chose}</span> — ${q.options[pick]}.</span><span class="fb-why"><b>Why ${letter} is right:</b> ${q.why}</span><span class="answer-line">Correct answer: <span class="k">${letter}</span> — ${q.options[q.answer]}</span>`;
+    if (window.Tutor && document.getElementById('tutorBtn')) {
+      fb.insertAdjacentHTML('beforeend', `<span class="fb-acts"><button class="t-link fb-tutor" type="button">Explain with tutor</button></span>`);
+      const qi = Number(card.dataset.q);
+      fb.querySelector('.fb-tutor').onclick = () => {
+        const plain = h => String(h).replace(/<[^>]*>/g, '').trim();
+        const text = `Practice question from Ch ${qch.n} (${plain(qch.title)}): "${plain(q.q)}" The correct answer is ${letter} (${plain(q.options[q.answer])})${good ? '' : `; I chose ${chose} (${plain(q.options[pick])})`}. Explain why${good ? '' : ', and what I may have misunderstood'}.`;
+        Tutor.prepare(text, qch, qch.cards.length + qi); // fills the question in; nothing is sent until you press Send
+      };
+    }
     renderMath(fb);
     recordAttempt(bs, `c${qch.n}-q${Number(card.dataset.q) + 1}`, pick, pick === q.answer);
     paintMistakes();

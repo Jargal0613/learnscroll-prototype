@@ -215,7 +215,7 @@
     if (open) { paintLog(); document.getElementById('t-input').focus(); }
     else { const f = document.getElementById('feed'); if (f) f.focus({ preventScroll: true }); }
   }
-  function setIndex(i) { if (!ctx) return; ctx.index = i; paintCtx(); paintScope(); }
+  function setIndex(i, ch) { if (!ctx) return; if (ch) ctx.ch = ch; ctx.index = i; paintCtx(); paintScope(); }
   function unmount() { ctx = null; }
 
   window.Tutor = { mount, toggle, setIndex, unmount, isOpen: () => !!(ctx && ctx.open), _md: md };

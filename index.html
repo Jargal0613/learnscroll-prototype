@@ -148,6 +148,27 @@
   .rv-opts li.right { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
   .rv-card .feedback { margin-top: 16px; }
 
+  /* Study session */
+  .sess { max-width: 860px; }
+  .sess-form { margin-top: 28px; display: flex; flex-direction: column; gap: 18px; }
+  .sess-field { display: flex; align-items: center; gap: 16px; }
+  .sess-l { width: 64px; color: var(--muted); font-size: 13.5px; }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; }
+  .seg button { padding: 8px 14px; font-size: 14px; color: var(--muted); border-right: 1px solid var(--line-strong); }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { color: var(--fg); background: var(--surface-2); }
+  .seg button[aria-checked="true"] { color: var(--accent); background: var(--accent-soft); }
+  .sess-q { color: var(--fg-2); font-size: 14px; }
+  .sess + .lead, .sess-sum + .lead { margin-top: 20px; }
+  .sess-sum { margin-top: 24px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); max-width: 420px; }
+  .sess-sum h2 { font-size: 16px; font-weight: 600; }
+  .sess-sum .imp-counts { margin-top: 10px; }
+  .sess-note { margin-top: 8px; font-size: 12.5px; color: var(--faint); }
+  .bar .count.left { color: var(--muted); }
+  .sess-from { color: var(--faint); }
+  .sess-msg { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 8; padding: 10px 16px; background: var(--surface); border: 1px solid var(--accent-line); border-radius: var(--radius); font-size: 14px; color: var(--fg-2); }
+  .sess-msg .t-link { color: var(--accent); font-size: 14px; }
+
   /* Library search */
   .search { position: relative; width: min(440px, 46vw); }
   .search input { width: 100%; height: 38px; padding: 0 36px 0 14px; font: inherit; font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); }

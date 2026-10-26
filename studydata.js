@@ -55,7 +55,7 @@
   }
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -68,7 +68,24 @@
       return { book: r.book, chapter: r.chapter, card: r.card, at: r.at };
     });
     if (recent.length > 50) fail('study.recent is too long.');
-    return { books, last: s.last || null, recent };
+    if (s.sessions !== undefined && (!Array.isArray(s.sessions) || s.sessions.length > 100)) fail('study.sessions must be a list (max 100).');
+    const sessions = (s.sessions || []).map((x, i) => {
+      const w = `study.sessions[${i}]`;
+      if (!isObj(x)) fail(`${w} must be an object.`); onlyKeys(x, ['book', 'minutes', 'start', 'end', 'seconds', 'seen', 'marked', 'queued'], w);
+      if (typeof x.book !== 'string' || (bookIds && !bookIds.includes(x.book))) fail(`${w}.book must be a known book id.`);
+      if (![10, 20, 30].includes(x.minutes) || !isTime(x.start) || !isTime(x.end) || ![x.seconds, x.seen, x.marked, x.queued].every(v => isInt(v))) fail(`${w} has invalid numbers.`);
+      return { book: x.book, minutes: x.minutes, start: x.start, end: x.end, seconds: x.seconds, seen: x.seen, marked: x.marked, queued: x.queued };
+    });
+    let sessionPrefs;
+    if (s.sessionPrefs !== undefined) {
+      const p = s.sessionPrefs;
+      if (!isObj(p)) fail('study.sessionPrefs must be an object.'); onlyKeys(p, ['book', 'minutes'], 'study.sessionPrefs');
+      if (typeof p.book !== 'string' || (bookIds && !bookIds.includes(p.book)) || ![10, 20, 30].includes(p.minutes)) fail('study.sessionPrefs is invalid.');
+      sessionPrefs = { book: p.book, minutes: p.minutes };
+    }
+    const out = { books, last: s.last || null, recent, sessions };
+    if (sessionPrefs) out.sessionPrefs = sessionPrefs;
+    return out;
   }
   function validTutor(t, bookIds) {
     if (!isObj(t)) fail('"tutor" must be an object.');
@@ -129,7 +146,8 @@
     let s = {}, t = {};
     try { s = JSON.parse(studyRaw || '{}') || {}; } catch (e) { s = {}; }
     try { t = JSON.parse(tutorRaw || '{}') || {}; } catch (e) { t = {}; }
-    const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [] };
+    const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [], sessions: Array.isArray(s.sessions) ? s.sessions : [] };
+    if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations } };
@@ -146,7 +164,7 @@
   }
 
   function counts(data) {
-    const c = { books: 0, bookmarks: 0, difficult: 0, notes: 0, reviews: 0, chaptersDone: 0, recent: 0, conversations: 0, style: null };
+    const c = { sessions: (data.study.sessions || []).length, books: 0, bookmarks: 0, difficult: 0, notes: 0, reviews: 0, chaptersDone: 0, recent: 0, conversations: 0, style: null };
     for (const b of Object.values(data.study.books || {})) {
       c.books++;
       for (const m of Object.values(b.marks || {})) { if (m.b) c.bookmarks++; if (m.d) c.difficult++; }
@@ -190,7 +208,12 @@
       const mine = conversations[id], at = x => Math.max(0, ...((x && x.messages) || []).map(m => m.at || 0));
       if (!mine || !(mine.messages || []).length || at(c) > at(mine)) conversations[id] = c;
     }
-    return { study: { books, last, recent }, tutor: { prefs, conversations } };
+    const smap = new Map();
+    for (const x of [...(L.sessions || []), ...(I.sessions || [])]) smap.set(x.book + '/' + x.start, x);
+    const sessions = [...smap.values()].sort((x, y) => y.start - x.start).slice(0, 20);
+    const study = { books, last, recent, sessions };
+    const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
+    return { study, tutor: { prefs, conversations } };
   }
   // Overwrite: study data and style come from the file. Conversations are replaced only if the file has them.
   function overwrite(local, incoming) {

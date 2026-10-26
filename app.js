@@ -8,8 +8,8 @@ const books = {};
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { books: (s && typeof s.books === 'object' && s.books) || {}, last: (s && s.last) || null, recent: (s && Array.isArray(s.recent) && s.recent) || [] };
-  } catch (e) { return { books: {}, last: null, recent: [] }; }
+    return { books: (s && typeof s.books === 'object' && s.books) || {}, last: (s && s.last) || null, recent: (s && Array.isArray(s.recent) && s.recent) || [], sessions: (s && Array.isArray(s.sessions) && s.sessions) || [], ...(s && s.sessionPrefs && typeof s.sessionPrefs === 'object' ? { sessionPrefs: s.sessionPrefs } : {}) };
+  } catch (e) { return { books: {}, last: null, recent: [], sessions: [] }; }
 }
 let state = load();
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -76,6 +76,7 @@ function route() {
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'import') return renderImport();
+  if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
   if (parts[0] === 'review' && books[parts[1]]) return renderReview(books[parts[1]], parts[2]);
   if (parts[0] === 'read') {
     const b = books[parts[1]];
@@ -119,6 +120,7 @@ function renderHome() {
     ${loadFailed.length ? `<div class="notice">${plural(loadFailed.length, 'book')} couldn’t be loaded. Reload the page to try again.</div>` : ''}
     ${cont}
     ${recentHTML()}
+    ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
@@ -275,6 +277,105 @@ function mountSearch() {
   cleanup = () => { document.removeEventListener('keydown', onDoc); document.removeEventListener('click', onClick); clearTimeout(timer); };
 }
 
+let saveFailed = () => {};
+
+// ---------- focused study session (no streaks, no notifications) ----------
+const SESSION_KEY = 'learnscroll-session-v1'; // the session in progress (this tab/browser), not exported
+function sessionQueue(book) {
+  const bs = bookState(book.id), out = [], seen = new Set();
+  const add = (ch, i) => { const id = screenId(ch, i); if (!seen.has(id)) { seen.add(id); out.push({ ch, i }); } };
+  const avail = book.chapters.filter(ready);
+  const each = f => { for (const ch of avail) for (let i = 0; i < screens(ch); i++) f(ch, i); };
+  each((ch, i) => { const m = bs.marks[screenId(ch, i)]; if (m && m.d) add(ch, i); });
+  const nd = out.length;
+  each((ch, i) => { const r = bs.review[screenId(ch, i)]; if (r && r.r === 'again') add(ch, i); });
+  const na = out.length - nd;
+  each((ch, i) => { if (!bs.done[ch.n] && i > (bs.seen[ch.n] ?? -1)) add(ch, i); });
+  return { items: out, difficult: nd, again: na, unstudied: out.length - nd - na };
+}
+function storeSession(s) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ book: s.book, minutes: s.minutes, start: s.start, ids: s.items.map(x => screenId(x.ch, x.i)), pos: s.pos, viewed: s.viewed, marked: s.marked })); } catch (e) { saveFailed(e); }
+}
+function loadSession() {
+  try {
+    const r = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (!r || !books[r.book] || !Array.isArray(r.ids)) return null;
+    const b = books[r.book], items = [];
+    for (const id of r.ids) {
+      const m = /^c(\d+)-(q?)(\d+)$/.exec(id); if (!m) continue;
+      const ch = b.chapters.find(c => c.n === Number(m[1])); if (!ch || !ready(ch)) continue;
+      const i = m[2] ? ch.cards.length + Number(m[3]) - 1 : Number(m[3]) - 1;
+      if (i >= 0 && i < screens(ch)) items.push({ ch, i });
+    }
+    if (!items.length) return null;
+    return { book: r.book, minutes: r.minutes, start: r.start, items, pos: Math.min(r.pos || 0, items.length), viewed: r.viewed || {}, marked: r.marked || {} };
+  } catch (e) { return null; }
+}
+function sessionSeen(sess, bs, i) {
+  sess.pos = Math.min(i, sess.items.length);
+  if (i < sess.items.length) {
+    const { ch, i: k } = sess.items[i];
+    sess.viewed[screenId(ch, k)] = true;
+    // an unstudied card viewed in order advances that chapter's progress (same meaning as in the reader)
+    if (k === (bs.seen[ch.n] ?? -1) + 1) { bs.seen[ch.n] = k; save(); }
+  }
+  storeSession(sess);
+}
+function endSession(sess) {
+  const secs = Math.max(0, Math.round((Date.now() - sess.start) / 1000));
+  const summary = { book: sess.book, minutes: sess.minutes, start: sess.start, end: Date.now(), seconds: secs, seen: Object.keys(sess.viewed).length, marked: Object.keys(sess.marked).length, queued: sess.items.length };
+  state.sessions = [summary, ...(state.sessions || [])].slice(0, 20);
+  save();
+  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  lastSummary = summary;
+  go('#/session');
+}
+let lastSummary = null;
+const fmtDur = s => s < 60 ? `${s} s` : `${Math.floor(s / 60)} min${s % 60 >= 30 ? ' ' + (s % 60) + ' s' : ''}`;
+function sessionHomeHTML() {
+  const last = (state.sessions || [])[0];
+  const active = loadSession();
+  return `<div class="section-h"><span>Study session</span><span>${active ? 'In progress' : last ? `Last: ${plural(last.seen, 'card')} · ${fmtDur(last.seconds)}` : 'Focused time'}</span></div>
+    <div class="review-row">${active ? `<a class="btn ghost sm" href="#/session/run" id="sessResume">Resume study session (${esc(books[active.book].short)})</a>` : ''}<a class="btn ghost sm" href="#/session" id="sessStart">Start study session</a></div>`;
+}
+function renderSessionSetup() {
+  document.title = 'Study session · LearnScroll';
+  const ids = BOOK_IDS.filter(id => books[id] && books[id].chapters.some(ready));
+  const sum = lastSummary; lastSummary = null;
+  const prefs = state.sessionPrefs || {};
+  let pick = ids.includes(prefs.book) ? prefs.book : (ids.includes(state.last) ? state.last : ids[0]);
+  let mins = [10, 20, 30].includes(prefs.minutes) ? prefs.minutes : 20;
+  const summaryHTML = sum ? `<section class="sess-sum" id="sessSum"><h2>Session complete</h2><p class="meta-line">${esc(books[sum.book].short)} · ${sum.minutes}-minute session</p>
+      <ul class="imp-counts">${[['Cards seen', sum.seen], ['Cards marked', sum.marked], ['Time', fmtDur(sum.seconds)]].map(([k, v]) => `<li><span>${k}</span><b>${v}</b></li>`).join('')}</ul>
+      <p class="sess-note">Saved in this browser.</p></section>` : '';
+  const paint = () => {
+    const q = sessionQueue(books[pick]);
+    app.innerHTML = `<main class="page sess">
+      <a class="back" href="#/">← Library</a><h1>${sum ? 'Nice work' : 'Study session'}</h1>
+      ${summaryHTML}
+      <p class="lead">${sum ? 'Start another when you’re ready, or head back to the library.' : 'A focused block of cards: the ones you marked difficult first, then cards you chose to review again, then cards you haven’t studied yet.'}</p>
+      <div class="sess-form">
+        <div class="sess-field"><span class="sess-l">Book</span><div class="seg" role="radiogroup" aria-label="Book">${ids.map(id => `<button role="radio" data-book="${id}" aria-checked="${id === pick}">${esc(books[id].short)}</button>`).join('')}</div></div>
+        <div class="sess-field"><span class="sess-l">Length</span><div class="seg" role="radiogroup" aria-label="Length">${[10, 20, 30].map(m => `<button role="radio" data-min="${m}" aria-checked="${m === mins}">${m} min</button>`).join('')}</div></div>
+        <p class="sess-q">${q.items.length ? `${plural(q.difficult, 'difficult card')} · ${plural(q.again, 'review-again card')} · ${plural(q.unstudied, 'unstudied card')}` : 'Nothing left to study in this book: no difficult or review-again cards, and every available chapter is done.'}</p>
+        <div class="btns"><button class="btn" id="sessGo" ${q.items.length ? '' : 'disabled'}>Start ${mins}-minute session</button><a class="btn ghost" href="#/">Back to library</a></div>
+      </div></main>`;
+    app.querySelectorAll('[data-book]').forEach(b => b.onclick = () => { pick = b.dataset.book; paint(); });
+    app.querySelectorAll('[data-min]').forEach(b => b.onclick = () => { mins = Number(b.dataset.min); paint(); });
+    document.getElementById('sessGo').onclick = () => {
+      state.sessionPrefs = { book: pick, minutes: mins }; save();
+      storeSession({ book: pick, minutes: mins, start: Date.now(), items: q.items, pos: 0, viewed: {}, marked: {} });
+      go('#/session/run');
+    };
+  };
+  paint();
+}
+function runSession() {
+  const s = loadSession();
+  if (!s) return go('#/session');
+  renderReader(books[s.book], s.items[0].ch, null, s);
+}
+
 // ---------- export / import (all local; logic in studydata.js) ----------
 let flash = '', pendingImport = null;
 const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY));
@@ -296,7 +397,7 @@ function readImport(file) {
 }
 function countsHTML(c) {
   const row = (k, v) => `<li><span>${k}</span><b>${v}</b></li>`;
-  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
+  return `<ul class="imp-counts">${row('Books with data', c.books)}${row('Bookmarks', c.bookmarks)}${row('Difficult marks', c.difficult)}${row('Notes', c.notes)}${row('Review results', c.reviews)}${row('Completed chapters', c.chaptersDone)}${row('Recent history', c.recent)}${row('Study sessions', c.sessions)}${row('Tutor conversations', c.conversations)}${row('Answer style', c.style || '—')}</ul>`;
 }
 function renderImport() {
   document.title = 'Import study data · LearnScroll';
@@ -484,7 +585,7 @@ function cardHTML(c, i, ch) {
   </div></section>`;
 }
 function quizHTML(q, i, n, ch) {
-  return `<section class="card quiz" data-q="${i}"><div class="card-body">
+  return `<section class="card quiz" data-q="${i}" data-ch="${ch.n}"><div class="card-body">
     <div class="sec"><span class="tag q-t">Practice</span><span>${i + 1} of ${n}</span>${markBtns(`c${ch.n}-q${i + 1}`)}</div>
     <h2>${q.q}</h2>
     <div class="opts">${q.options.map((o, k) => `<button class="opt" data-k="${k}">${o}</button>`).join('')}</div>
@@ -492,27 +593,32 @@ function quizHTML(q, i, n, ch) {
     ${noteEditor(`c${ch.n}-q${i + 1}`)}
   </div></section>`;
 }
-function renderReader(book, ch, at = null) {
-  document.title = `Ch ${ch.n} · ${book.short}`;
+function renderReader(book, ch, at = null, sess = null) {
+  if (sess) ch = sess.items[Math.min(sess.pos, sess.items.length - 1)].ch;
+  document.title = sess ? `Study session · ${book.short}` : `Ch ${ch.n} · ${book.short}`;
   const bs = bookState(book.id);
-  const total = screens(ch);
+  const total = sess ? sess.items.length : screens(ch);
+  const itemAt = i => (sess ? sess.items[i] : { ch, i });
+  const idAt = i => { const it = itemAt(i); return screenId(it.ch, it.i); };
   const next = book.chapters.find(c => c.n === ch.n + 1);
   const nextReady = next && ready(next);
   const quiz = ch.quiz || [];
   app.innerHTML = `<div class="reader">
-    <header class="bar"><a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span><span class="bar-r"><span class="count" id="count" aria-live="polite"></span><button class="navbtn sm" id="tutorBtn" aria-expanded="false" aria-controls="tutor">Ask tutor</button></span></header>
+    <header class="bar">${sess ? `<button class="back t-link" id="endSess">End session</button><span class="where"><span>Study session · </span>${esc(book.short)}</span>` : `<a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span>`}<span class="bar-r">${sess ? '<span class="count left" id="left" aria-live="off"></span>' : ''}<span class="count" id="count" aria-live="polite"></span><button class="navbtn sm" id="tutorBtn" aria-expanded="false" aria-controls="tutor">Ask tutor</button></span></header>
     <div class="track" role="progressbar" aria-label="Chapter progress" aria-valuemin="0" aria-valuemax="${total}" id="track"><div class="line" id="line"></div></div>
+    ${sess ? '<div class="sess-msg" id="sessMsg" role="status" hidden></div>' : ''}
     <main class="feed" id="feed">
+      ${sess ? sess.items.map(({ ch: c2, i }) => i < c2.cards.length ? cardHTML(c2.cards[i], i, c2).replace('<div class="sec">', `<div class="sec"><span class="sess-from">Ch ${c2.n} · </span>`) : quizHTML(c2.quiz[i - c2.cards.length], i - c2.cards.length, c2.quiz.length, c2)).join('') + `<section class="card end"><div class="card-body"><div class="sec"><span>End of session queue</span></div><h2>That’s every card in this session.</h2><p>Nice, steady work. See your summary when you’re ready.</p><div class="btns"><button class="btn" id="endSess2">See summary</button></div></div></section>` : `
       ${ch.cards.map((c, i) => cardHTML(c, i, ch)).join('')}
-      ${quiz.map((q, i) => quizHTML(q, i, quiz.length, ch)).join('')}
-      <section class="card end"><div class="card-body">
+      ${quiz.map((q, i) => quizHTML(q, i, quiz.length, ch)).join('')}`}
+      ${sess ? '' : `<section class="card end"><div class="card-body">
         <div class="sec"><span>End of chapter ${ch.n}</span></div>
         <h2>${esc(ch.title)}</h2>
         <p>${nextReady ? `Next up: Chapter ${next.n}, ${esc(next.title)}.` : next ? `Chapter ${next.n} is coming soon.` : 'That’s the last chapter.'}</p>
         <div class="btns">${nextReady ? `<a class="btn" href="#/read/${book.id}/${next.n}">Next chapter →</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">All chapters</a></div>
-      </div></section>
+      </div></section>`}
     </main>
-    <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> chapters · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult</span>
+    <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> ${sess ? 'end session' : 'chapters'} · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult</span>
       <div class="nav"><button class="navbtn" id="prev" aria-label="Previous card">↑ Previous</button><button class="navbtn" id="next" aria-label="Next card">Next ↓</button></div></footer>
   </div>`;
   const feed = document.getElementById('feed');
@@ -528,7 +634,7 @@ function renderReader(book, ch, at = null) {
     document.getElementById('count').textContent = i >= total ? 'Done' : `${i + 1} / ${total}`;
     document.getElementById('line').style.width = `${Math.min(100, (Math.min(i + 1, total) / total) * 100)}%`;
     document.getElementById('track').setAttribute('aria-valuenow', Math.min(i + 1, total));
-    if (window.Tutor) Tutor.setIndex(Math.min(i, total));
+    if (window.Tutor) { if (sess) { const it = itemAt(Math.min(i, total - 1)); Tutor.setIndex(i >= total ? screens(it.ch) : it.i, it.ch); } else Tutor.setIndex(Math.min(i, total)); }
     prevBtn.disabled = i <= 0;
     nextBtn.disabled = i >= total;
   }
@@ -536,6 +642,7 @@ function renderReader(book, ch, at = null) {
     const i = idx();
     if (target !== null && i === target) target = null;
     paint(i);
+    if (sess) { sessionSeen(sess, bs, i); return; }
     bs.chapter = ch.n;
     bs.card = Math.min(i, total - 1);
     if (i >= total) bs.done[ch.n] = true;
@@ -554,8 +661,8 @@ function renderReader(book, ch, at = null) {
   }
   // Resume where the reader left off in this chapter.
   // A deep link (#/read/book/ch/N) jumps once; then drop N so a reload resumes at the saved card instead.
-  if (at !== null) history.replaceState(null, '', `#/read/${book.id}/${ch.n}`);
-  const start = at !== null ? at : bs.chapter === ch.n && !bs.done[ch.n] ? bs.card : 0;
+  if (at !== null && !sess) history.replaceState(null, '', `#/read/${book.id}/${ch.n}`);
+  const start = sess ? sess.pos : at !== null ? at : bs.chapter === ch.n && !bs.done[ch.n] ? bs.card : 0;
   feed.style.scrollSnapType = 'none';
   feed.scrollTop = start * h();
   feed.style.scrollSnapType = '';
@@ -582,6 +689,7 @@ function renderReader(book, ch, at = null) {
   function toggleMark(id, kind) {
     const m = bs.marks[id] || {};
     m[kind] = !m[kind];
+    if (sess && m[kind]) { sess.marked[id] = true; storeSession(sess); }
     if (!m.b && !m.d) delete bs.marks[id]; else bs.marks[id] = m;
     save(); paintMarks();
   }
@@ -635,7 +743,8 @@ function renderReader(book, ch, at = null) {
     const opt = e.target.closest('.opt');
     if (!opt || opt.disabled) return;
     const card = opt.closest('.quiz');
-    const q = quiz[Number(card.dataset.q)];
+    const qch = book.chapters.find(c => c.n === Number(card.dataset.ch)) || ch;
+    const q = qch.quiz[Number(card.dataset.q)];
     const pick = Number(opt.dataset.k);
     card.querySelectorAll('.opt').forEach((b, k) => {
       b.disabled = true;
@@ -658,10 +767,10 @@ function renderReader(book, ch, at = null) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') d = 1;
     else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') d = -1;
     else if (e.key === ' ') { if (onControl) return; d = e.shiftKey ? -1 : 1; } // Space activates a focused button/link
-    else if (e.key === 'Escape') { e.preventDefault(); go(`#/book/${book.id}`); return; }
+    else if (e.key === 'Escape') { e.preventDefault(); if (sess) endSession(sess); else go(`#/book/${book.id}`); return; }
     else if ((e.key === 'b' || e.key === 'B' || e.key === 'd' || e.key === 'D') && !e.shiftKey) {
       const i = target !== null ? target : idx();
-      if (i < total) { e.preventDefault(); toggleMark(screenId(ch, i), e.key.toLowerCase()); }
+      if (i < total) { e.preventDefault(); toggleMark(idAt(i), e.key.toLowerCase()); }
       return;
     }
     if (!d) return;
@@ -670,7 +779,22 @@ function renderReader(book, ch, at = null) {
   };
   document.addEventListener('keydown', onKey);
   feed.tabIndex = -1; feed.focus({ preventScroll: true });
+  let tick = null;
+  if (sess) {
+    const endBtn = () => endSession(sess);
+    document.getElementById('endSess').addEventListener('click', endBtn);
+    document.getElementById('endSess2').addEventListener('click', endBtn);
+    const clock = () => {
+      const left = sess.minutes * 60 - Math.floor((Date.now() - sess.start) / 1000);
+      const el = document.getElementById('left'); if (!el) return;
+      el.textContent = left > 0 ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} left` : 'Time’s up';
+      const msg = document.getElementById('sessMsg');
+      if (left <= 0 && msg.hidden) { msg.hidden = false; msg.innerHTML = `Your ${sess.minutes} minutes are up. Finish this card if you like, then <button class="t-link" id="sessDone">see your summary</button>.`; document.getElementById('sessDone').onclick = endBtn; }
+    };
+    clock(); tick = setInterval(clock, 1000);
+  }
   cleanup = () => {
+    clearInterval(tick);
     document.removeEventListener('keydown', onKey); clearTimeout(t); if (window.Tutor) Tutor.unmount();
     // flush any pending note edit before leaving the reader
     feed.querySelectorAll('.note-ed:not([hidden])').forEach(ed => { clearTimeout(noteTimer); saveNote(ed.dataset.note, ed.querySelector('textarea').value); });

@@ -93,3 +93,16 @@ test('overwrite replaces study data; keeps local conversations unless the file h
   const inc2 = SD.parse(file({ tutor: { prefs: {}, conversations: {} } }), { bookIds: IDS }).data;
   assert.deepEqual(SD.overwrite(local, inc2).tutor.conversations, {});
 });
+
+test('study sessions: validated, merged by start time, counted', () => {
+  const sess = (start, seen) => ({ book: 'heat-mass-transfer', minutes: 20, start, end: start + 600000, seconds: 600, seen, marked: 1, queued: 30 });
+  const ok = SD.parse(file({ study: { books: {}, recent: [], sessions: [sess(T1, 5)], sessionPrefs: { book: 'heat-mass-transfer', minutes: 20 } } }), { bookIds: IDS });
+  assert.ok(ok.ok, ok.error);
+  assert.equal(SD.counts(ok.data).sessions, 1);
+  for (const bad of [{ ...sess(T1, 5), minutes: 15 }, { ...sess(T1, 5), seen: -1 }, { ...sess(T1, 5), streak: 3 }, { ...sess(T1, 5), book: 'x' }])
+    assert.equal(SD.parse(file({ study: { books: {}, sessions: [bad] } }), { bookIds: IDS }).ok, false);
+  assert.equal(SD.parse(file({ study: { books: {}, sessionPrefs: { book: 'heat-mass-transfer', minutes: 45 } } }), { bookIds: IDS }).ok, false);
+  const local = SD.fromStorage(JSON.stringify({ books: {}, recent: [], sessions: [sess(T1, 5)] }), '{}');
+  const m = SD.merge(local, SD.parse(file({ study: { books: {}, recent: [], sessions: [sess(T1, 5), sess(T2, 9)] } }), { bookIds: IDS }).data);
+  assert.deepEqual(m.study.sessions.map(x => x.seen), [9, 5]);
+});

@@ -112,7 +112,7 @@ test('sanitizeStudy: valid data untouched; malformed pieces dropped and flagged;
   const r = SD.sanitizeStudy(good);
   assert.equal(r.repaired, false);
   assert.deepEqual(r.study.books['heat-mass-transfer'].notes, good.books['heat-mass-transfer'].notes);
-  assert.deepEqual(SD.sanitizeStudy({}), { study: { schema: 3, books: {}, last: null, recent: [], sessions: [], formulas: {} }, repaired: false });
+  assert.deepEqual(SD.sanitizeStudy({}), { study: { schema: 3, books: {}, last: null, recent: [], sessions: [], formulas: {}, sheets: {} }, repaired: false });
   const bad = SD.sanitizeStudy({ books: { 'heat-mass-transfer': { chapter: 'x', card: -3, marks: 'oops', notes: { 'c1-2': { text: 5 }, 'c1-3': { text: 'ok', at: T1 } }, seen: { 1: 'far' } }, 'bad id!': {}, 'koretsky-thermo': 7 }, recent: 'nope', last: 42 });
   assert.equal(bad.repaired, true);
   const h = bad.study.books['heat-mass-transfer'];

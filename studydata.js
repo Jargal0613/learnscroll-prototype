@@ -92,9 +92,33 @@
     for (const [id, f] of Object.entries(out)) if (f.kind === 'card' && id !== `f-${f.book}-${f.card}`) fail(`study.formulas.${id} does not match its card.`);
     return out;
   }
+  // Study sheets (schema 3, optional): an ordered pick of saved formulas, notes, bookmarks and difficult cards.
+  const SHEET_RE = /^s-[a-z0-9]{4,24}$/, MAX_SHEETS = 50, MAX_SHEET_ITEMS = 300, SHEET_KINDS = ['formula', 'note', 'bookmark', 'difficult'];
+  function validSheet(x, w, bookIds) {
+    if (!isObj(x)) fail(`${w} must be an object.`); onlyKeys(x, ['title', 'items', 'at', 'updated'], w);
+    if (typeof x.title !== 'string' || !x.title.trim() || x.title.length > MAX_TITLE) fail(`${w}.title must be text (max ${MAX_TITLE}).`);
+    if (!isTime(x.at) || (x.updated !== undefined && !isTime(x.updated))) fail(`${w} needs at/updated timestamps.`);
+    if (!Array.isArray(x.items) || x.items.length > MAX_SHEET_ITEMS) fail(`${w}.items must be a list (max ${MAX_SHEET_ITEMS}).`);
+    const seen = new Set();
+    const items = x.items.map((it, i) => {
+      const iw = `${w}.items[${i}]`;
+      if (!isObj(it) || !SHEET_KINDS.includes(it.t)) fail(`${iw} must be a formula, note, bookmark or difficult item.`);
+      let r;
+      if (it.t === 'formula') { onlyKeys(it, ['t', 'ref'], iw); if (typeof it.ref !== 'string' || !FORMULA_RE.test(it.ref)) fail(`${iw}.ref is invalid.`); r = { t: it.t, ref: it.ref }; }
+      else { onlyKeys(it, ['t', 'book', 'card'], iw); if (typeof it.book !== 'string' || (bookIds && !bookIds.includes(it.book)) || typeof it.card !== 'string' || !CARD_RE.test(it.card)) fail(`${iw} needs a known book and card.`); r = { t: it.t, book: it.book, card: it.card }; }
+      const k = JSON.stringify(r); if (seen.has(k)) fail(`${iw} is listed twice.`); seen.add(k);
+      return r;
+    });
+    return { title: x.title, items, at: x.at, updated: x.updated || x.at };
+  }
+  function validSheets(o, bookIds) {
+    const out = mapOf(o, SHEET_RE, 'study.sheets', (v, w) => validSheet(v, w, bookIds));
+    if (Object.keys(out).length > MAX_SHEETS) fail(`study.sheets has more than ${MAX_SHEETS} sheets.`);
+    return out;
+  }
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -131,6 +155,7 @@
       out.readPrefs = { textSize: r.textSize };
     }
     if (s.formulas !== undefined) out.formulas = validFormulas(s.formulas, bookIds); // absent in files before format 3
+    if (s.sheets !== undefined) out.sheets = validSheets(s.sheets, bookIds);
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -251,6 +276,7 @@
     if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
     if (isObj(s.readPrefs)) study.readPrefs = s.readPrefs;
     study.formulas = isObj(s.formulas) ? s.formulas : {};
+    study.sheets = isObj(s.sheets) ? s.sheets : {};
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
@@ -333,6 +359,7 @@
     const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
     const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
     study.formulas = mergeById(L.formulas, I.formulas);
+    study.sheets = mergeById(L.sheets, I.sheets);
     // a session in progress here wins; otherwise take the file's
     return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
   }
@@ -355,6 +382,10 @@
         file: incoming.study.formulas === undefined ? 'Not in the file (older export format)' : n(Object.keys(incoming.study.formulas).length, 'formula'),
         merge: incoming.study.formulas === undefined ? 'Kept as they are' : 'Combined (same formula: most recently edited copy kept)',
         replace: incoming.study.formulas === undefined ? 'Kept (the file has no formula data)' : Object.keys(incoming.study.formulas).length ? 'Replaced by the file' : Object.keys(local.study.formulas || {}).length ? `Removed (${n(Object.keys(local.study.formulas).length, 'formula')} here; the file has none)` : 'None before or after' },
+      { key: 'sheets', label: 'Study sheets',
+        file: incoming.study.sheets === undefined ? 'Not in the file' : n(Object.keys(incoming.study.sheets).length, 'sheet'),
+        merge: incoming.study.sheets === undefined ? 'Kept as they are' : 'Combined (same sheet: most recently edited copy kept)',
+        replace: incoming.study.sheets === undefined ? 'Kept (the file has no sheets)' : Object.keys(incoming.study.sheets).length ? 'Replaced by the file' : Object.keys(local.study.sheets || {}).length ? `Removed (${n(Object.keys(local.study.sheets).length, 'sheet')} here; the file has none)` : 'None before or after' },
       { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
         file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
         merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
@@ -371,6 +402,7 @@
   function overwrite(local, incoming) {
     const study = { ...incoming.study };
     if (study.formulas === undefined) study.formulas = local.study.formulas || {}; // older file: not part of it, kept
+    if (study.sheets === undefined) study.sheets = local.study.sheets || {};
     return {
       study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
@@ -457,6 +489,8 @@
     const study = { schema: SCHEMA, books, last, recent, sessions };
     if (s.formulas !== undefined && !isObj(s.formulas)) repaired = true;
     study.formulas = objOr(s.formulas, (k, v) => { try { return FORMULA_RE.test(k) && !!validFormula(v, k); } catch (e) { return false; } });
+    if (s.sheets !== undefined && !isObj(s.sheets)) repaired = true;
+    study.sheets = objOr(s.sheets, (k, v) => { try { return SHEET_RE.test(k) && !!validSheet(v, k); } catch (e) { return false; } });
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
     if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
@@ -538,6 +572,6 @@
     return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
-  const api = { mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

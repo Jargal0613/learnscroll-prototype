@@ -255,6 +255,47 @@
   .f-lock { font-size: 13px; color: var(--muted); }
   .f-msg { font-size: 13px; color: var(--fg-2); min-height: 1em; }
   .fpage .marked-empty { margin-top: 8px; }
+  .end-extra { margin-top: 14px; font-size: 13px; }
+  .end-extra a { color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
+  .legend-a { display: block; margin-top: 6px; font-size: 13px; color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
+  .sh-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 20px; }
+  .sh-title { font: inherit; font-size: 24px; font-weight: 600; color: var(--fg); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; margin-left: -8px; flex: 1 1 300px; min-width: 0; }
+  .sh-title:hover, .sh-title:focus { border-color: var(--line-strong); }
+  .sh-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .sh-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 16px; }
+  .sh-cols h2, .sh-prev-h { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+  .sh-pick .f-bar { margin: 10px 0; }
+  .sh-cands, .sh-items { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; max-height: 360px; overflow: auto; font-size: 13.5px; color: var(--fg-2); }
+  .sh-cands label { display: flex; gap: 8px; align-items: baseline; padding: 4px 2px; cursor: pointer; }
+  .sh-items li { display: flex; gap: 8px; align-items: baseline; padding: 4px 2px; border-bottom: 1px solid var(--line); }
+  .sh-name { flex: 1; min-width: 0; }
+  .sh-btns { display: flex; flex: none; }
+  .sh-kind { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); flex: none; }
+  .sh-prev-h { margin-top: 32px; }
+  .sheet { margin-top: 10px; padding: 20px 24px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); }
+  .sh-print-title { font-size: 22px; margin: 0 0 4px; }
+  .sh-group h2 { font-size: 14px; font-weight: 600; color: var(--fg); margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  .sh-item { padding: 10px 0; border-bottom: 1px dashed var(--line); break-inside: avoid; }
+  .sh-h { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .sh-h h3 { font-size: 15px; font-weight: 600; }
+  .sh-lab { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
+  .sh-card { margin-top: 6px; font-size: 14px; line-height: 1.55; color: var(--fg-2); }
+  .sh-mine { margin-top: 8px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); font-size: 14px; color: var(--fg); border-radius: 0 6px 6px 0; }
+  .sh-eq { overflow-x: auto; overflow-y: hidden; font-size: 17px; }
+  .sh-gone, .sh-err { font-size: 13px; color: var(--fg-2); border-left: 2px solid var(--danger); padding-left: 8px; }
+  @media (max-width: 760px) { .sh-cols { grid-template-columns: minmax(0, 1fr); } }
+  @media print {
+    html, body, .page { background: #fff !important; color: #000 !important; }
+    .page { padding: 0 !important; max-width: none; }
+    .shpage > :not(.sheet), .tp-bar, .save-warn, .tutor, .bar, nav, #helpMenu { display: none !important; }
+    .sheet { border: 0; padding: 0; background: #fff; }
+    .sheet, .sheet * { color: #000 !important; }
+    .sh-mine { background: #f2f2f2 !important; border-left-color: #000 !important; }
+    .sh-eq, .sh-eq .katex-display { overflow: visible !important; }
+    .sh-eq .katex-display > .katex { white-space: normal; max-width: 100%; }
+    .sh-item, .sh-eq { break-inside: avoid; }
+    .sh-group h2 { break-after: avoid; }
+  }
   .help-wrap { position: relative; flex: none; }
   .help-btn { font-size: 13px; }
   .help-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: flex; flex-direction: column; min-width: 230px; padding: 6px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); }
@@ -596,5 +637,6 @@
 <script defer src="tutor.js"></script>
 <script defer src="app.js"></script>
 <script defer src="formulas.js"></script>
+<script defer src="sheets.js"></script>
 </body>
 </html>

@@ -202,3 +202,18 @@ test('schema 3: formula notebook migrates, validates, exports, merges and replac
   // v2 files still import
   const { formulas: _g, ...s2 } = f.study; assert.ok(SD.parse(JSON.stringify({ ...f, version: 2, study: s2 }), { bookIds: IDS }).ok);
 });
+
+test('study sheets: validate, export, merge (newest edit wins), replace; older files keep local sheets', () => {
+  const S = { 's-abcd1': { title: 'Exam 1', items: [{ t: 'formula', ref: 'f-heat-mass-transfer-c1-13' }, { t: 'note', book: 'heat-mass-transfer', card: 'c1-2' }, { t: 'difficult', book: 'heat-mass-transfer', card: 'c1-q1' }], at: T1, updated: T1 } };
+  const study = { ...SD.sanitizeStudy({ schema: 3, books: {}, recent: [], sessions: [] }).study, sheets: S };
+  assert.deepEqual(SD.sanitizeStudy(study).study.sheets, S);
+  const local = SD.fromStorage(JSON.stringify(study), '{}', null), f = SD.build(local, { now: new Date(T2) });
+  const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error); assert.deepEqual(p.data.study.sheets, S);
+  for (const items of [[{ t: 'pdf', ref: 'x' }], [{ t: 'note', book: 'nope', card: 'c1-1' }], [S['s-abcd1'].items[1], S['s-abcd1'].items[1]]]) {
+    const r = SD.parse(JSON.stringify({ ...f, study: { ...f.study, sheets: { 's-abcd1': { ...S['s-abcd1'], items } } } }), { bookIds: IDS }); assert.equal(r.ok, false); assert.match(r.error, /sheets/);
+  }
+  const newer = { ...S['s-abcd1'], title: 'Exam 1 (edited)', updated: T2 };
+  assert.equal(SD.merge(local, { ...p.data, study: { ...p.data.study, sheets: { 's-abcd1': newer } } }).study.sheets['s-abcd1'].title, 'Exam 1 (edited)');
+  const { sheets: _s, ...old } = p.data.study; assert.deepEqual(SD.overwrite(local, { ...p.data, study: old }).study.sheets, S);
+  assert.deepEqual(SD.overwrite(local, { ...p.data, study: { ...p.data.study, sheets: {} } }).study.sheets, {});
+});

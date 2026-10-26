@@ -135,6 +135,7 @@ function route() {
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'formulas') return Formulas.render(parts[1]);
+  if (parts[0] === 'sheets') return Sheets.route(parts);
   if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
   if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
@@ -234,7 +235,7 @@ function renderHome() {
     ${attentionHTML()}
     ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
-    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span></p>
+    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span><span aria-hidden="true">·</span><a href="#/sheets">Study sheets</a><span>${plural(Sheets.count(), 'sheet')}</span></p>
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
       const b = books[id], p = bookProgress(b);
@@ -819,7 +820,7 @@ function renderBook(book, filter) {
   app.innerHTML = `<main class="page">
     <a class="back" href="#/">← Library</a>
     <div class="book-head"><div><h1>${esc(book.title)}</h1><p class="meta-line">${esc(book.author)} · ${esc(book.edition)}</p></div>
-    <div class="legend"><span>${avail} of ${book.chapters.length} chapters available</span></div></div>
+    <div class="legend"><span>${avail} of ${book.chapters.length} chapters available</span><a class="legend-a" href="#/sheets/new/${book.id}">New study sheet for this book</a></div></div>
     ${tabs}
     ${view ? markedHTML(book, view) : `<div class="chapters" role="list">${book.chapters.map(ch => {
       const st = chapterState(book, ch);
@@ -898,6 +899,7 @@ function renderReader(book, ch, at = null, sess = null) {
         <p>${nextReady ? `Next up: Chapter ${next.n}, ${esc(next.title)}.` : next ? `Chapter ${next.n} is coming soon.` : 'That’s the last chapter.'}</p>
         <p class="mist-line" id="mistLine" hidden></p>
         <div class="btns"><a class="btn ghost" id="mistakesBtn" href="#/mistakes/${book.id}/${ch.n}" hidden>Review mistakes</a>${nextReady ? `<a class="btn" href="#/read/${book.id}/${next.n}">Next chapter →</a>` : ''}<a class="btn ghost" href="#/book/${book.id}">All chapters</a></div>
+        <p class="end-extra"><a href="#/sheets/new/${book.id}/${ch.n}">Make a study sheet from this chapter</a></p>
       </div></section>`}
     </main>
     <footer class="foot"><span class="hint"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>space</kbd> to move · <kbd>esc</kbd> ${sess ? 'end session' : 'chapters'} · <kbd>B</kbd> bookmark · <kbd>D</kbd> difficult · <kbd>?</kbd> all shortcuts</span>

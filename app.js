@@ -114,6 +114,7 @@ function renderMissing(msg, href, label) {
 
 // ---------- home ----------
 function renderHome() {
+  if (finishExpiredSession()) flash = flash || `Your study session ended while you were away (${plural(lastSummary.seen, 'card')} seen, ${fmtDur(lastSummary.seconds)} active). Only time with the page open counts.`;
   document.title = 'LearnScroll';
   const ids = BOOK_IDS.filter(id => books[id]);
   if (!ids.length) {
@@ -340,7 +341,7 @@ function sessionQueue(book) {
   return { items: out, difficult: nd, again: na, unstudied: out.length - nd - na };
 }
 function storeSession(s) {
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ book: s.book, minutes: s.minutes, start: s.start, ids: s.items.map(x => screenId(x.ch, x.i)), pos: s.pos, viewed: s.viewed, marked: s.marked })); } catch (e) { saveFailed(e); }
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ book: s.book, minutes: s.minutes, start: s.start, ids: s.items.map(x => screenId(x.ch, x.i)), pos: s.pos, viewed: s.viewed, marked: s.marked, active: s.active || 0, visibleSince: s.visibleSince ?? null, lastSeen: s.lastSeen ?? null })); } catch (e) { saveFailed(e); }
 }
 function loadSession() {
   try {
@@ -354,7 +355,8 @@ function loadSession() {
       if (i >= 0 && i < screens(ch)) items.push({ ch, i });
     }
     if (!items.length) return null;
-    return { book: r.book, minutes: r.minutes, start: r.start, items, pos: Math.min(r.pos || 0, items.length), viewed: r.viewed || {}, marked: r.marked || {} };
+    const num = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+    return { book: r.book, minutes: r.minutes, start: r.start, items, pos: Math.min(r.pos || 0, items.length), viewed: r.viewed || {}, marked: r.marked || {}, active: Math.max(0, num(r.active) || 0), visibleSince: num(r.visibleSince), lastSeen: num(r.lastSeen) };
   } catch (e) { return null; }
 }
 function sessionSeen(sess, bs, i) {
@@ -367,14 +369,37 @@ function sessionSeen(sess, bs, i) {
   }
   storeSession(sess);
 }
-function endSession(sess) {
-  const secs = Math.max(0, Math.round((Date.now() - sess.start) / 1000));
-  const summary = { book: sess.book, minutes: sess.minutes, start: sess.start, end: Date.now(), seconds: secs, seen: Object.keys(sess.viewed).length, marked: Object.keys(sess.marked).length, queued: sess.items.length };
+// Session time. Stored: start + duration (minutes). Remaining time is always computed from Date.now();
+// timers only re-render. Active time counts only while the page is open and visible: it is accumulated
+// in visible stretches [visibleSince, now). If a page closes without a 'hidden' event, the stretch ends
+// at lastSeen (the last render), so closed time never counts.
+const sessEnd = s => s.start + s.minutes * 60000;
+const sessLeft = (s, now = Date.now()) => Math.max(0, Math.ceil((sessEnd(s) - now) / 1000));
+function sessPause(s, now = Date.now()) {
+  if (s.visibleSince != null) { s.active += Math.max(0, now - s.visibleSince); s.visibleSince = null; }
+  s.lastSeen = now;
+}
+function sessRecover(s) { // on open/reload: close a stretch left open by a page that was closed abruptly
+  if (s.visibleSince != null) { s.active += Math.max(0, (s.lastSeen != null ? s.lastSeen : s.visibleSince) - s.visibleSince); s.visibleSince = null; }
+}
+const sessActive = (s, now = Date.now()) => s.active + (s.visibleSince != null ? Math.max(0, now - s.visibleSince) : 0);
+// A session whose time ran out while no page had it open is completed on return.
+function finishExpiredSession() {
+  const s = loadSession(); if (!s) return false;
+  sessRecover(s);
+  if (Date.now() < sessEnd(s)) { storeSession(s); return false; }
+  endSession(s, { expiredAway: true, navigate: false });
+  return true;
+}
+function endSession(sess, { expiredAway = false, navigate = true } = {}) {
+  sessPause(sess);
+  const secs = Math.max(0, Math.round(sess.active / 1000));
+  const summary = { book: sess.book, minutes: sess.minutes, start: sess.start, end: Math.min(Date.now(), sessEnd(sess)), seconds: secs, seen: Object.keys(sess.viewed).length, marked: Object.keys(sess.marked).length, queued: sess.items.length };
   state.sessions = [summary, ...(state.sessions || [])].slice(0, 20);
   save();
   try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
-  lastSummary = summary;
-  go('#/session');
+  lastSummary = { ...summary, expiredAway };
+  if (navigate) go('#/session');
 }
 let lastSummary = null;
 const fmtDur = s => s < 60 ? `${s} s` : `${Math.floor(s / 60)} min${s % 60 >= 30 ? ' ' + (s % 60) + ' s' : ''}`;
@@ -398,6 +423,7 @@ function fitBookPicker() {
 }
 window.addEventListener('resize', () => fitBookPicker());
 function renderSessionSetup() {
+  finishExpiredSession();
   document.title = 'Study session · LearnScroll';
   const ids = BOOK_IDS.filter(id => books[id] && books[id].chapters.some(ready));
   const sum = lastSummary; lastSummary = null;
@@ -405,7 +431,8 @@ function renderSessionSetup() {
   let pick = ids.includes(prefs.book) ? prefs.book : (ids.includes(state.last) ? state.last : ids[0]);
   let mins = [10, 20, 30].includes(prefs.minutes) ? prefs.minutes : 20;
   const summaryHTML = sum ? `<section class="sess-sum" id="sessSum"><h2>Session complete</h2><p class="meta-line">${esc(books[sum.book].short)} · ${sum.minutes}-minute session</p>
-      <ul class="imp-counts">${[['Cards seen', sum.seen], ['Cards marked', sum.marked], ['Time', fmtDur(sum.seconds)]].map(([k, v]) => `<li><span>${k}</span><b>${v}</b></li>`).join('')}</ul>
+      ${sum.expiredAway ? '<p class="sess-note">The time ran out while the page was closed. Only time with the page open counts.</p>' : ''}
+      <ul class="imp-counts">${[['Cards seen', sum.seen], ['Cards marked', sum.marked], ['Active study time', fmtDur(sum.seconds)], ['Session length', `${sum.minutes} min`]].map(([k, v]) => `<li><span>${k}</span><b>${v}</b></li>`).join('')}</ul>
       <p class="sess-note">Saved in this browser.</p></section>` : '';
   const paint = () => {
     const q = sessionQueue(books[pick]);
@@ -426,15 +453,19 @@ function renderSessionSetup() {
     app.querySelectorAll('[data-min]').forEach(b => b.onclick = () => { mins = Number(b.dataset.min); paint(); });
     document.getElementById('sessGo').onclick = () => {
       state.sessionPrefs = { book: pick, minutes: mins }; save();
-      storeSession({ book: pick, minutes: mins, start: Date.now(), items: q.items, pos: 0, viewed: {}, marked: {} });
+      storeSession({ book: pick, minutes: mins, start: Date.now(), items: q.items, pos: 0, viewed: {}, marked: {}, active: 0, visibleSince: null, lastSeen: null });
       go('#/session/run');
     };
   };
   paint();
 }
 function runSession() {
+  if (finishExpiredSession()) return go('#/session');
   const s = loadSession();
   if (!s) return go('#/session');
+  sessRecover(s);
+  if (document.visibilityState !== 'hidden') s.visibleSince = Date.now();
+  s.lastSeen = Date.now(); storeSession(s);
   renderReader(books[s.book], s.items[0].ch, null, s);
 }
 
@@ -841,22 +872,33 @@ function renderReader(book, ch, at = null, sess = null) {
   };
   document.addEventListener('keydown', onKey);
   feed.tabIndex = -1; feed.focus({ preventScroll: true });
-  let tick = null;
+  let tick = null, onVis = null, onHide = null;
   if (sess) {
     const endBtn = () => endSession(sess);
     document.getElementById('endSess').addEventListener('click', endBtn);
     document.getElementById('endSess2').addEventListener('click', endBtn);
-    const clock = () => {
-      const left = sess.minutes * 60 - Math.floor((Date.now() - sess.start) / 1000);
+    const clock = () => { // render only: everything is derived from Date.now()
+      const left = sessLeft(sess);
+      if (document.visibilityState !== 'hidden') { sess.lastSeen = Date.now(); storeSession(sess); }
       const el = document.getElementById('left'); if (!el) return;
       el.textContent = left > 0 ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} left` : 'Time’s up';
       const msg = document.getElementById('sessMsg');
       if (left <= 0 && msg.hidden) { msg.hidden = false; msg.innerHTML = `Your ${sess.minutes} minutes are up. Finish this card if you like, then <button class="t-link" id="sessDone">see your summary</button>.`; document.getElementById('sessDone').onclick = endBtn; }
     };
     clock(); tick = setInterval(clock, 1000);
+    onVis = () => {
+      if (document.visibilityState === 'hidden') sessPause(sess);
+      else { sess.visibleSince = Date.now(); sess.lastSeen = Date.now(); }
+      storeSession(sess); clock();
+    };
+    onHide = () => { sessPause(sess); storeSession(sess); };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', onHide);
   }
   cleanup = () => {
     clearInterval(tick);
+    if (onVis) { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('pagehide', onHide); }
+    if (sess && loadSession()) { sessPause(sess); storeSession(sess); } // leaving the reader pauses active time
     document.removeEventListener('keydown', onKey); clearTimeout(t); if (window.Tutor) Tutor.unmount();
     // flush any pending note edit before leaving the reader
     feed.querySelectorAll('.note-ed:not([hidden])').forEach(ed => { clearTimeout(noteTimer); saveNote(ed.dataset.note, ed.querySelector('textarea').value); });

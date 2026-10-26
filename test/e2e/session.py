@@ -5,7 +5,7 @@ SEED = {'books': {'heat-mass-transfer': {'chapter': 1, 'card': 10, 'done': {}, '
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []
     for W, H in SIZES:
-        pg = b.new_page(viewport={'width': W, 'height': H}); watch(pg, errs)
+        pg = b.new_page(viewport={'width': W, 'height': H}); watch(pg, errs); pg.clock.install()
         pg.goto(BASE + '/#/'); pg.evaluate("s => { localStorage.clear(); localStorage.setItem('learnscroll-study-v1', JSON.stringify(s)); }", SEED); pg.reload(); pg.wait_for_selector('#sessStart')
         pg.click('#sessStart'); pg.wait_for_selector('#sessGo')
         pg.click('[data-book="heat-mass-transfer"]'); pg.click('[data-min="10"]')
@@ -26,7 +26,7 @@ with sync_playwright() as p:
         ok(pg.evaluate(f"JSON.parse(localStorage['{SK}']).books['heat-mass-transfer'].seen['1']") == 11, 'unstudied card viewed in order advances progress')
         pg.reload(); pg.wait_for_selector('#left'); pg.wait_for_timeout(1000)
         ok(pg.inner_text('#count').startswith('3 / '), 'refresh resumes the session at the same card')
-        pg.evaluate(f"() => {{ const s = JSON.parse(localStorage['{XK}']); s.start = Date.now() - 11*60*1000; localStorage['{XK}'] = JSON.stringify(s); }}"); pg.reload(); pg.wait_for_selector('#sessMsg:not([hidden])')
+        pg.clock.run_for(11 * 60 * 1000); pg.wait_for_selector('#sessMsg:not([hidden])')
         ok("up" in pg.inner_text('#sessMsg') and pg.inner_text('#left') == 'Time’s up', 'gentle end when time is up (no forced stop)')
         pg.screenshot(path=f'{OUT}/{W}-time-up.png')
         pg.click('#sessDone'); pg.wait_for_selector('#sessSum')

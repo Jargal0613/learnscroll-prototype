@@ -134,6 +134,7 @@ function route() {
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'import') return renderImport();
+  if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
   if (parts[0] === 'session') return parts[1] === 'run' ? runSession() : renderSessionSetup();
   if (parts[0] === 'review' && books[parts[1]]) return renderReview(books[parts[1]], parts[2]);
@@ -1143,6 +1144,67 @@ function renderReader(book, ch, at = null, sess = null) {
     feed.querySelectorAll('.note-ed:not([hidden])').forEach(ed => { clearTimeout(noteTimer); saveNote(ed.dataset.note, ed.querySelector('textarea').value); });
   };
 }
+
+// ---------- usability-test kit (dev only: open with ?usability=1) ----------
+// Puts this browser into a labeled test profile for moderated sessions. Nothing is sent anywhere (no telemetry).
+// Real data is never removed without typing RESET; it is first snapshotted in this browser and downloaded as a file.
+const USABILITY_DEV = /[?&]usability=1\b/.test(location.search);
+const TP_KEY = 'learnscroll-test-profile', SNAP_KEY = 'learnscroll-real-snapshot';
+const LS_KEYS = () => Object.keys(localStorage).filter(k => k.startsWith('learnscroll-') && k !== SNAP_KEY);
+function testProfile() { try { return JSON.parse(localStorage.getItem(TP_KEY) || 'null'); } catch (e) { return null; } }
+const UT_B = 'heat-mass-transfer';
+function utBook(extra = {}) { return { chapter: 1, card: 0, done: {}, seen: {}, marks: {}, notes: {}, review: {}, attempts: {}, ...extra }; }
+const SCENARIOS = [
+  { id: 'a', title: 'Find a book and open a specific card', start: 'Clean profile (first-use guide visible), library page.', task: 'Open “Conduction: Fourier’s law” in Heat and Mass Transfer, Chapter 1.', done: 'The reader shows Ch 1, card 13 “Conduction: Fourier’s law”.', hash: '#/', sample: false },
+  { id: 'b', title: 'Resume, mark difficult, find it via filters', start: 'Sample profile: Heat and Mass Transfer Ch 1 in progress at card 13; library page shows “Continue studying”.', task: 'Continue where you left off, mark the card you land on as difficult, then find it again from the book’s Difficult filter.', done: 'Card 13 appears in the book’s Difficult list and opens from there.', hash: '#/', sample: true, study: () => ({ last: UT_B, books: { [UT_B]: utBook({ card: 12, seen: { 1: 12 }, marks: { 'c1-2': { b: true } }, notes: { 'c1-2': { text: '[Sample] Test note for the usability session.', at: Date.now() } } }) } }) },
+  { id: 'c', title: 'Ask the tutor about a formula', start: 'Sample profile, reader open at Heat and Mass Transfer Ch 1, card 13 (Fourier’s law). Needs the live tutor; one question costs one tutor call.', task: 'Ask the tutor what each symbol in Fourier’s law means and its units, then say where the answer came from.', done: 'Participant identifies Q̇_cond (conduction heat rate, W), k (thermal conductivity, W/m·K), A (area normal to the flow, m²) and dT/dx (temperature gradient, K/m), and points to where the answer says it came from (the “From the textbook” part / Sources).', hash: `#/read/${UT_B}/1/13`, sample: true, study: () => ({ last: UT_B, books: { [UT_B]: utBook({ card: 12, seen: { 1: 12 } }) } }) },
+  { id: 'd', title: 'Quiz, review a wrong answer, retry', start: 'Sample profile: Ch 1 practice question 1 already answered wrong once; reader open at the first practice question.', task: 'Do the practice questions, then go back to the one you got wrong, read why, and try it again.', done: 'The previously wrong question is retried and answered correctly (shown as correct in Review mistakes).', hash: `#/read/${UT_B}/1/26`, sample: true, study: () => { const q = books[UT_B].chapters[0].quiz[0], wrong = q.options.findIndex((_, i) => i !== q.answer); return { last: UT_B, books: { [UT_B]: utBook({ card: 25, seen: { 1: 25 }, attempts: { 'c1-q1': [{ k: wrong, ok: false, at: Date.now() - 60000 }] } }) } }; } },
+  { id: 'e', title: 'Export, import into a clean profile, verify', start: 'Sample profile with a bookmark and the note “[Sample] Test note for the usability session.” on Ch 1 card 2. After the export, the facilitator clicks “Clean profile” here.', task: 'Save a backup of your study data, then (in the clean profile) bring it back and check your note is there.', done: 'After import, Ch 1 card 2 shows the sample note and its bookmark.', hash: '#/', sample: true, study: () => ({ last: UT_B, books: { [UT_B]: utBook({ card: 1, seen: { 1: 1 }, marks: { 'c1-2': { b: true } }, notes: { 'c1-2': { text: '[Sample] Test note for the usability session.', at: Date.now() } } }) } }) },
+];
+function hasRealData() { return !testProfile() && hasActivity(); }
+function snapshotReal() { // keep the real data in this browser (once) so the test can be undone exactly
+  if (localStorage.getItem(SNAP_KEY)) return true;
+  const snap = {}; for (const k of LS_KEYS()) snap[k] = localStorage.getItem(k);
+  try { localStorage.setItem(SNAP_KEY, JSON.stringify({ at: Date.now(), keys: snap })); return true; } catch (e) { return false; }
+}
+function applyProfile(sc) {
+  if (hasRealData()) { exportData(true, '-before-usability-test'); if (!snapshotReal()) return 'Couldn’t keep a copy of your data in this browser (storage full). Nothing was changed; your backup file was downloaded.'; }
+  for (const k of LS_KEYS()) localStorage.removeItem(k);
+  if (sc && sc.study) localStorage.setItem(KEY, JSON.stringify(StudyData.sanitizeStudy({ schema: StudyData.SCHEMA, recent: [], sessions: [], ...sc.study() }).study));
+  if (sc && sc.id !== 'a') localStorage.setItem(GUIDE_KEY, JSON.stringify({ state: 'dismissed', at: Date.now() }));
+  localStorage.setItem(TP_KEY, JSON.stringify({ scenario: sc ? sc.id : 'clean', sample: !!(sc && sc.sample), at: Date.now() }));
+  history.replaceState(null, '', location.pathname + location.search + (sc ? sc.hash : '#/')); location.reload(); return '';
+}
+function restoreReal() {
+  let snap = null; try { snap = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null'); } catch (e) {}
+  for (const k of LS_KEYS()) localStorage.removeItem(k);
+  if (snap) { for (const [k, v] of Object.entries(snap.keys)) localStorage.setItem(k, v); localStorage.removeItem(SNAP_KEY); }
+  history.replaceState(null, '', location.pathname + location.search + '#/'); location.reload();
+}
+function renderUsability(msg = '') {
+  document.title = 'Usability test kit · LearnScroll';
+  const tp = testProfile(), real = hasRealData(), snap = !!localStorage.getItem(SNAP_KEY);
+  app.innerHTML = `<main class="page ut"><div class="topline"><a class="brand" href="#/"><i></i>LearnScroll</a></div>
+    <h1>Usability test kit</h1>
+    <p class="lead">Developer-only page (opened with <code>?usability=1</code>). It sets up start states for the moderated test in <code>docs/usability-test.md</code>. Nothing is recorded or sent; notes go on the paper observation sheet.</p>
+    ${msg ? `<div class="notice" role="alert">${esc(msg)}</div>` : ''}
+    <div class="ut-state">${tp ? `<b>Test profile active</b> · scenario ${esc(String(tp.scenario).toUpperCase())}${tp.sample ? ' · sample data' : ' · empty'}${snap ? ' · your real data is kept in this browser and comes back with “Restore my real data”.' : ''}` : real ? '<b>This browser has real study data.</b> Setting up a scenario first downloads a backup file and keeps a copy here; you must type RESET to continue.' : '<b>No study data here.</b> Scenarios can be set up directly.'}</div>
+    ${real ? '<label class="ut-confirm">Type RESET to allow replacing this browser’s real study data with a test profile: <input id="ut-reset" autocomplete="off" spellcheck="false"></label>' : ''}
+    <ol class="ut-list">${SCENARIOS.map(sc => `<li><div><b>${sc.id.toUpperCase()}. ${esc(sc.title)}</b><p><span>Start:</span> ${esc(sc.start)}</p><p><span>Task:</span> “${esc(sc.task)}”</p><p><span>Done when:</span> ${esc(sc.done)}</p></div><button class="btn ghost" data-sc="${sc.id}">Set up ${sc.id.toUpperCase()}</button></li>`).join('')}</ol>
+    <div class="btns"><button class="btn ghost" id="ut-clean">Clean profile</button>${tp || snap ? '<button class="btn" id="ut-restore">Restore my real data</button>' : ''}</div>
+  </main>`;
+  const guard = () => !real || (document.getElementById('ut-reset').value.trim() === 'RESET');
+  const run = sc => { if (!guard()) return renderUsability('Type RESET first. Nothing was changed.'); const e = applyProfile(sc); if (e) renderUsability(e); };
+  app.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => run(SCENARIOS.find(x => x.id === b.dataset.sc))));
+  document.getElementById('ut-clean').addEventListener('click', () => run(null));
+  const r = document.getElementById('ut-restore'); if (r) r.addEventListener('click', restoreReal);
+}
+(function testBanner() { // a test profile is always labeled, on every page
+  const tp = testProfile(); if (!tp) return;
+  const bar = document.createElement('div'); bar.className = 'tp-bar'; bar.setAttribute('role', 'note');
+  bar.innerHTML = `Test profile${tp.sample ? ' · sample data, not real study data' : ''}${USABILITY_DEV ? ' · <a href="#/usability">kit</a>' : ''}`;
+  document.body.prepend(bar);
+})();
 
 // ---------- boot ----------
 Promise.all(BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })))

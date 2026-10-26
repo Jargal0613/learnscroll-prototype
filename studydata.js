@@ -328,7 +328,7 @@
     ];
     return rows;
   }
-  const EXCLUDED = ['Copies of unreadable data kept for recovery', 'Pre-upgrade copies of saved data', 'Interrupted-import safety journal', 'Whether the getting-started guide was dismissed (a display setting)', 'Anything stored on the server (nothing about you is)'];
+  const EXCLUDED = ['Copies of unreadable data kept for recovery', 'Pre-upgrade copies of saved data', 'Interrupted-import safety journal', 'Whether the getting-started guide was dismissed (a display setting)', 'Usability-test profile markers and the copy of real data kept during a test (developer tool)', 'Anything stored on the server (nothing about you is)'];
   // Overwrite: study data and style come from the file. Conversations are replaced only if the file has them.
   function overwrite(local, incoming) {
     return {

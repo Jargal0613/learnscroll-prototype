@@ -40,6 +40,12 @@ function verifiedChapter(raw) {
   return m ? Number(m[1]) : null;
 }
 
+// Some model outputs contain raw inline citation markers (private-use chars, e.g. \uE200filecite\uE202turn0file6\uE201).
+// The app shows sources separately, so strip them.
+function cleanMarkers(t) {
+  return String(t).replace(/\uE200[^\uE201]{0,200}\uE201/g, '').replace(/[\uE200-\uE2FF]/g, '').replace(/[ \t]+\n/g, '\n');
+}
+
 async function answer(body, { provider, env = process.env } = {}) {
   const req = validate(body);
   const p = provider || getProvider(env); // throws not_configured when no credentials
@@ -80,7 +86,7 @@ async function answerFileSearch(req, p) {
     .slice(0, MAX_PASSAGES)
     .map(x => ({ ...x, book: `${req.book.short} (${req.book.edition})`, label: 'Retrieved passage', page: null }));
   return {
-    answer: out.text.slice(0, MAX_ANSWER).trim(), sources, passages,
+    answer: cleanMarkers(out.text).slice(0, MAX_ANSWER).trim(), sources, passages,
     retrieval: { provider: 'openai-file-search', model: p.model, searched: out.searched, passages: out.results, usage: out.usage },
     conversationId: req.conversationId,
   };
@@ -94,4 +100,4 @@ function status(env = process.env) {
   for (const id of BOOK_IDS) books[id] = !!p && (p.kind !== 'file_search' || !!knowledge.forBook(id));
   return { configured: !!p, provider: p ? p.name : null, books };
 }
-module.exports = { answer, status, excerpt, verifiedChapter };
+module.exports = { answer, status, excerpt, verifiedChapter, cleanMarkers };

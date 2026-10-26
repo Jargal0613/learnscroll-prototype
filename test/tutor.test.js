@@ -311,3 +311,9 @@ test('temperature rule: ΔT in K or °C consistently, absolute K for ratios / T^
     assert.ok(buildPrompt(rr, [], { bookIndexAvailable: false })[0].content.includes(TEMPERATURE_RULE));
   }
 });
+
+test('raw inline citation markers are stripped from answers', () => {
+  const { cleanMarkers } = require('../api/_lib/tutor');
+  assert.equal(cleanMarkers('Heat approach. \uE200filecite\uE202turn0file6\uE202turn0file1\uE201\n\n### Next'), 'Heat approach.\n\n### Next');
+  assert.equal(cleanMarkers('a \\(T^4\\) b'), 'a \\(T^4\\) b');
+});

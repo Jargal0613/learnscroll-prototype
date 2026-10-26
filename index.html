@@ -273,11 +273,18 @@
   .tag.def-t { color: var(--accent); border-color: var(--accent-line); }
   .tag.q-t { color: var(--accent); border-color: var(--accent-line); }
   .card h2 { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.22; margin-bottom: 22px; color: #f5f5f5; }
-  .card p { font-size: 20px; line-height: 1.7; color: var(--fg-2); max-width: 68ch; }
+  .card p { font-size: calc(20px * var(--prose, 1)); line-height: 1.7; color: var(--fg-2); max-width: 68ch; }
+  :root[data-text="small"] { --prose: 0.9; }
+  :root[data-text="large"] { --prose: 1.15; }
+  .txt-wrap { position: relative; display: inline-flex; }
+  .txt-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 9; min-width: 240px; padding: 12px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .txt-pop[hidden] { display: none; }
+  .txt-h { font-size: 12px; color: var(--muted); }
+  .txt-pop .seg { flex-wrap: nowrap; }
   .eq { margin: 28px 0 0; font-size: 22px; overflow-x: auto; overflow-y: hidden; padding: 22px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); color: #f5f5f5; }
   .eq .katex-display { margin: 0; text-align: left; }
   .eq .katex-display > .katex { text-align: left; }
-  .note { margin-top: 24px; padding: 14px 18px; border-left: 2px solid var(--accent); background: var(--accent-soft); font-size: 17px; line-height: 1.6; color: var(--fg); border-radius: 0 var(--radius) var(--radius) 0; }
+  .note { margin-top: 24px; padding: 14px 18px; border-left: 2px solid var(--accent); background: var(--accent-soft); font-size: calc(17px * var(--prose, 1)); line-height: 1.6; color: var(--fg); border-radius: 0 var(--radius) var(--radius) 0; }
   .note .label { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; font-weight: 600; }
   .note.example { border-left-color: var(--line-strong); background: var(--surface); }
   .note.example .label { color: var(--muted); }
@@ -455,7 +462,7 @@
     .bar { grid-template-columns: auto minmax(0,1fr) auto; padding: 0 12px; }
     .card { padding: 76px 22px 76px; }
     .card h2 { font-size: 26px; }
-    .card p { font-size: 18px; }
+    .card p { font-size: calc(18px * var(--prose, 1)); }
     .eq { font-size: 18px; padding: 16px; }
     .hint { display: none; }
   }
@@ -484,7 +491,7 @@
     .card { height: auto; min-height: 100vh; min-height: 100dvh; scroll-snap-stop: normal; align-items: flex-start; padding: 72px 16px 104px; }
     .card-body { max-width: 100%; min-width: 0; max-height: none; overflow: visible; }
     .card h2 { font-size: 23px; }
-    .card p { font-size: 17px; }
+    .card p { font-size: calc(17px * var(--prose, 1)); }
     .eq { font-size: 16px; padding: 12px 14px; max-width: 100%; }
     .foot { height: auto; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: rgba(10,10,11,0.94); border-top: 1px solid var(--line); }
     .foot .nav { width: 100%; }
@@ -493,6 +500,8 @@
     .reader.with-tutor .foot { display: none; }
     #t-close, .t-retry { min-width: 44px; min-height: 44px; }
     .t-head { flex-wrap: wrap; }
+    .txt-pop { position: fixed; top: 60px; left: 10px; right: 10px; min-width: 0; }
+    .bar .navbtn { white-space: nowrap; padding: 0 9px; }
   }
 </style>
 </head>

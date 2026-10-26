@@ -31,6 +31,11 @@ function load() {
 }
 try { if (StudyData.journalRecover(localStorage)) startNotice = 'An import was interrupted before it finished, so your previous study data was restored. Nothing from the file was applied; you can import it again.'; } catch (e) {}
 let state = load();
+// Reading text size (card prose only). Applied before first paint so nothing jumps.
+const TEXT_LABEL = { small: 'Small', default: 'Default', large: 'Large' };
+function textSize() { const t = state.readPrefs && state.readPrefs.textSize; return TEXT_LABEL[t] ? t : 'default'; }
+function applyTextSize() { const t = textSize(); if (t === 'default') delete document.documentElement.dataset.text; else document.documentElement.dataset.text = t; }
+applyTextSize();
 (function checkTutorStore() { // back up an unreadable tutor store at start-up, before anything rewrites it
   let raw = null; try { raw = localStorage.getItem(StudyData.TUTOR_KEY); } catch (e) { return; }
   if (raw === null) return;
@@ -79,8 +84,11 @@ function renderMath(el) {
   });
   if (window.renderMathInElement) renderMathInElement(el, { delimiters: [{ left: '\\(', right: '\\)', display: false }, { left: '\\[', right: '\\]', display: true }], throwOnError: false });
   // Keep trailing punctuation on the same line as inline math ("r²." never leaves the "." alone on a line).
-  el.querySelectorAll('.katex').forEach(k => {
-    if (k.closest('.katex-display') || (k.parentElement && k.parentElement.classList.contains('m-nb'))) return;
+  el.querySelectorAll('.katex').forEach(k0 => {
+    let k = k0;
+    if (k.closest('.katex-display, .m-nb')) return;
+    if (k.parentElement && k.parentElement.tagName === 'SPAN' && k.parentElement.childElementCount === 1 && !k.parentElement.className) k = k.parentElement; // auto-render's wrapper
+    if (k.textContent.length > 24) return; // long inline math may need to wrap; only glue short ones
     const t = k.nextSibling; if (!t || t.nodeType !== 3) return;
     const m = t.textContent.match(/^[.,;:!?)\]]+/); if (!m) return;
     const w = document.createElement('span'); w.className = 'm-nb'; k.replaceWith(w); w.appendChild(k);
@@ -820,7 +828,8 @@ function renderReader(book, ch, at = null, sess = null) {
   const nextReady = next && ready(next);
   const quiz = ch.quiz || [];
   app.innerHTML = `<div class="reader">
-    <header class="bar">${sess ? `<button class="back t-link" id="endSess">End session</button><span class="where"><span>Study session · </span>${esc(book.short)}</span>` : `<a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span>`}<span class="bar-r">${sess ? '<span class="count left" id="left" aria-live="off"></span>' : ''}<span class="count" id="count" aria-live="polite"></span><button class="navbtn sm" id="tutorBtn" aria-expanded="false" aria-controls="tutor">Ask tutor</button></span></header>
+    <header class="bar">${sess ? `<button class="back t-link" id="endSess">End session</button><span class="where"><span>Study session · </span>${esc(book.short)}</span>` : `<a href="#/book/${book.id}" class="back">← Chapters</a><span class="where" title="${esc(ch.title)}"><span>Ch ${ch.n} · </span>${esc(ch.title)}</span>`}<span class="bar-r">${sess ? '<span class="count left" id="left" aria-live="off"></span>' : ''}<span class="count" id="count" aria-live="polite"></span><span class="txt-wrap"><button class="navbtn sm" id="textBtn" aria-haspopup="true" aria-expanded="false" aria-controls="textPop" title="Reading text size" aria-label="Reading text size">Aa</button>
+      <div class="txt-pop" id="textPop" role="group" aria-label="Reading text size" hidden><div class="txt-h">Text size</div><div class="seg" role="radiogroup" aria-label="Text size">${Object.entries(TEXT_LABEL).map(([k, l]) => `<button role="radio" data-size="${k}" aria-checked="${k === textSize()}">${l}</button>`).join('')}</div><button class="t-link" id="textReset">Reset to default</button></div></span><button class="navbtn sm" id="tutorBtn" aria-expanded="false" aria-controls="tutor">Ask tutor</button></span></header>
     <div class="track" role="progressbar" aria-label="Chapter progress" aria-valuemin="0" aria-valuemax="${total}" id="track"><div class="line" id="line"></div></div>
     ${sess ? '<div class="sess-msg" id="sessMsg" role="status" hidden></div>' : ''}
     <main class="feed" id="feed">
@@ -1027,6 +1036,28 @@ function renderReader(book, ch, at = null, sess = null) {
   };
   document.addEventListener('keydown', onKey);
   feed.tabIndex = -1; feed.focus({ preventScroll: true });
+  // Text size popover: Small / Default / Large for card prose; applies at once and keeps the current card in view.
+  (function textMenu() {
+    const btn = document.getElementById('textBtn'), pop = document.getElementById('textPop'), reader = app.querySelector('.reader');
+    const close = (focus = true) => { if (pop.hidden) return; pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus(); };
+    const open = () => { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); (pop.querySelector('[aria-checked="true"]') || pop.querySelector('button')).focus(); };
+    const set = t => {
+      const i = target !== null ? target : idx();
+      state.readPrefs = { textSize: t }; if (t === 'default') delete state.readPrefs; save(); applyTextSize();
+      pop.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.size === textSize())));
+      feed.style.scrollSnapType = 'none'; feed.scrollTop = topOf(i); feed.style.scrollSnapType = '';
+      document.querySelectorAll('.eq').forEach(markEqScroll);
+    };
+    btn.addEventListener('click', e => { e.stopPropagation(); pop.hidden ? open() : close(); });
+    pop.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('[data-size]'); if (b) set(b.dataset.size); if (e.target.id === 'textReset') { set('default'); close(); } });
+    pop.addEventListener('keydown', e => {
+      e.stopPropagation(); // reader shortcuts stay off while the menu is open
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'Tab') { const f = [...pop.querySelectorAll('button')], k = f.indexOf(document.activeElement);
+        if (e.shiftKey && k <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && k === f.length - 1) { e.preventDefault(); f[0].focus(); } }
+    });
+    reader.addEventListener('click', e => { if (!e.target.closest('.txt-wrap')) close(false); });
+  })();
   let tick = null, onVis = null, onHide = null;
   if (sess) {
     const endBtn = () => endSession(sess);

@@ -5,6 +5,7 @@
   const SCHEMA = 2, JOURNAL_KEY = 'learnscroll-write-journal';
   const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1', SESSION_KEY = 'learnscroll-session-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
+  const TEXT_SIZES = ['small', 'default', 'large'];
   const SCOPES = ['card', 'chapter', 'book'];
   const MAX_BYTES = 5 * 1024 * 1024, MAX_RECENT = 10, MAX_NOTE = 4000, MAX_MSGS = 60, MAX_MSG = 20000;
   const QUIZ_RE = /^c\d{1,3}-q\d{1,4}$/, MAX_ATTEMPTS = 50;
@@ -68,7 +69,7 @@
   }
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -98,6 +99,12 @@
     }
     const out = { books, last: s.last || null, recent, sessions };
     if (sessionPrefs) out.sessionPrefs = sessionPrefs;
+    if (s.readPrefs !== undefined) {
+      const r = s.readPrefs;
+      if (!isObj(r)) fail('study.readPrefs must be an object.'); onlyKeys(r, ['textSize'], 'study.readPrefs');
+      if (!TEXT_SIZES.includes(r.textSize)) fail('study.readPrefs.textSize must be small, default or large.');
+      out.readPrefs = { textSize: r.textSize };
+    }
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -214,6 +221,7 @@
     try { t = JSON.parse(tutorRaw || '{}') || {}; } catch (e) { t = {}; }
     const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [], sessions: Array.isArray(s.sessions) ? s.sessions : [] };
     if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
+    if (isObj(s.readPrefs)) study.readPrefs = s.readPrefs;
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
@@ -294,6 +302,7 @@
     const sessions = [...smap.values()].sort((x, y) => y.start - x.start).slice(0, 20);
     const study = { books, last, recent, sessions };
     const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
+    const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
     // a session in progress here wins; otherwise take the file's
     return { study, tutor: { prefs, conversations }, session: local.session || incoming.session || null };
   }
@@ -383,6 +392,7 @@
     if (s.schema !== undefined && s.schema !== SCHEMA) repaired = true;
     const study = { schema: SCHEMA, books, last, recent, sessions };
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
+    if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
   }
 
@@ -462,6 +472,6 @@
     return [...tiers.difficult, ...tiers.again, ...tiers.unfinished].slice(0, limit).map(({ order: _o, ...x }) => x);
   }
 
-  const api = { SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

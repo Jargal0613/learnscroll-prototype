@@ -163,3 +163,14 @@ test('tutor continuity data: origin + saved conversations validate, export and m
   const m = SD.merge(other, p.data).tutor.conversations['heat-mass-transfer'];
   assert.equal(m.conversationId, 'cB'); assert.deepEqual(m.saved.map(x => x.conversationId).sort(), ['cA', 'cOld']);
 });
+
+test('reading text size preference: exported, validated, sanitized, merged (this browser wins)', () => {
+  const st = { ...SD.sanitizeStudy({}).study, readPrefs: { textSize: 'large' } };
+  const f = SD.build(SD.fromStorage(JSON.stringify(st), null, null), { now: new Date(T2) });
+  const p = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(p.ok, p.error); assert.deepEqual(p.data.study.readPrefs, { textSize: 'large' });
+  for (const bad of [{ textSize: 'huge' }, 'large', { textSize: 'large', x: 1 }]) { const o = JSON.parse(JSON.stringify(f)); o.study.readPrefs = bad; assert.equal(SD.parse(JSON.stringify(o), { bookIds: IDS }).ok, false); }
+  const r = SD.sanitizeStudy({ readPrefs: { textSize: 'huge' } }); assert.equal(r.repaired, true); assert.equal(r.study.readPrefs, undefined);
+  const local = SD.fromStorage(JSON.stringify({ ...st, readPrefs: { textSize: 'small' } }), null, null);
+  assert.equal(SD.merge(local, p.data).study.readPrefs.textSize, 'small');
+  assert.equal(SD.merge(SD.fromStorage(null, null, null), p.data).study.readPrefs.textSize, 'large');
+});

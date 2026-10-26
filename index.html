@@ -80,6 +80,36 @@
   .chap.soon .num, .chap.soon .name { color: var(--faint); }
   .chap.soon .pill { color: var(--faint); border-color: var(--line); border-style: dashed; }
 
+  /* Phase 1: marks, filters, recent */
+  .marks { margin-left: auto; display: inline-flex; gap: 6px; text-transform: none; letter-spacing: 0; }
+  .mark { font-size: 12px; padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--muted); transition: color .15s, border-color .15s, background .15s; }
+  .mark:hover { color: var(--fg); border-color: #4a4a52; }
+  .mark[data-mark="b"][aria-pressed="true"] { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+  .mark[data-mark="d"][aria-pressed="true"] { color: var(--fg); border-color: #8a8a92; background: var(--surface-3); }
+  .tabs { display: flex; gap: 4px; margin-top: 32px; border-bottom: 1px solid var(--line); }
+  .tabs a { padding: 10px 14px; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; border-radius: 6px 6px 0 0; }
+  .tabs a:hover { color: var(--fg); }
+  .tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .tabs a span { font-size: 12px; color: var(--faint); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .tabs + .chapters { margin-top: 0; border-top: 0; }
+  .marked { list-style: none; }
+  .marked a { display: grid; grid-template-columns: 64px 1fr auto; gap: 20px; align-items: center; padding: 16px 12px; border-bottom: 1px solid var(--line); }
+  .marked a:hover { background: var(--surface); }
+  .marked .num { color: var(--muted); font-size: 14px; }
+  .marked .name { font-size: 17px; color: var(--fg); }
+  .marked .counts { color: var(--muted); font-size: 13px; }
+  .marked-empty { padding: 48px 12px; color: var(--muted); font-size: 15px; line-height: 1.7; }
+  .marked-empty kbd, .empty-note kbd { font: inherit; font-size: 12px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 4px; }
+  .cmeter { display: block; width: 160px; height: 2px; background: var(--line-strong); margin-top: 8px; border-radius: 2px; overflow: hidden; }
+  .cmeter i { display: block; height: 100%; background: var(--accent); }
+  .recent { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .recent a { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); transition: border-color .15s, background .15s; }
+  .recent a:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .r-book { font-size: 12px; color: var(--muted); }
+  .r-ch { font-size: 15px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r-pos { font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .empty-note { color: var(--muted); font-size: 14px; }
+
   /* Reader */
   .reader { position: fixed; inset: 0; background: var(--bg); }
   .feed { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }

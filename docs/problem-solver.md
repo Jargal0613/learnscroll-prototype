@@ -29,8 +29,15 @@ Rules carried over from the tutor:
 - Ids only from the client; the server resolves the book itself. The problem text is capped at 3,000 characters.
   Problem text is never logged.
 
-UI (not built): a "Solve a problem" tab in the tutor panel. It reuses KaTeX, the Sources block and the
-Helpful / Needs improvement feedback. Solutions are stored locally, like conversations.
+UI (built, hidden): a "Solve a problem" button in the tutor panel, shown only when `GET /api/tutor` reports
+`solver: true` (that is `SOLVER_ENABLED=1` **and** the Upstash env vars present). In solve mode the panel sends
+`{ bookId, problem }` to `/api/solve` and renders Given / Find / Assumptions / Equation / Substitution / Units /
+Answer / Sanity check with KaTeX. Each equation says "From the textbook · <section>" only when the model cites a
+section from a retrieved passage, otherwise "Additional explanation"; the answer also keeps separate
+"From the textbook" and "Additional explanation" paragraphs (new schema fields `fromTextbook`,
+`additionalExplanation`, `sanityCheck`). A 429 shows a calm "Solver limit reached, try again in about N minutes /
+tomorrow"; 404/503 show "unavailable"; the problem stays in the box. Solutions are stored locally in the tutor
+conversation (and in exports). Tests: `test/e2e/solver.py` (all API calls mocked).
 
 ## Cost per solved problem (estimate)
 

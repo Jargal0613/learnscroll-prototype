@@ -4,7 +4,7 @@ const S = require('../api/_lib/solver');
 const book = { id: 'heat-mass-transfer', title: 'Heat and Mass Transfer', edition: '5th edition' };
 const kb = { forBook: id => (id === 'heat-mass-transfer' ? { vectorStoreId: 'vs_test', fileId: 'f' } : null) };
 const mapStore = () => { const m = new Map(); return { incr: async k => { m.set(k, (m.get(k) || 0) + 1); return m.get(k); } }; };
-const good = JSON.stringify({ givens: [{ symbol: 'k', value: '0.8', unit: 'W/m·K' }], unknown: 'q', assumptions: ['steady'], equations: [{ tex: 'q=-k\\,dT/dx', source: 'Ch 1' }], steps: ['q = 0.8 × 50 = 40 W/m²'], result: { value: '40', unit: 'W/m²' }, unitCheck: 'W/m·K × K/m = W/m²', sourceNote: 'Ch 1' });
+const good = JSON.stringify({ givens: [{ symbol: 'k', value: '0.8', unit: 'W/m·K' }], unknown: 'q', assumptions: ['steady'], equations: [{ tex: 'q=-k\\,dT/dx', source: 'Ch 1' }], steps: ['q = 0.8 × 50 = 40 W/m²'], result: { value: '40', unit: 'W/m²' }, unitCheck: 'W/m·K × K/m = W/m²', sanityCheck: 'Positive and modest for a thin wall.', fromTextbook: 'Fourier law for 1-D conduction.', additionalExplanation: '', sourceNote: 'Ch 1' });
 test('disabled by default: no flag, no call', async () => {
   let called = false; const provider = { respond: async () => { called = true; } };
   assert.equal(S.enabled({}), false);

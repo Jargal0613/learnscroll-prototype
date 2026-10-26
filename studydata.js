@@ -192,11 +192,12 @@
           // display-only metadata from the tutor is kept as-is when it has the right basic shape
           for (const k of ['sources', 'passages']) if (m[k] !== undefined && !Array.isArray(m[k])) fail(`${mw}.${k} must be a list.`);
           if (m.retrieval !== undefined && m.retrieval !== null && !isObj(m.retrieval)) fail(`${mw}.retrieval must be an object.`);
+          if (m.solution !== undefined && !isObj(m.solution)) fail(`${mw}.solution must be an object.`);
           if (m.where !== undefined && typeof m.where !== 'string') fail(`${mw}.where must be text.`);
           if (m.check !== undefined && !(isObj(m.check) && ['question', 'hint', 'answer'].every(k => typeof m.check[k] === 'string' && m.check[k].length <= 2000) && Object.keys(m.check).length === 3)) fail(`${mw}.check must have question, hint and answer text.`);
           if (m.feedback !== undefined) { const f = m.feedback; if (!(isObj(f) && ['helpful', 'needs_work'].includes(f.rating) && Array.isArray(f.reasons) && f.reasons.every(r => FB_REASONS.includes(r)) && (f.at === undefined || isTime(f.at)) && Object.keys(f).every(k => ['rating', 'reasons', 'at'].includes(k)))) fail(`${mw}.feedback is invalid.`); }
           const out = { role: m.role, content: m.content };
-          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check', 'feedback']) if (m[k] !== undefined) out[k] = m[k];
+          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check', 'feedback', 'solution', 'kind']) if (m[k] !== undefined) out[k] = m[k];
           return out;
         });
         const r = { conversationId: c.conversationId, messages, scope: c.scope || 'card' };

@@ -20,7 +20,7 @@ function buildPrompt({ book, problem }) {
     instructions: [
       `You help an engineering student solve a problem from ${book.title} (${book.edition}).`,
       'Use only the retrieved textbook passages for equations, property values and definitions. If a needed value is not in the passages, say so and ask the student for it; never invent property values.',
-      'Answer as JSON matching the schema: givens (symbol, value, unit), unknown, assumptions, equations (TeX, with the textbook section if a passage states it), steps (each with the substituted numbers and units), result (value, unit), unitCheck (one sentence), sourceNote.',
+      'Answer as JSON matching the schema: givens (symbol, value, unit), unknown, assumptions, equations (TeX without $ delimiters; source = the textbook section only if a retrieved passage states it, else ""), steps (each with the substituted numbers and units; inline math in \\( \\)), result (value, unit), unitCheck (one sentence), sanityCheck (one sentence: is the magnitude and sign reasonable?), fromTextbook (what the retrieved passages support, paraphrased, no quotes; "" if nothing), additionalExplanation (general knowledge not from the passages; "" if none), sourceNote.',
       'Use SI units. Keep 3 significant figures unless the problem says otherwise.',
     ].join('\n'),
     input: [{ role: 'user', content: problem.slice(0, MAX_PROBLEM) }],
@@ -28,14 +28,14 @@ function buildPrompt({ book, problem }) {
 }
 const SCHEMA = {
   type: 'object', additionalProperties: false,
-  required: ['givens', 'unknown', 'assumptions', 'equations', 'steps', 'result', 'unitCheck', 'sourceNote'],
+  required: ['givens', 'unknown', 'assumptions', 'equations', 'steps', 'result', 'unitCheck', 'sanityCheck', 'fromTextbook', 'additionalExplanation', 'sourceNote'],
   properties: {
     givens: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['symbol', 'value', 'unit'], properties: { symbol: { type: 'string' }, value: { type: 'string' }, unit: { type: 'string' } } } },
     unknown: { type: 'string' }, assumptions: { type: 'array', items: { type: 'string' } },
     equations: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['tex', 'source'], properties: { tex: { type: 'string' }, source: { type: 'string' } } } },
     steps: { type: 'array', items: { type: 'string' } },
     result: { type: 'object', additionalProperties: false, required: ['value', 'unit'], properties: { value: { type: 'string' }, unit: { type: 'string' } } },
-    unitCheck: { type: 'string' }, sourceNote: { type: 'string' },
+    unitCheck: { type: 'string' }, sanityCheck: { type: 'string' }, fromTextbook: { type: 'string' }, additionalExplanation: { type: 'string' }, sourceNote: { type: 'string' },
   },
 };
 function parse(text) {

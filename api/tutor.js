@@ -1,6 +1,10 @@
 // POST /api/tutor — Vercel Node serverless function (no framework).
 const { answer, status } = require('./_lib/tutor');
 const { toResponse, E } = require('./_lib/errors');
+const solver = require('./_lib/solver');
+const { upstashStore } = require('./_lib/upstash');
+// The problem solver is offered only when it is switched on AND its rate limiter is configured (fail closed).
+const solverOn = (env = process.env) => solver.enabled(env) && !!upstashStore(env);
 
 const MAX_BODY = 64 * 1024;
 
@@ -19,7 +23,7 @@ async function readBody(req) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  if (req.method === 'GET') { res.statusCode = 200; return res.end(JSON.stringify(status())); }
+  if (req.method === 'GET') { res.statusCode = 200; return res.end(JSON.stringify({ ...status(), solver: solverOn() })); }
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST');
     res.statusCode = 405;

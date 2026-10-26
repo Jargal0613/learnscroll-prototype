@@ -384,6 +384,19 @@ function sessionHomeHTML() {
   return `<div class="section-h"><span>Study session</span><span>${active ? 'In progress' : last ? `Last: ${plural(last.seen, 'card')} · ${fmtDur(last.seconds)}` : 'Focused time'}</span></div>
     <div class="review-row">${active ? `<a class="btn ghost sm" href="#/session/run" id="sessResume">Resume study session (${esc(books[active.book].short)})</a>` : ''}<a class="btn ghost sm" href="#/session" id="sessStart">Start study session</a></div>`;
 }
+// Compact book labels for one-row pickers (full title stays in title/aria-label).
+const COMPACT = { 'heat-mass-transfer': 'Heat & Mass', 'koretsky-thermo': 'Chem. Thermo', 'electric-circuits': 'Circuits', 'university-physics': 'Univ. Physics', 'chemistry-silberberg': 'Chemistry' };
+const compactTitle = id => COMPACT[id] || books[id].short;
+// One row of buttons if it fits; otherwise a single-line select (never wider than the viewport).
+function fitBookPicker() {
+  const field = document.getElementById('bookField'), seg = document.getElementById('bookSeg'), sel = document.getElementById('bookSel');
+  if (!field) return;
+  seg.hidden = false; sel.hidden = true;
+  const avail = field.clientWidth - document.getElementById('bookLbl').offsetWidth - 16;
+  const fits = seg.scrollWidth <= avail && seg.getBoundingClientRect().right <= document.documentElement.clientWidth;
+  seg.hidden = !fits; sel.hidden = fits;
+}
+window.addEventListener('resize', () => fitBookPicker());
 function renderSessionSetup() {
   document.title = 'Study session · LearnScroll';
   const ids = BOOK_IDS.filter(id => books[id] && books[id].chapters.some(ready));
@@ -401,12 +414,15 @@ function renderSessionSetup() {
       ${summaryHTML}
       <p class="lead">${sum ? 'Start another when you’re ready, or head back to the library.' : 'A focused block of cards: the ones you marked difficult first, then cards you chose to review again, then cards you haven’t studied yet.'}</p>
       <div class="sess-form">
-        <div class="sess-field"><span class="sess-l">Book</span><div class="seg" role="radiogroup" aria-label="Book">${ids.map(id => `<button role="radio" data-book="${id}" aria-checked="${id === pick}">${esc(books[id].short)}</button>`).join('')}</div></div>
+        <div class="sess-field" id="bookField"><span class="sess-l" id="bookLbl">Book</span><div class="seg one" role="radiogroup" aria-labelledby="bookLbl" id="bookSeg">${ids.map(id => `<button role="radio" data-book="${id}" aria-checked="${id === pick}" title="${esc(books[id].title)}" aria-label="${esc(books[id].title)}">${esc(compactTitle(id))}</button>`).join('')}</div>
+          <select id="bookSel" class="sess-sel" aria-labelledby="bookLbl" hidden>${ids.map(id => `<option value="${id}" ${id === pick ? 'selected' : ''}>${esc(books[id].title)}</option>`).join('')}</select></div>
         <div class="sess-field"><span class="sess-l">Length</span><div class="seg" role="radiogroup" aria-label="Length">${[10, 20, 30].map(m => `<button role="radio" data-min="${m}" aria-checked="${m === mins}">${m} min</button>`).join('')}</div></div>
         <p class="sess-q">${q.items.length ? `${plural(q.difficult, 'difficult card')} · ${plural(q.again, 'review-again card')} · ${plural(q.unstudied, 'unstudied card')}` : 'Nothing left to study in this book: no difficult or review-again cards, and every available chapter is done.'}</p>
         <div class="btns"><button class="btn" id="sessGo" ${q.items.length ? '' : 'disabled'}>Start ${mins}-minute session</button><a class="btn ghost" href="#/">Back to library</a></div>
       </div></main>`;
     app.querySelectorAll('[data-book]').forEach(b => b.onclick = () => { pick = b.dataset.book; paint(); });
+    document.getElementById('bookSel').onchange = e => { pick = e.target.value; paint(); document.getElementById('bookSel').focus(); };
+    fitBookPicker();
     app.querySelectorAll('[data-min]').forEach(b => b.onclick = () => { mins = Number(b.dataset.min); paint(); });
     document.getElementById('sessGo').onclick = () => {
       state.sessionPrefs = { book: pick, minutes: mins }; save();

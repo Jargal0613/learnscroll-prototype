@@ -1,7 +1,8 @@
 // LearnScroll study data export / import: pure, testable logic (browser global StudyData + CommonJS).
 // Nothing here touches the network; the app reads/writes localStorage and calls these functions.
 (function (root) {
-  const APP = 'learnscroll', VERSION = 1;
+  const APP = 'learnscroll', VERSION = 1; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
+  const SCHEMA = 2, JOURNAL_KEY = 'learnscroll-write-journal';
   const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
   const SCOPES = ['card', 'chapter', 'book'];
@@ -168,7 +169,7 @@
   function toStorage({ study, tutor }) {
     const t = { ...(tutor.conversations || {}) };
     if (tutor.prefs && Object.keys(tutor.prefs).length) t._prefs = tutor.prefs;
-    return { study: JSON.stringify(study), tutor: JSON.stringify(t) };
+    return { study: JSON.stringify({ schema: SCHEMA, ...study }), tutor: JSON.stringify(t) };
   }
   function build(local, { conversations = false, now = new Date() } = {}) {
     const tutor = { prefs: local.tutor.prefs || {} };
@@ -243,6 +244,53 @@
     };
   }
 
+  // Saved-data migrations, oldest first. Each step upgrades data saved at schema `from` to `from + 1` and must
+  // keep every user value it understands. Data saved before schemas existed (no `schema` field) is schema 1.
+  const MIGRATIONS = [
+    { from: 1, note: 'Add schema number; mark entries keep only true flags (empty marks dropped), matching the app.', run(s) {
+      for (const b of Object.values(isObj(s.books) ? s.books : {})) {
+        if (!isObj(b) || !isObj(b.marks)) continue;
+        for (const [k, m] of Object.entries(b.marks)) {
+          if (!isObj(m)) continue;
+          const f = flags(m.b === true, m.d === true);
+          if (Object.keys(f).length) b.marks[k] = f; else delete b.marks[k];
+        }
+      }
+    } },
+  ];
+  // Returns { data, from, migrated, future }. `future` means the data came from a newer app version: it is returned
+  // unchanged so the caller can back it up before reading what it can.
+  function migrateStudy(raw) {
+    if (!isObj(raw)) return { data: raw, from: null, migrated: false, future: false };
+    const from = raw.schema === undefined ? 1 : raw.schema;
+    if (!Number.isInteger(from) || from < 1) return { data: raw, from, migrated: false, future: false, invalid: true };
+    if (from > SCHEMA) return { data: raw, from, migrated: false, future: true };
+    if (from === SCHEMA) return { data: raw, from, migrated: false, future: false };
+    const data = JSON.parse(JSON.stringify(raw));
+    let v = from;
+    for (const m of MIGRATIONS) if (m.from === v) { m.run(data); v++; }
+    if (v !== SCHEMA) throw new Error(`No migration path from schema ${from}`);
+    data.schema = SCHEMA;
+    return { data, from, migrated: true, future: false };
+  }
+  // Before a multi-key write (import), the previous values are journaled; if the page dies mid-write the journal is
+  // still there on next start and the previous, consistent data is restored.
+  function journalStart(storage) {
+    try { storage.setItem(JOURNAL_KEY, JSON.stringify({ at: Date.now(), keys: { [STUDY_KEY]: storage.getItem(STUDY_KEY), [TUTOR_KEY]: storage.getItem(TUTOR_KEY) } })); return true; } catch (e) { return false; }
+  }
+  function journalEnd(storage) { try { storage.removeItem(JOURNAL_KEY); } catch (e) {} }
+  // Returns true if an interrupted write was rolled back.
+  function journalRecover(storage) {
+    let raw = null; try { raw = storage.getItem(JOURNAL_KEY); } catch (e) { return false; }
+    if (raw === null) return false;
+    let j = null; try { j = JSON.parse(raw); } catch (e) {}
+    if (!j || !isObj(j.keys)) { journalEnd(storage); return false; }
+    try {
+      for (const k of [STUDY_KEY, TUTOR_KEY]) { if (!(k in j.keys)) continue; const v = j.keys[k]; if (v === null) storage.removeItem(k); else storage.setItem(k, v); }
+    } catch (e) { return false; } // keep the journal; try again next start
+    journalEnd(storage); return true;
+  }
+
   // Repairs whatever is in localStorage into the shape the app expects, dropping only malformed pieces.
   // Returns { study, repaired } where repaired is true if anything had to be dropped or reset.
   function sanitizeStudy(raw) {
@@ -270,7 +318,8 @@
     const sessions = arr(s.sessions, x => isObj(x) && typeof x.book === 'string' && isTime(x.start) && isInt(x.seen) && isInt(x.seconds));
     let last = s.last === undefined || s.last === null ? null : s.last;
     if (last !== null && typeof last !== 'string') { repaired = true; last = null; }
-    const study = { books, last, recent, sessions };
+    if (s.schema !== undefined && s.schema !== SCHEMA) repaired = true;
+    const study = { schema: SCHEMA, books, last, recent, sessions };
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
     return { study, repaired };
   }
@@ -341,6 +390,6 @@
     return [...pick.mistakes, ...pick.difficult, ...pick.again, ...pick.unfinished].slice(0, limit);
   }
 
-  const api = { needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -3,7 +3,7 @@ quiz right/wrong feedback, selected/disabled states, shortcuts dialog) across th
 plus 3:1 for input boundaries and selected-state indicators. Disabled controls are reported but exempt (WCAG 1.4.3)."""
 from common import *
 import json, os
-JS = open(os.path.join(os.path.dirname(__file__), 'contrast_lib.js')).read()
+JS = open(os.path.join(os.path.dirname(__file__), 'contrast_lib.inject.txt')).read()
 B = 'heat-mass-transfer'
 STUDY = {'books': {B: {'chapter': 1, 'card': 3, 'done': {}, 'marks': {'c1-2': {'b': True, 'd': True}}, 'seen': {'1': 5}, 'notes': {'c1-2': {'text': 'note text', 'at': 1793000000000}},
          'review': {'c1-2': {'r': 'again', 'at': 1793000000000}}}}, 'last': B, 'recent': [{'book': B, 'chapter': 1, 'card': 3, 'at': 1793000000000}]}

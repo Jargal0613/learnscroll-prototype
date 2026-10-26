@@ -11,16 +11,25 @@ const BACKUP_SUFFIX = '-corrupt-backup';
 function backupRaw(key, raw) {
   try { if (!localStorage.getItem(key + BACKUP_SUFFIX)) localStorage.setItem(key + BACKUP_SUFFIX, raw); return true; } catch (e) { return false; }
 }
+let startNotice = '';
 function load() {
   let raw = null;
   try { raw = localStorage.getItem(KEY); } catch (e) { raw = null; }
   if (raw === null) return StudyData.sanitizeStudy({}).study;
   let parsed;
   try { parsed = JSON.parse(raw); } catch (e) { backupRaw(KEY, raw); return StudyData.sanitizeStudy({}).study; }
-  const { study, repaired } = StudyData.sanitizeStudy(parsed);
-  if (repaired) backupRaw(KEY, raw);
+  let m;
+  try { m = StudyData.migrateStudy(parsed); } catch (e) { m = { data: parsed, invalid: true }; }
+  if (m.future || m.invalid) { backupRaw(KEY, raw); startNotice = startNotice || 'Your study data was saved by a different version of LearnScroll. What could be read is loaded, and the original is kept as a backup you can download below.'; }
+  if (m.migrated) { // keep the pre-migration copy until the next migration, then store the upgraded data
+    try { if (localStorage.getItem(`${KEY}-pre-schema-${m.from}`) === null) localStorage.setItem(`${KEY}-pre-schema-${m.from}`, raw); } catch (e) {}
+  }
+  const { study, repaired } = StudyData.sanitizeStudy(m.data);
+  if (repaired && !m.migrated) backupRaw(KEY, raw);
+  if (m.migrated) { try { localStorage.setItem(KEY, JSON.stringify(study)); } catch (e) {} }
   return study;
 }
+try { if (StudyData.journalRecover(localStorage)) startNotice = 'An import was interrupted before it finished, so your previous study data was restored. Nothing from the file was applied; you can import it again.'; } catch (e) {}
 let state = load();
 (function checkTutorStore() { // back up an unreadable tutor store at start-up, before anything rewrites it
   let raw = null; try { raw = localStorage.getItem(StudyData.TUTOR_KEY); } catch (e) { return; }
@@ -566,7 +575,7 @@ function runSession() {
 }
 
 // ---------- export / import (all local; logic in studydata.js) ----------
-let flash = '', pendingImport = null;
+let flash = startNotice, pendingImport = null;
 const localData = () => StudyData.fromStorage(localStorage.getItem(StudyData.STUDY_KEY), localStorage.getItem(StudyData.TUTOR_KEY));
 function download(name, text, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -613,8 +622,16 @@ function renderImport() {
     if (mode === 'overwrite' && document.getElementById('imp-backup').checked) exportData(true, '-backup');
     const next = mode === 'merge' ? StudyData.merge(local, p.data) : StudyData.overwrite(local, p.data);
     const out = StudyData.toStorage(next);
+    const prev = { study: localStorage.getItem(StudyData.STUDY_KEY), tutor: localStorage.getItem(StudyData.TUTOR_KEY) };
+    StudyData.journalStart(localStorage); // if the tab dies between the two writes, the next start restores `prev`
     try { localStorage.setItem(StudyData.STUDY_KEY, out.study); localStorage.setItem(StudyData.TUTOR_KEY, out.tutor); }
-    catch (e) { flash = 'Import failed: browser storage is full or unavailable. Nothing was changed.'; localStorage.setItem(StudyData.STUDY_KEY, StudyData.toStorage(local).study); go('#/'); return; }
+    catch (e) {
+      // The failed write left its key unchanged, so only the study key can differ; put it back. If even that fails the
+      // journal stays and the next start restores both keys.
+      try { if (prev.study === null) localStorage.removeItem(StudyData.STUDY_KEY); else localStorage.setItem(StudyData.STUDY_KEY, prev.study); StudyData.journalEnd(localStorage); } catch (e2) {}
+      flash = 'Import failed: browser storage is full or unavailable. Nothing was changed.'; state = load(); go('#/'); return;
+    }
+    StudyData.journalEnd(localStorage);
     state = load(); pendingImport = null;
     const c = StudyData.counts(next);
     flash = `${mode === 'merge' ? 'Merged' : 'Imported'} study data: ${plural(c.bookmarks, 'bookmark')}, ${plural(c.difficult, 'difficult mark')}, ${plural(c.notes, 'note')}, ${plural(c.reviews, 'review result')}.`;

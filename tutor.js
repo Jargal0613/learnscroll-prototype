@@ -90,6 +90,15 @@
     input.addEventListener('input', () => { const c = conv(); c.draft = input.value; store(c); });
     $('t-form').addEventListener('submit', e => { e.preventDefault(); send(); });
     $('t-close').addEventListener('click', () => toggle(false));
+    $('t-log').addEventListener('click', e => {
+      const b = e.target.closest('[data-check],[data-hint],[data-reveal]'); if (!b) return;
+      if (b.dataset.check !== undefined) return runCheck(Number(b.dataset.check), b);
+      const el = document.getElementById(b.getAttribute('aria-controls'));
+      el.hidden = !el.hidden; b.setAttribute('aria-expanded', String(!el.hidden));
+      if (b.dataset.reveal !== undefined) b.textContent = el.hidden ? 'Reveal answer' : 'Hide answer';
+      if (b.dataset.hint !== undefined) b.textContent = el.hidden ? 'Hint' : 'Hide hint';
+      renderMath(el);
+    });
     $('t-new').addEventListener('click', () => {
       if (ctx.busy) return;
       const c = conv(); store({ conversationId: newId(), messages: [], draft: input.value, scope: c.scope });
@@ -144,7 +153,7 @@
     const card = cardAt(ctx.index);
     el.innerHTML = `${esc(ctx.book.short)} · Ch ${ctx.ch.n}: ${esc(ctx.ch.title)}<br><span>${card ? esc(card.label) : 'End of chapter'}</span>`;
   }
-  function msgHTML(m) {
+  function msgHTML(m, idx) {
     if (m.role === 'user') return `<div class="t-msg user"><div class="t-who">You${m.where ? ` · ${esc(m.where)}` : ''}</div><div class="t-body">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`;
     let src = '';
     if ((m.passages || []).length) {
@@ -152,13 +161,48 @@
     } else if ((m.sources || []).length) {
       src = `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`;
     } else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
-    return `<div class="t-msg bot"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}</div>`;
+    const canCheck = typeof idx === 'number' && m.retrieval && !/^#{0,4}\s*$/.test(m.content);
+    return `<div class="t-msg bot" data-i="${idx}"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}${canCheck ? checkHTML(m, idx) : ''}</div>`;
+  }
+  // 'Check my understanding': one question about this answer, with Hint / Reveal answer. Stored on the message.
+  function checkHTML(m, idx) {
+    const c = m.check;
+    if (!c) return `<div class="t-check-row"><button class="t-link t-check-btn" data-check="${idx}">Check my understanding</button></div>`;
+    return `<div class="t-check" role="group" aria-label="Check your understanding"><div class="t-check-h">Check your understanding</div>
+      <div class="md t-check-q">${md(c.question)}</div>
+      <div class="t-check-acts"><button class="t-link" data-hint="${idx}" aria-expanded="false" aria-controls="t-hint-${idx}">Hint</button><button class="t-link" data-reveal="${idx}" aria-expanded="false" aria-controls="t-ans-${idx}">Reveal answer</button></div>
+      <div class="md t-check-hint" id="t-hint-${idx}" hidden><b>Hint:</b> ${md(c.hint)}</div>
+      <div class="md t-check-ans" id="t-ans-${idx}" hidden><b>Answer:</b> ${md(c.answer)}</div></div>`;
+  }
+  async function runCheck(idx, btn) {
+    const c = conv(), m = c.messages[idx];
+    if (!m || m.role !== 'assistant' || ctx.busy) return;
+    const card = cardAt(ctx.index);
+    btn.disabled = true; btn.textContent = 'Writing a question…';
+    const row = btn.parentElement; row.querySelectorAll('.t-err').forEach(x => x.remove());
+    try {
+      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), window.__lsTutorTimeoutMs || 45000);
+      let res, data;
+      try { res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ac.signal, body: JSON.stringify({ bookId: ctx.book.id, chapterId: ctx.ch.n, cardId: card ? card.id : null, scope: effectiveScope(), conversationId: c.conversationId, mode: 'check', explanation: m.content.slice(0, 8000) }) }); }
+      finally { clearTimeout(t); }
+      try { data = await res.json(); } catch (e) { data = null; }
+      const ch = data && data.check;
+      if (!res.ok || !ch || ['question', 'hint', 'answer'].some(k => typeof ch[k] !== 'string' || !ch[k].trim())) throw new Error((data && data.error && data.error.message) || `The tutor service is unavailable (HTTP ${res.status}).`);
+      const fresh = conv(); if (fresh.messages[idx] && fresh.messages[idx].content === m.content) { fresh.messages[idx].check = { question: ch.question, hint: ch.hint, answer: ch.answer }; store(fresh); }
+      const log = document.getElementById('t-log'), top = log.scrollTop;
+      paintLog(); log.scrollTop = top;
+      const q = log.querySelector(`.t-msg[data-i="${idx}"] .t-check`); if (q) { q.scrollIntoView({ block: 'nearest' }); q.querySelector('[data-hint]').focus({ preventScroll: true }); }
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Check my understanding';
+      const msg = e.name === 'AbortError' ? 'The request timed out.' : e.message === 'Failed to fetch' ? 'Could not reach the tutor service.' : e.message;
+      row.insertAdjacentHTML('beforeend', `<div class="t-err" role="alert"><p>${esc(msg)}</p></div>`);
+    }
   }
   function paintLog(extra = '') {
     const log = document.getElementById('t-log'); if (!log) return;
     const c = conv();
     log.innerHTML = c.messages.length || extra
-      ? c.messages.map(msgHTML).join('') + extra
+      ? c.messages.map((m, i) => msgHTML(m, i)).join('') + extra
       : `<div class="t-empty"><p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope and an answer style above, then type your question below.</p></div>`;
     renderMath(log);
     log.scrollTop = log.scrollHeight;

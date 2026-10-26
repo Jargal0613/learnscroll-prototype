@@ -16,7 +16,7 @@ module.exports = function openaiProvider({ apiKey, model, timeoutMs = 45000, max
   return {
     name: 'openai', kind: 'file_search', model,
     // input: Responses API input items; returns { text, citations: [{ fileId, filename }], results: n, usage }
-    async respond({ instructions, input, vectorStoreId }) {
+    async respond({ instructions, input, vectorStoreId, format }) {
       let r;
       try {
         r = await sdk.responses.create({
@@ -25,6 +25,7 @@ module.exports = function openaiProvider({ apiKey, model, timeoutMs = 45000, max
           max_output_tokens: maxOutputTokens,
           tools: [{ type: 'file_search', vector_store_ids: [vectorStoreId], max_num_results: 8 }],
           include: ['file_search_call.results'],
+          ...(format ? { text: { format } } : {}),
         });
       } catch (e) { throw mapError(e); }
       if (r.status === 'incomplete' && !r.output_text) throw E.provider('OpenAI stopped before finishing the answer.');

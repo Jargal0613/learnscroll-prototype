@@ -124,8 +124,9 @@
           for (const k of ['sources', 'passages']) if (m[k] !== undefined && !Array.isArray(m[k])) fail(`${mw}.${k} must be a list.`);
           if (m.retrieval !== undefined && m.retrieval !== null && !isObj(m.retrieval)) fail(`${mw}.retrieval must be an object.`);
           if (m.where !== undefined && typeof m.where !== 'string') fail(`${mw}.where must be text.`);
+          if (m.check !== undefined && !(isObj(m.check) && ['question', 'hint', 'answer'].every(k => typeof m.check[k] === 'string' && m.check[k].length <= 2000) && Object.keys(m.check).length === 3)) fail(`${mw}.check must have question, hint and answer text.`);
           const out = { role: m.role, content: m.content };
-          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval']) if (m[k] !== undefined) out[k] = m[k];
+          for (const k of ['where', 'at', 'sources', 'passages', 'retrieval', 'check']) if (m[k] !== undefined) out[k] = m[k];
           return out;
         });
         return { conversationId: c.conversationId, messages, draft: c.draft || '', scope: c.scope || 'card' };

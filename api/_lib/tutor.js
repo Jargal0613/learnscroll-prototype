@@ -1,7 +1,7 @@
 // Pipeline: validate -> provider -> (File Search | local retrieval + prompt) -> verified citations.
 const { validate } = require('./validate');
 const { retrieve } = require('./retrieve');
-const { buildPrompt, buildFileSearchPrompt } = require('./prompt');
+const { buildPrompt, buildFileSearchPrompt, buildCheckPrompt, parseCheck, CHECK_SCHEMA } = require('./prompt');
 const { getProvider } = require('./providers');
 const knowledge = require('./knowledge');
 const { E } = require('./errors');
@@ -49,6 +49,7 @@ function cleanMarkers(t) {
 async function answer(body, { provider, env = process.env } = {}) {
   const req = validate(body);
   const p = provider || getProvider(env); // throws not_configured when no credentials
+  if (req.mode === 'check') return answerCheck(req, p);
   if (p.kind === 'file_search') return answerFileSearch(req, p);
   const { sources, bookIndexAvailable } = retrieve(req);
   const messages = buildPrompt(req, sources, { bookIndexAvailable });
@@ -59,6 +60,22 @@ async function answer(body, { provider, env = process.env } = {}) {
   text = text.replace(/\[(S\d{1,2})\]/g, (m, r) => (byRef.has(r) ? (used.add(r), m) : ''));
   const cited = sources.filter(s => used.has(s.ref)).map(({ text: _t, ...meta }) => meta);
   return { answer: text.trim(), sources: cited, retrieval: { bookIndexAvailable, consulted: sources.length }, conversationId: req.conversationId };
+}
+
+async function answerCheck(req, p) {
+  const { instructions, input } = buildCheckPrompt(req);
+  let text, usage = null;
+  if (p.kind === 'file_search') {
+    const kb = knowledge.forBook(req.book.id);
+    if (!kb) throw E.notAvailable();
+    const out = await p.respond({ instructions, input, vectorStoreId: kb.vectorStoreId, format: { type: 'json_schema', name: 'check_question', strict: true, schema: CHECK_SCHEMA } });
+    text = out.text; usage = out.usage;
+  } else {
+    text = await p.complete([{ role: 'system', content: instructions }, ...input]);
+  }
+  let check;
+  try { check = parseCheck(cleanMarkers(text)); } catch (e) { throw E.provider('The tutor returned an invalid check question. Try again.'); }
+  return { check, retrieval: { provider: p.name, model: p.model || null, usage }, conversationId: req.conversationId };
 }
 
 async function answerFileSearch(req, p) {

@@ -81,7 +81,7 @@
     panel.className = 'tutor'; panel.id = 'tutor'; panel.hidden = true;
     panel.setAttribute('aria-label', 'Ask your tutor');
     panel.innerHTML = `
-      <div class="t-head"><div><h2>Ask your tutor</h2><div class="t-ctx" id="t-ctx"></div></div>
+      <div class="t-head"><div><h2>Ask your tutor</h2><div class="t-ctx" id="t-ctx"></div><div class="t-status" id="t-status" data-state="checking" aria-live="polite">Checking tutor…</div></div>
         <div class="t-actions"><button class="t-link" id="t-saved" aria-expanded="false" aria-controls="t-saved-list" title="Reopen an earlier conversation for this book">Saved</button><button class="t-link" id="t-new" title="Start a new conversation for this book">New conversation</button><button class="t-x" id="t-close" aria-label="Close tutor (Esc)">✕</button></div></div>
       <div class="t-scope" role="radiogroup" aria-label="Question scope">
         <button role="radio" data-scope="card">This card</button><button role="radio" data-scope="chapter">This chapter</button><button role="radio" data-scope="book">Whole book</button></div>
@@ -147,22 +147,34 @@
   }
 
   // Ask the server which books the tutor can answer for, and say so up front instead of after a failed send.
+  // The answer comes from GET /api/tutor, which reads the server's provider + knowledge config (no ids or secrets).
   let statusCache = null;
   async function checkStatus(bookId) {
+    let failed = false;
     try {
-      if (!statusCache) { const r = await fetch(API, { method: 'GET' }); statusCache = r.ok ? await r.json() : null; }
-    } catch (e) { statusCache = null; }
-    if (!ctx || ctx.book.id !== bookId || !statusCache) return;
-    const n = document.getElementById('t-notice'); if (!n) return;
-    let msg = '';
-    if (!statusCache.configured) msg = '<b>Tutor not configured.</b> The server has no AI provider credentials yet.';
-    else if (!statusCache.books[bookId]) msg = '<b>Tutor not available for this book yet.</b> Only books whose textbook has been indexed can be asked about.';
+      if (!statusCache) { const r = await fetch(API, { method: 'GET' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); if (!j || typeof j.books !== 'object') throw new Error('bad status'); statusCache = j; }
+    } catch (e) { statusCache = null; failed = true; }
+    if (!ctx || ctx.book.id !== bookId) return;
+    const n = document.getElementById('t-notice'), st = document.getElementById('t-status'); if (!n || !st) return;
+    let msg = '', state, label;
+    if (failed) { state = 'error'; label = 'Couldn’t check the tutor (network or server error). Sending may fail.'; }
+    else if (!statusCache.configured) return applyUnavailable('not_configured');
+    else if (!statusCache.books[bookId]) return applyUnavailable('book_not_available');
+    else { state = 'on'; label = 'Tutor connected'; }
+    st.dataset.state = state; st.textContent = label;
     n.innerHTML = msg; n.hidden = !msg;
     ctx.unavailable = !!msg;
-    const dis = !!msg;
-    document.querySelectorAll('#t-input, #t-send').forEach(x => { x.disabled = dis; });
+    document.querySelectorAll('#t-input, #t-send').forEach(x => { x.disabled = !!msg; });
   }
 
+  function applyUnavailable(code) {
+    const n = document.getElementById('t-notice'), st = document.getElementById('t-status'); if (!n || !st) return;
+    st.dataset.state = 'off'; st.textContent = code === 'not_configured' ? 'Tutor unavailable' : 'Tutor unavailable for this book';
+    n.innerHTML = code === 'not_configured' ? '<b>Tutor unavailable.</b> The server has no AI provider set up, so no questions can be answered right now.' : `<b>Tutor unavailable for this book.</b> ${esc(ctx.book.short)}’s textbook hasn’t been connected yet. Questions here are not sent, and other books are never searched instead.`;
+    n.hidden = false; ctx.unavailable = true;
+    const empty = document.querySelector('#t-log .t-empty'); if (empty) empty.innerHTML = '<p>You can still read and review this book; only the tutor is unavailable here.</p>';
+    document.querySelectorAll('#t-input, #t-send').forEach(x => { x.disabled = true; });
+  }
   function effectiveScope() {
     const c = conv(); if (c.messages.length && c.origin) return c.origin.scope;
     const s = c.scope || 'card';
@@ -315,6 +327,9 @@
       // Keep the user's question: put it back in the box (and the saved draft) so nothing is lost.
       input.value = q; const d = conv(); d.draft = q; store(d);
       const msg = e.name === 'AbortError' ? 'The request timed out.' : e.message === 'Failed to fetch' ? 'Could not reach the tutor service. Check your connection.' : e.message;
+      if (e.code === 'book_not_available' || e.code === 'not_configured') { // the server says this book isn't connected: that's "unavailable", not an error
+        paintLog(); return applyUnavailable(e.code);
+      }
       paintLog(`<div class="t-err" role="alert"><b>${e.code === 'not_configured' ? 'Tutor not configured' : e.code === 'book_not_available' ? 'Tutor not available for this book yet' : e.code === 'rate_limited' ? 'Too many requests' : 'Couldn’t get an answer'}</b><p>${esc(msg)}</p><button class="t-retry" id="t-retry">Retry</button></div>`);
       document.getElementById('t-retry').addEventListener('click', send);
     }

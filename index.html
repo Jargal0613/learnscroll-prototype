@@ -344,6 +344,12 @@
   .t-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
   .t-ctx { font-size: 12.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
   .t-ctx span { color: var(--fg-2); }
+  .t-status { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+  .t-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--muted); flex: none; }
+  .t-status[data-state="on"]::before { background: var(--accent); border-color: var(--accent); }
+  .t-status[data-state="off"]::before { background: none; }
+  .t-status[data-state="error"] { color: var(--fg-2); }
+  .t-status[data-state="error"]::before { content: '!'; width: auto; height: auto; border: 0; border-radius: 0; color: var(--danger); font-weight: 700; }
   .t-actions { display: flex; align-items: flex-start; gap: 6px; flex: none; }
   .t-link { font-size: 12.5px; color: var(--muted); padding: 4px 8px; border-radius: 6px; }
   .t-link:hover:not(:disabled) { color: var(--fg); background: var(--surface-3); }

@@ -97,3 +97,12 @@ the question back in the input and the saved draft. No server-side storage, acco
 node --test test/                 # unit tests (mock provider; uses private index if built locally)
 node scripts/dev-server.js 8787   # static site + /api/tutor locally (never serves private/)
 ```
+
+## Per-book availability
+
+`GET /api/tutor` returns `{ configured, provider, books: { <bookId>: true|false }, textbook: { <bookId>: true|false } }`,
+computed on the server from the provider settings and `api/_lib/knowledge.json` (a book counts only when its index
+`status` is `completed`). It never includes vector-store ids, file ids, filenames or keys. The tutor panel shows
+"Tutor connected", "Tutor unavailable for this book" (input disabled, with an explanation before anything is
+typed; nothing is sent and no other book is searched) or, if the status check itself fails, a separate red
+"Couldn't check the tutor" state. A `book_not_available` reply from the server is shown as unavailable, not as an error.

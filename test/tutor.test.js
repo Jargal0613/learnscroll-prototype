@@ -394,3 +394,18 @@ test('check mode: stray control characters and escaped control codes are removed
   assert.equal(out.answer, 'The rate is halved because \\(\\dot Q=kA\\Delta T/L\\), so doubling \\(L\\) halves it.');
   assert.ok(!/[\u0000-\u001F]/.test(out.answer));
 });
+
+test('status: per-book availability comes from the server knowledge config, no ids or secrets', () => {
+  const { status } = require('../api/_lib/tutor');
+  const knowledge = require('../api/_lib/knowledge');
+  knowledge.setKnowledge({ 'heat-mass-transfer': { status: 'completed', vectorStoreId: 'vs_secret', fileId: 'file_secret', filename: 'x.pdf' }, 'koretsky-thermo': { status: 'in_progress', vectorStoreId: 'vs_2', fileId: 'f2' } });
+  try {
+    const st = status({ OPENAI_API_KEY: 'sk-test-not-real', TUTOR_PROVIDER: 'openai' });
+    assert.equal(st.configured, true);
+    assert.equal(st.books['heat-mass-transfer'], true); assert.equal(st.textbook['heat-mass-transfer'], true);
+    assert.equal(st.books['koretsky-thermo'], false); assert.equal(st.books['electric-circuits'], false);
+    const raw = JSON.stringify(st); for (const x of ['vs_secret', 'file_secret', 'sk-test', 'x.pdf']) assert.ok(!raw.includes(x), x);
+    const none = status({});
+    assert.equal(none.configured, false); assert.ok(Object.values(none.books).every(v => v === false));
+  } finally { knowledge.setKnowledge(null); }
+});

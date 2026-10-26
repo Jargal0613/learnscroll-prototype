@@ -113,8 +113,11 @@ async function answerFileSearch(req, p) {
 function status(env = process.env) {
   let p = null; try { p = getProvider(env); } catch (e) { p = null; }
   const { BOOK_IDS } = require('./books');
-  const books = {};
-  for (const id of BOOK_IDS) books[id] = !!p && (p.kind !== 'file_search' || !!knowledge.forBook(id));
-  return { configured: !!p, provider: p ? p.name : null, books };
+  const books = {}, textbook = {};
+  for (const id of BOOK_IDS) {
+    textbook[id] = !!p && p.kind === 'file_search' && !!knowledge.forBook(id); // file_search mode: this book has its own completed vector-store index
+    books[id] = !!p && (p.kind !== 'file_search' || textbook[id]);
+  }
+  return { configured: !!p, provider: p ? p.name : null, books, textbook };
 }
 module.exports = { answer, status, excerpt, verifiedChapter, cleanMarkers };

@@ -702,6 +702,25 @@
   .imp-plan tbody th { color: var(--fg); font-weight: 500; }
   .imp-note { font-size: 13px; color: var(--muted); margin-top: 10px; line-height: 1.55; }
   .imp-note b { color: var(--fg-2); font-weight: 600; }
+  /* Problem practice */
+  .p-statement { max-width: 720px; color: var(--fg-2); line-height: 1.6; }
+  .p-steps { list-style: none; padding: 0; margin: 18px 0 0; max-width: 720px; display: grid; gap: 12px; }
+  .p-step { padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); }
+  .p-step h2 { font-size: 15px; margin: 0 0 8px; }
+  .p-step textarea, .p-step input[type=text], .p-step input:not([type]) { width: 100%; box-sizing: border-box; }
+  .p-step textarea { min-height: 70px; font: inherit; background: var(--bg); color: var(--fg); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 8px; }
+  .p-eqs { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .p-msg { margin: 8px 0 0; font-size: 14px; color: var(--fg-2); padding-left: 10px; border-left: 2px solid var(--line-strong); }
+  .p-msg.good { border-left-color: var(--accent); } .p-msg.bad { border-left-color: var(--danger); }
+  .p-hints { margin: 8px 0 0; padding-left: 18px; color: var(--fg-2); font-size: 14px; }
+  .p-ref { margin-top: 8px; color: var(--fg-2); font-size: 14px; overflow-x: auto; }
+  .p-step .btns, .p-extra .btns { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn.small { padding: 4px 10px; font-size: 13px; }
+  .p-extra { max-width: 720px; margin-top: 16px; } .p-extra [hidden] { display: none; }
+  .p-ai, .p-full { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line-strong); border-radius: var(--radius); }
+  .p-ai.bad { border-left: 2px solid var(--danger); } .p-ai p { margin: 6px 0 0; white-space: pre-wrap; color: var(--fg-2); }
+  .p-full h3 { font-size: 14px; margin: 12px 0 0; }
+  .p-cardlinks { margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -713,5 +732,8 @@
 <script defer src="sheets.js"></script>
 <script defer src="calccore.js"></script>
 <script defer src="calc.js"></script>
+<script defer src="practicedata.js"></script>
+<script defer src="practicecore.js"></script>
+<script defer src="practice.js"></script>
 </body>
 </html>

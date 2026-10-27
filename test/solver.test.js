@@ -115,3 +115,27 @@ for (const [name, o] of Object.entries(out3)) {
     }
   });
 }
+
+// Practice hints via the existing tutor route: counted against the solver limits, fail closed, no new allowance.
+const tutorHandler = require('../api/tutor');
+function tcall(body, deps, ip = '7.7.7.7') {
+  return new Promise(resolve => {
+    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, end(s) { resolve({ status: this.statusCode, headers: this.headers, body: JSON.parse(s) }); } };
+    tutorHandler({ method: 'POST', body, headers: { 'x-real-ip': ip } }, res, deps);
+  });
+}
+test('practice hint: solver off -> 404, no limiter -> 503, limiter error -> 503; tutor never called', async () => {
+  let n = 0; const answer = async () => { n++; return { answer: 'hint' }; };
+  assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: {}, store: mapStore(), answer })).status, 404);
+  assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: null, answer })).status, 503);
+  assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: { incr: async () => { throw new Error('x'); } }, answer })).status, 503);
+  assert.equal(n, 0);
+});
+test('practice hint shares the solver counters: 2/min per IP then 429; plain tutor questions are not limited', async () => {
+  const st = mapStore(); let seen = []; const answer = async b => { seen.push(b); return { answer: 'hint' }; };
+  assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: st, answer })).status, 200);
+  await S.limit(st, { ip: '7.7.7.7' }); // one solver problem from the same IP uses the same allowance
+  const r = await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: st, answer }); assert.equal(r.status, 429); assert.ok(Number(r.headers['Retry-After']) > 0);
+  assert.equal(seen.length, 1); assert.equal(seen[0].practiceHint, undefined, 'flag stripped before the tutor sees the request');
+  assert.equal((await tcall({ question: 'q' }, { env: ON, store: st, answer })).status, 200, 'ordinary tutor use unchanged');
+});

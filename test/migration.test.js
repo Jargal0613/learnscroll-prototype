@@ -73,7 +73,7 @@ test('malformed backups are rejected with a message and never throw', () => {
   const g = () => JSON.parse(good);
   const cases = {
     truncated: good.slice(0, good.length / 2), empty: '', bom_garbage: '\uFEFF{not json', array: '[]', number: '42',
-    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 4 }),
+    wrongApp: JSON.stringify({ ...g(), app: 'other' }), futureVersion: JSON.stringify({ ...g(), version: 99 }),
     extraKey: JSON.stringify({ ...g(), evil: 1 }), badDate: JSON.stringify({ ...g(), exportedAt: 'yesterday' }),
     noteNotText: (() => { const o = g(); o.study.books['heat-mass-transfer'].notes['c1-2'].text = 5; return JSON.stringify(o); })(),
     attemptBad: (() => { const o = g(); o.study.books['heat-mass-transfer'].attempts['c1-q1'] = [{ k: 'a' }]; return JSON.stringify(o); })(),
@@ -127,7 +127,7 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   const sess = { schema: SD.SCHEMA, book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: { 'c1-1': { b: true } }, active: 30, visibleSince: null, lastSeen: T2 };
   const study = SD.sanitizeStudy(SD.migrateStudy(clone(LEGACY)).data).study;
   const local = SD.fromStorage(JSON.stringify(study), JSON.stringify(TUTOR), JSON.stringify(sess));
-  const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, 3); assert.deepEqual(f.session, sess);
+  const f = SD.build(local, { conversations: true, now: new Date(T2) }); assert.equal(f.version, SD.VERSION); assert.deepEqual(f.session, sess);
   assert.deepEqual(Object.keys(f).sort(), ['app', 'exportedAt', 'session', 'study', 'tutor', 'version']);
   assert.equal(SD.build(SD.fromStorage(null, null, null), { now: new Date(T2) }).session, null, 'v2 always states the session (null = none)');
   assert.doesNotMatch(JSON.stringify(f), /sk-[A-Za-z0-9]|OPENAI|api[_-]?key|vs_[A-Za-z0-9]|vector_store/i, 'no secrets/server data');
@@ -144,7 +144,7 @@ test('export v2 carries the session in progress; round trip, merge and replace s
   }
   assert.equal(SD.parse(JSON.stringify({ ...f, version: 1 }), { bookIds: IDS }).ok, false, 'v1 files cannot carry a session');
   const { session, ...v1 } = f; assert.ok(SD.parse(JSON.stringify({ ...v1, version: 1 }), { bookIds: IDS }).ok, 'v1 file imports');
-  assert.match(SD.parse(JSON.stringify({ ...f, version: 4 }), { bookIds: IDS }).error, /newer version/);
+  assert.match(SD.parse(JSON.stringify({ ...f, version: 99 }), { bookIds: IDS }).error, /newer version/);
 });
 
 test('tutor continuity data: origin + saved conversations validate, export and merge without loss', () => {
@@ -179,7 +179,7 @@ test('reading text size preference: exported, validated, sanitized, merged (this
 
 test('schema 3: formula notebook migrates, validates, exports, merges and replaces predictably', () => {
   const v2 = { schema: 2, books: { 'heat-mass-transfer': { chapter: 1, card: 2, done: {}, marks: {}, seen: {}, notes: {}, review: {}, attempts: {} } }, last: null, recent: [], sessions: [] };
-  const m = SD.migrateStudy(clone(v2)); assert.equal(m.migrated, true); assert.equal(m.from, 2); assert.deepEqual(m.data.formulas, {}); assert.equal(m.data.schema, 3);
+  const m = SD.migrateStudy(clone(v2)); assert.equal(m.migrated, true); assert.equal(m.from, 2); assert.deepEqual(m.data.formulas, {}); assert.equal(m.data.schema, SD.SCHEMA);
   assert.deepEqual(m.data.books, v2.books, 'nothing else changes');
   const F = { 'f-heat-mass-transfer-c1-13': { kind: 'card', title: 'Conduction', tex: '\\dot Q = -kA\\,dT/dx', book: 'heat-mass-transfer', chapter: 1, card: 'c1-13', heading: 'Conduction', at: T1, updated: T1 },
     'fc-abc123': { kind: 'custom', title: 'Mine', tex: 'a^2+b^2', notes: 'n', at: T1, updated: T1 } };
@@ -245,4 +245,25 @@ test('revision plan: deterministic ranking, reasons, target, Postpone/Understood
   assert.equal(SD.parse(JSON.stringify({ ...f, study: { ...f.study, revision: { target: 7 } } }), { bookIds: IDS }).ok, false);
   const m = SD.merge(SD.fromStorage(JSON.stringify({ ...st, revision: { target: 15, log: { 'heat-mass-transfer/c1-1': [{ a: 'postpone', at: NOW }] } } }), '{}', null), pp.data);
   assert.equal(m.study.revision.target, 15); assert.equal(Object.keys(m.study.revision.log).length, 3);
+});
+
+// Schema 4: study sheets can hold calculation results. Added BEFORE the calculator stores anything.
+test('schema 3 -> 4 keeps everything; calc sheet items round-trip through export/import', () => {
+  const v3 = { schema: 3, books: {}, recent: [], sessions: [], formulas: {}, sheets: { 's-abcd': { title: 'Old', items: [{ t: 'bookmark', book: 'heat-mass-transfer', card: 'c1-2' }], at: T1 } } };
+  const m = SD.migrateStudy(clone(v3)); assert.equal(m.migrated, true); assert.equal(m.from, 3); assert.equal(m.data.schema, 4);
+  assert.deepEqual(m.data.sheets, v3.sheets, 'v3 sheets untouched');
+  const calc = { t: 'calc', calc: 'convection', solve: 'h', inputs: { Q: [1200, 'W'], A: [2, 'm²'], Ts: [80, '°C'], Tinf: [20, '°C'] }, result: [10, 'W/m²·K'], at: T2 };
+  const sheets = { 's-calc1': { title: 'Calcs', items: [calc], at: T2, updated: T2 } };
+  const study = { ...SD.sanitizeStudy({ schema: 4, books: {}, recent: [], sessions: [] }).study, sheets };
+  const f = SD.build(SD.fromStorage(JSON.stringify(study), '{}', null), { conversations: true, now: new Date(T2) });
+  assert.equal(f.version, 4);
+  const back = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(back.ok, back.error);
+  assert.deepEqual(back.data.study.sheets['s-calc1'].items[0], calc);
+  const v3file = { ...f, version: 3 }; assert.ok(SD.parse(JSON.stringify({ ...v3file, study: { ...f.study, sheets: {} } }), { bookIds: IDS }).ok, 'format 3 files still import');
+});
+test('calc sheet items: bad shapes are rejected, never stored', () => {
+  const base = { t: 'calc', calc: 'convection', solve: 'h', inputs: { Q: [1, 'W'] }, result: [1, 'W/m²·K'], at: T1 };
+  for (const bad of [{ ...base, calc: 'Bad Id!' }, { ...base, solve: '' }, { ...base, inputs: { Q: [NaN, 'W'] } }, { ...base, inputs: { Q: ['1', 'W'] } }, { ...base, result: [1, ''] }, { ...base, extra: 1 }, { ...base, inputs: { h: [1, 'W'] } }])
+    assert.throws(() => SD.validSheet({ title: 'x', items: [bad], at: T1 }, 's', IDS), undefined, JSON.stringify(bad).slice(0, 80));
+  assert.deepEqual(SD.validSheet({ title: 'x', items: [base], at: T1 }, 's', IDS).items[0], base);
 });

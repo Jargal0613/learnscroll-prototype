@@ -1,8 +1,8 @@
 // LearnScroll study data export / import: pure, testable logic (browser global StudyData + CommonJS).
 // Nothing here touches the network; the app reads/writes localStorage and calls these functions.
 (function (root) {
-  const APP = 'learnscroll', VERSION = 3, VERSIONS = [1, 2, 3]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
-  const SCHEMA = 3, JOURNAL_KEY = 'learnscroll-write-journal';
+  const APP = 'learnscroll', VERSION = 4, VERSIONS = [1, 2, 3, 4]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
+  const SCHEMA = 4, JOURNAL_KEY = 'learnscroll-write-journal';
   const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1', SESSION_KEY = 'learnscroll-session-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
   const TEXT_SIZES = ['small', 'default', 'large'];
@@ -93,7 +93,19 @@
     return out;
   }
   // Study sheets (schema 3, optional): an ordered pick of saved formulas, notes, bookmarks and difficult cards.
-  const SHEET_RE = /^s-[a-z0-9]{4,24}$/, MAX_SHEETS = 50, MAX_SHEET_ITEMS = 300, SHEET_KINDS = ['formula', 'note', 'bookmark', 'difficult'];
+  const SHEET_RE = /^s-[a-z0-9]{4,24}$/, MAX_SHEETS = 50, MAX_SHEET_ITEMS = 300, SHEET_KINDS = ['formula', 'note', 'bookmark', 'difficult', 'calc'];
+  // Calculation results (schema 4): which curated calculator, which variable was solved, the inputs as typed
+  // (number + unit) and the result. Shape-checked only; the calculator itself re-validates when it shows them.
+  const CALC_ID_RE = /^[a-z0-9-]{2,40}$/, CALC_VAR_RE = /^[A-Za-z][A-Za-z0-9_]{0,15}$/, UNIT_MAX = 16;
+  const numUnit = (v, w) => { if (!Array.isArray(v) || v.length !== 2 || typeof v[0] !== 'number' || !Number.isFinite(v[0]) || typeof v[1] !== 'string' || !v[1] || v[1].length > UNIT_MAX) fail(`${w} must be [number, unit].`); return [v[0], v[1]]; };
+  function validCalcItem(it, iw) {
+    onlyKeys(it, ['t', 'calc', 'solve', 'inputs', 'result', 'at'], iw);
+    if (typeof it.calc !== 'string' || !CALC_ID_RE.test(it.calc) || typeof it.solve !== 'string' || !CALC_VAR_RE.test(it.solve)) fail(`${iw} needs a calculator id and the solved variable.`);
+    if (!isObj(it.inputs) || Object.keys(it.inputs).length > 12) fail(`${iw}.inputs must be an object (max 12).`);
+    const inputs = {}; for (const [k, v] of Object.entries(it.inputs)) { if (!CALC_VAR_RE.test(k) || k === it.solve) fail(`${iw}.inputs has an invalid name.`); inputs[k] = numUnit(v, `${iw}.inputs.${k}`); }
+    if (!isTime(it.at)) fail(`${iw}.at must be a timestamp.`);
+    return { t: 'calc', calc: it.calc, solve: it.solve, inputs, result: numUnit(it.result, `${iw}.result`), at: it.at };
+  }
   function validSheet(x, w, bookIds) {
     if (!isObj(x)) fail(`${w} must be an object.`); onlyKeys(x, ['title', 'items', 'at', 'updated'], w);
     if (typeof x.title !== 'string' || !x.title.trim() || x.title.length > MAX_TITLE) fail(`${w}.title must be text (max ${MAX_TITLE}).`);
@@ -102,9 +114,10 @@
     const seen = new Set();
     const items = x.items.map((it, i) => {
       const iw = `${w}.items[${i}]`;
-      if (!isObj(it) || !SHEET_KINDS.includes(it.t)) fail(`${iw} must be a formula, note, bookmark or difficult item.`);
+      if (!isObj(it) || !SHEET_KINDS.includes(it.t)) fail(`${iw} must be a formula, note, bookmark, difficult or calculation item.`);
       let r;
-      if (it.t === 'formula') { onlyKeys(it, ['t', 'ref'], iw); if (typeof it.ref !== 'string' || !FORMULA_RE.test(it.ref)) fail(`${iw}.ref is invalid.`); r = { t: it.t, ref: it.ref }; }
+      if (it.t === 'calc') r = validCalcItem(it, iw);
+      else if (it.t === 'formula') { onlyKeys(it, ['t', 'ref'], iw); if (typeof it.ref !== 'string' || !FORMULA_RE.test(it.ref)) fail(`${iw}.ref is invalid.`); r = { t: it.t, ref: it.ref }; }
       else { onlyKeys(it, ['t', 'book', 'card'], iw); if (typeof it.book !== 'string' || (bookIds && !bookIds.includes(it.book)) || typeof it.card !== 'string' || !CARD_RE.test(it.card)) fail(`${iw} needs a known book and card.`); r = { t: it.t, book: it.book, card: it.card }; }
       const k = JSON.stringify(r); if (seen.has(k)) fail(`${iw} is listed twice.`); seen.add(k);
       return r;
@@ -448,6 +461,7 @@
       }
     } },
     { from: 2, note: 'Add the formula notebook (empty); nothing else changes.', run(s) { if (!isObj(s.formulas)) s.formulas = {}; } },
+    { from: 3, note: 'Study sheets may now hold calculation results (new item type); existing data is unchanged.', run() {} },
   ];
   // Returns { data, from, migrated, future }. `future` means the data came from a newer app version: it is returned
   // unchanged so the caller can back it up before reading what it can.

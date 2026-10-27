@@ -15,7 +15,7 @@ const file = (over = {}) => JSON.stringify({ app: 'learnscroll', version: 1, exp
 test('export round-trip: build -> parse gives the same data back', () => {
   const local = localSample();
   const out = SD.build(local, { conversations: true, now: new Date(T2) });
-  assert.equal(out.app, 'learnscroll'); assert.equal(out.version, 3); assert.equal(out.exportedAt, new Date(T2).toISOString());
+  assert.equal(out.app, 'learnscroll'); assert.equal(out.version, SD.VERSION); assert.equal(out.exportedAt, new Date(T2).toISOString());
   const r = SD.parse(JSON.stringify(out), { bookIds: IDS });
   assert.ok(r.ok, r.error);
   assert.deepEqual(r.data.study.books['heat-mass-transfer'].notes, local.study.books['heat-mass-transfer'].notes);
@@ -30,7 +30,7 @@ test('parse rejects malformed files with a clear message', () => {
   const bad = [
     ['not json {', /not valid JSON/], ['[]', /not a LearnScroll export/], ['null', /not a LearnScroll export/],
     [JSON.stringify({ version: 1 }), /app id/], [file({ app: 'other' }), /app id/],
-    [file({ version: 4 }), /newer version of LearnScroll/], [file({ version: '1' }), /Unsupported export version/],
+    [file({ version: 99 }), /newer version of LearnScroll/], [file({ version: '1' }), /Unsupported export version/],
     [file({ exportedAt: 'yesterday' }), /ISO date/], [file({ extra: 1 }), /Unexpected field "extra"/],
     [file({ study: [] }), /"study" must be an object/],
     [file({ study: { books: { 'nope-book': {} } } }), /Unknown book/],
@@ -112,7 +112,7 @@ test('sanitizeStudy: valid data untouched; malformed pieces dropped and flagged;
   const r = SD.sanitizeStudy(good);
   assert.equal(r.repaired, false);
   assert.deepEqual(r.study.books['heat-mass-transfer'].notes, good.books['heat-mass-transfer'].notes);
-  assert.deepEqual(SD.sanitizeStudy({}), { study: { schema: 3, books: {}, last: null, recent: [], sessions: [], formulas: {}, sheets: {} }, repaired: false });
+  assert.deepEqual(SD.sanitizeStudy({}), { study: { schema: 4, books: {}, last: null, recent: [], sessions: [], formulas: {}, sheets: {} }, repaired: false });
   const bad = SD.sanitizeStudy({ books: { 'heat-mass-transfer': { chapter: 'x', card: -3, marks: 'oops', notes: { 'c1-2': { text: 5 }, 'c1-3': { text: 'ok', at: T1 } }, seen: { 1: 'far' } }, 'bad id!': {}, 'koretsky-thermo': 7 }, recent: 'nope', last: 42 });
   assert.equal(bad.repaired, true);
   const h = bad.study.books['heat-mass-transfer'];

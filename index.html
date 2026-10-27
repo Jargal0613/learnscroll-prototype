@@ -292,6 +292,45 @@
   .sh-eq { overflow-x: auto; overflow-y: hidden; font-size: 17px; }
   .sh-gone, .sh-err { font-size: 13px; color: var(--fg-2); border-left: 2px solid var(--danger); padding-left: 8px; }
   @media (max-width: 760px) { .sh-cols { grid-template-columns: minmax(0, 1fr); } }
+  /* calculation workspace */
+  .eq-act .c-calc { margin-left: 10px; }
+  .f-calc { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 8px; }
+  .f-calc .c-calc, .c-ws { color: var(--accent); font-size: 13.5px; }
+  .c-ws { margin-left: auto; }
+  .c-eq { overflow-x: auto; overflow-y: hidden; max-width: 720px; }
+  .c-list .c-eq { margin-top: 4px; }
+  .c-form { margin-top: 18px; display: grid; gap: 14px; max-width: 720px; }
+  .c-solve { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px 12px; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .c-solve legend { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
+  .c-pill { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--fg-2); cursor: pointer; }
+  .c-pill span { color: var(--muted); }
+  .c-pill:has(input:checked) { border-color: var(--accent-line); background: var(--accent-soft); color: var(--fg); }
+  .c-pill input { accent-color: var(--accent); margin: 0; }
+  .c-inputs { display: grid; gap: 10px; }
+  .c-row { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: center; }
+  .c-row label { font-size: 14px; color: var(--fg-2); min-width: 0; }
+  .c-sym { display: inline-block; min-width: 34px; color: var(--fg); }
+  .c-in { display: flex; gap: 6px; }
+  .c-in input { flex: 1; min-width: 0; padding: 8px 10px; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; font-variant-numeric: tabular-nums; }
+  .c-in select, .c-add select { padding: 7px 8px; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; font-size: 13.5px; }
+  .c-unit1 { align-self: center; color: var(--muted); font-size: 13.5px; min-width: 64px; }
+  .c-row.bad input { border-color: var(--danger); }
+  .c-msg { margin-top: 12px; max-width: 720px; color: var(--fg-2); font-size: 14px; }
+  .c-msg:not(:empty) { padding: 10px 14px; border: 1px solid var(--line-strong); border-left: 2px solid var(--danger); border-radius: var(--radius); }
+  .c-result { margin-top: 18px; max-width: 720px; padding: 16px 18px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); }
+  .c-result:focus { outline: 1px solid var(--accent-line); }
+  .c-result h2 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .c-ans { font-size: 20px; margin: 0 0 10px; }
+  .c-ans b { color: var(--accent); font-weight: 600; }
+  .c-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+  .c-steps .katex-display { margin: 4px 0; overflow-x: auto; overflow-y: hidden; }
+  .c-lab { display: block; font-size: 13px; color: var(--muted); }
+  .c-steps ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; }
+  .c-add { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--fg-2); }
+  .c-note { margin-top: 18px; max-width: 720px; }
+  .sh-calc { margin: 4px 0; padding-left: 18px; }
+  .sh-calc-r { margin: 4px 0; }
+  @media (max-width: 600px) { .c-row { grid-template-columns: 1fr; gap: 4px; } .c-ws { margin-left: 0; } }
   /* problem solver (inside the tutor panel; hidden unless the server enables it) */
   .tutor.solving .t-scope, .tutor.solving .t-style { display: none; }
   .t-solve-row { flex: none; margin: 0 20px 12px; }
@@ -672,5 +711,7 @@
 <script defer src="app.js"></script>
 <script defer src="formulas.js"></script>
 <script defer src="sheets.js"></script>
+<script defer src="calccore.js"></script>
+<script defer src="calc.js"></script>
 </body>
 </html>

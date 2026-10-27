@@ -2,8 +2,8 @@
 // book/chapter for viewing and printing. Stored in study.sheets (local; exported with the study data).
 const Sheets = (() => {
   const all = () => state.sheets || (state.sheets = {});
-  const KIND = { formula: 'Formula', note: 'My note', bookmark: 'Bookmarked', difficult: 'Difficult' };
-  const key = it => it.t === 'formula' ? `formula:${it.ref}` : `${it.t}:${it.book}/${it.card}`;
+  const KIND = { formula: 'Formula', note: 'My note', bookmark: 'Bookmarked', difficult: 'Difficult', calc: 'Calculation' };
+  const key = it => it.t === 'formula' ? `formula:${it.ref}` : it.t === 'calc' ? `calc:${it.calc}:${it.solve}:${it.at}` : `${it.t}:${it.book}/${it.card}`;
   function cardAt(bookId, cardId) {
     const b = books[bookId], m = /^c(\d+)-(q?)(\d+)$/.exec(cardId || ''); if (!b || !m) return null;
     const ch = b.chapters.find(c => c.n === Number(m[1])); if (!ch || !ready(ch)) return null;
@@ -12,6 +12,7 @@ const Sheets = (() => {
   }
   // where an item lives (for grouping); null = no longer available
   function placeOf(it) {
+    if (it.t === 'calc') { const f = typeof CalcCore !== 'undefined' && CalcCore.byId[it.calc]; return f && f.vars[it.solve] ? { book: 'heat-mass-transfer', ch: f.ch, calc: f } : null; }
     if (it.t === 'formula') { const f = (state.formulas || {})[it.ref]; if (!f) return null; return f.kind === 'custom' ? { book: '', ch: 0, f } : { book: f.book, ch: f.chapter, f }; }
     const c = cardAt(it.book, it.card); return c ? { book: it.book, ch: c.ch.n, c } : null;
   }
@@ -30,13 +31,17 @@ const Sheets = (() => {
     }
     return out;
   }
-  const label = it => { const p = placeOf(it); if (!p) return 'No longer available'; if (it.t === 'formula') return p.f.title; return stripTags(p.c.card ? p.c.card.h : `Practice ${p.c.i - p.c.ch.cards.length + 1}: ${p.c.quiz.q}`); };
+  const label = it => { const p = placeOf(it); if (!p) return 'No longer available'; if (it.t === 'formula') return p.f.title; if (it.t === 'calc') return `${p.calc.title}: ${p.calc.vars[it.solve].label.toLowerCase()}`; return stripTags(p.c.card ? p.c.card.h : `Practice ${p.c.i - p.c.ch.cards.length + 1}: ${p.c.quiz.q}`); };
   const where = it => { const p = placeOf(it); if (!p) return ''; if (!p.book) return 'Your formula'; return `${books[p.book].short} · Ch ${p.ch}`; };
   // ---- content of one item (shared by the page and the standalone export) ----
   function texHTML(t) { try { return window.katex ? katex.renderToString(t, { displayMode: true, throwOnError: true }) : `<code>${esc(t)}</code>`; } catch (e) { return `<div class="sh-err">This LaTeX can’t be displayed.</div><code>${esc(t)}</code>`; } }
   function itemBody(it) {
     const p = placeOf(it);
-    if (!p) return `<p class="sh-gone">This ${it.t === 'formula' ? 'formula was deleted' : 'card is no longer available'}. Remove it from the sheet.</p>`;
+    if (!p) return `<p class="sh-gone">This ${it.t === 'formula' ? 'formula was deleted' : it.t === 'calc' ? 'calculator is no longer available' : 'card is no longer available'}. Remove it from the sheet.</p>`;
+    if (it.t === 'calc') {
+      const f = p.calc, v = f.vars, num = x => esc(CalcCore.fmt(x, 6));
+      return `<div class="sh-eq">${texHTML(f.solve[it.solve].tex)}</div><ul class="sh-calc">${Object.entries(it.inputs).filter(([n]) => v[n]).map(([n, [x, u]]) => `<li>${esc(v[n].label)} \\(${v[n].sym}\\) = ${num(x)} ${esc(u)}</li>`).join('')}</ul><p class="sh-calc-r"><b>Result:</b> \\(${v[it.solve].sym}\\) = ${num(it.result[0])} ${esc(it.result[1])}</p><p class="f-tag">Calculated in LearnScroll with ${esc(f.ref)} (${esc(books['heat-mass-transfer'] ? books['heat-mass-transfer'].short : 'Heat and Mass Transfer')}).</p>`;
+    }
     if (it.t === 'formula') {
       const f = p.f;
       return `<div class="sh-eq">${texHTML(f.tex)}</div>${f.notes ? `<div class="sh-mine"><span class="sh-lab">My note</span>${esc(f.notes).replace(/\n/g, '<br>')}</div>` : ''}`;
@@ -134,5 +139,16 @@ const Sheets = (() => {
     const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(s.title)}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"><style>${css}</style></head><body><h1>${esc(s.title)}</h1><p class="sh-lab">LearnScroll study sheet · ${new Date().toLocaleDateString()} · equations pre-rendered; their fonts load from cdn.jsdelivr.net</p>${box.innerHTML}</body></html>`;
     download(`${s.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'study-sheet'}.html`, html, 'text/html');
   }
-  return { route: parts => { if (parts[1] === 'new') return create(parts[2] && books[parts[2]] ? parts[2] : '', Number(parts[3]) || 0, true); if (parts[1]) return render(parts[1]); renderList(); }, count: () => Object.keys(all()).length };
+  // Calculation workspace hook: append a result to a sheet (validated like everything else in studydata).
+  function addCalc(sheetId, item) {
+    let id = sheetId, created = false;
+    if (!id || !all()[id]) { const now = Date.now(); id = `s-${now.toString(36)}${Math.random().toString(36).slice(2, 5)}`; all()[id] = { title: 'Calculations', items: [], at: now, updated: now }; created = true; }
+    const s = all()[id], before = JSON.stringify(s), undo = () => { if (created) delete all()[id]; else all()[id] = JSON.parse(before); };
+    try { StudyData.validSheet({ ...s, items: [...s.items, item] }, id, BOOK_IDS); } catch (e) { undo(); return { ok: false, error: e.message }; }
+    s.items.push(item); s.updated = Date.now();
+    if (!save()) { undo(); return { ok: false, error: 'Not saved: browser storage is full or disabled.' }; }
+    return { ok: true, id, title: s.title };
+  }
+  const list = () => Object.keys(all()).sort((a, b) => all()[b].updated - all()[a].updated).map(id => ({ id, title: all()[id].title }));
+  return { addCalc, list, route: parts => { if (parts[1] === 'new') return create(parts[2] && books[parts[2]] ? parts[2] : '', Number(parts[3]) || 0, true); if (parts[1]) return render(parts[1]); renderList(); }, count: () => Object.keys(all()).length };
 })();

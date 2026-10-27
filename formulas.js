@@ -17,7 +17,7 @@ const Formulas = (() => {
     catch (e) { return `<div class="f-err" role="note">This LaTeX can’t be displayed: ${esc(String(e.message || e).replace(/^KaTeX parse error:\s*/, ''))}</div><code class="f-src">${esc(t)}</code>`; }
   }
   // ---- reader: one "Save formula" control under each card equation ----
-  const saveBtn = id => `<div class="eq-act"><button class="t-link f-save" data-fsave="${id}">Save formula</button></div>`;
+  const saveBtn = (id, extra = '') => `<div class="eq-act"><button class="t-link f-save" data-fsave="${id}">Save formula</button>${extra}</div>`;
   function paint(root, book) {
     root.querySelectorAll('.f-save').forEach(b => {
       const on = !!all()[cardFid(book.id, b.dataset.fsave)];
@@ -59,7 +59,7 @@ const Formulas = (() => {
     return `<li class="f-item${ui.focus === id ? ' hl' : ''}" id="${id}"><div class="f-top"><h2>${esc(f.title)}</h2><span class="f-acts">${ui.del === id
       ? `<span class="f-confirm">Delete this formula?</span><button class="t-link danger" data-fdel-yes="${id}">Delete</button><button class="t-link" data-fdel-no>Keep</button>`
       : `<button class="t-link" data-fedit="${id}">Edit</button><button class="t-link" data-fdel="${id}">Delete</button>`}</span></div>
-      <div class="f-where">${where}</div>${tex(f.tex)}
+      <div class="f-where">${where}</div>${tex(f.tex)}${f.kind === 'card' && src && Calc.linksFor(f.book, f.card) ? `<div class="f-calc">${Calc.linksFor(f.book, f.card)}</div>` : ''}
       ${src ? `<div class="f-card"><span class="f-lab">Card text (symbols and units as the card states them)</span><p>${src.c.t}</p></div>` : ''}
       ${f.notes ? `<div class="f-notes"><span class="f-lab">Your notes</span><p>${esc(f.notes).replace(/\n/g, '<br>')}</p></div>` : ''}</li>`;
   }
@@ -82,7 +82,7 @@ const Formulas = (() => {
       <div class="book-head"><div><h1>Formula notebook</h1><p class="meta-line">${plural(ids.length, 'formula')} · saved in this browser</p></div></div>
       <div class="f-bar"><label class="sr" for="f-q">Search formulas</label><input id="f-q" type="search" placeholder="Search by title, symbol or concept" value="${esc(ui.q)}" autocomplete="off">
         <label class="sr" for="f-book">Book</label><select id="f-book"><option value="">All books</option>${bookOpts.map(id => `<option value="${id}"${ui.book === id ? ' selected' : ''}>${esc(books[id].short)}</option>`).join('')}<option value="custom"${ui.book === 'custom' ? ' selected' : ''}>Your formulas</option></select>
-        <button class="btn ghost sm" id="f-new">New formula</button></div>
+        <button class="btn ghost sm" id="f-new">New formula</button><a class="t-link c-ws" href="#/calc">Calculation workspace →</a></div>
       ${ui.edit === 'new' ? `<div class="f-item editing">${editorHTML(null)}</div>` : ''}
       ${!ids.length ? `<div class="marked-empty"><p>No formulas saved yet.</p><p>In the reader, use <b>Save formula</b> under a card’s equation, or add your own with <b>New formula</b>.</p></div>`
         : !shown.length ? `<div class="marked-empty"><p>No formulas match${ui.q ? ` “${esc(ui.q)}”` : ''}${ui.book ? ' in this book' : ''}.</p></div>`

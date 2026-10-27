@@ -138,6 +138,7 @@ function route() {
   if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'formulas') return Formulas.render(parts[1]);
   if (parts[0] === 'sheets') return Sheets.route(parts);
+  if (parts[0] === 'calc') return Calc.route(parts);
   if (parts[0] === 'revision') return renderRevision(books[parts[1]] ? books[parts[1]] : null);
   if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
@@ -857,13 +858,13 @@ function markedHTML(book, kind) {
 // Card kinds come from the existing fields: eq → equation, def → definition, ex → worked example.
 const markBtns = id => `<span class="marks"><button class="mark" data-mark="n" data-id="${id}" aria-expanded="false" title="Add a note to this card">Add note</button><button class="mark" data-mark="b" data-id="${id}" aria-pressed="false" title="Bookmark (B)">Bookmark</button><button class="mark" data-mark="d" data-id="${id}" aria-pressed="false" title="Mark as difficult (D)">Difficult</button></span>`;
 const noteEditor = id => `<div class="note-ed" data-note="${id}" hidden><label class="sr" for="ne-${id}">Your note</label><textarea id="ne-${id}" rows="3" maxlength="4000" placeholder="Your note on this card (plain text, saved in this browser)…"></textarea><div class="note-row"><span class="note-status" aria-live="polite"></span><span><button class="t-link note-del">Delete note</button><button class="t-link note-close">Close <kbd>esc</kbd></button></span></div></div>`;
-function cardHTML(c, i, ch) {
+function cardHTML(c, i, ch, bookId) {
   const tags = [c.eq && '<span class="tag eq-t">Equation</span>', c.def && '<span class="tag def-t">Definition</span>', c.ex && '<span class="tag">Example</span>'].filter(Boolean).join('');
   return `<section class="card" aria-label="${esc(c.h)}"><div class="card-body">
     <div class="sec"><span>${esc(c.s)}</span>${tags}${markBtns(screenId(ch, i))}</div>
     <h2>${esc(c.h)}</h2>
     <p>${c.t}</p>
-    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i))}` : ''}
+    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i), bookId ? Calc.linksFor(bookId, screenId(ch, i)) : '')}` : ''}
     ${c.def ? `<div class="note"><span class="label">Definition</span>${c.def}</div>` : ''}
     ${c.ex ? `<div class="note example"><span class="label">Example</span>${c.ex}</div>` : ''}
     ${noteEditor(screenId(ch, i))}
@@ -894,8 +895,8 @@ function renderReader(book, ch, at = null, sess = null) {
     <div class="track" role="progressbar" aria-label="Chapter progress" aria-valuemin="0" aria-valuemax="${total}" id="track"><div class="line" id="line"></div></div>
     ${sess ? '<div class="sess-msg" id="sessMsg" role="status" hidden></div>' : ''}
     <main class="feed" id="feed">
-      ${sess ? sess.items.map(({ ch: c2, i }) => i < c2.cards.length ? cardHTML(c2.cards[i], i, c2).replace('<div class="sec">', `<div class="sec"><span class="sess-from">Ch ${c2.n} · </span>`) : quizHTML(c2.quiz[i - c2.cards.length], i - c2.cards.length, c2.quiz.length, c2)).join('') + `<section class="card end"><div class="card-body"><div class="sec"><span>End of session queue</span></div><h2>That’s every card in this session.</h2><p>Nice, steady work. See your summary when you’re ready.</p><div class="btns"><button class="btn" id="endSess2">See summary</button></div></div></section>` : `
-      ${ch.cards.map((c, i) => cardHTML(c, i, ch)).join('')}
+      ${sess ? sess.items.map(({ ch: c2, i }) => i < c2.cards.length ? cardHTML(c2.cards[i], i, c2, book.id).replace('<div class="sec">', `<div class="sec"><span class="sess-from">Ch ${c2.n} · </span>`) : quizHTML(c2.quiz[i - c2.cards.length], i - c2.cards.length, c2.quiz.length, c2)).join('') + `<section class="card end"><div class="card-body"><div class="sec"><span>End of session queue</span></div><h2>That’s every card in this session.</h2><p>Nice, steady work. See your summary when you’re ready.</p><div class="btns"><button class="btn" id="endSess2">See summary</button></div></div></section>` : `
+      ${ch.cards.map((c, i) => cardHTML(c, i, ch, book.id)).join('')}
       ${quiz.map((q, i) => quizHTML(q, i, quiz.length, ch)).join('')}`}
       ${sess ? '' : `<section class="card end"><div class="card-body">
         <div class="sec"><span>End of chapter ${ch.n}</span></div>

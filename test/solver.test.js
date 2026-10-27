@@ -88,3 +88,30 @@ test('route GET: status + own counters, read-only, works while disabled', async 
   assert.equal(r.status, 200); assert.equal(r.body.enabled, false); assert.deepEqual(r.body.usage, { ip: '9.9.9.9', minute: 1, day: 1, global: 1 });
   assert.equal(m.size, 3, 'GET does not increment');
 });
+
+// Retrieval states: decided from the File Search call, never from the model. Citations without passages are cleared.
+const LONG = 'Fourier law states that the rate of heat conduction through a plane layer is proportional to the temperature difference across the layer and the heat transfer area.';
+const kbF = { forBook: () => ({ vectorStoreId: 'vs_test', fileId: 'f-book' }) };
+const out3 = {
+  retrieved: { searched: true, results: 2, passages: [{ fileId: 'f-book', score: 0.9, text: LONG }, { fileId: 'other', score: 0.95, text: LONG + ' other' }] },
+  none: { searched: true, results: 0, passages: [] },
+  failed: { searched: true, searchFailed: true, results: 0, passages: [] },
+  notRun: { searched: false, results: 0, passages: [] },
+};
+for (const [name, o] of Object.entries(out3)) {
+  test(`retrieval state via route: ${name}`, async () => {
+    const p = { async respond() { return { text: good, usage: { input: 1, output: 1 }, ...o }; } };
+    const r = await call('POST', okBody, { env: ON, store: mapStore(), provider: p, knowledge: kbF }, 'ip-' + name);
+    assert.equal(r.status, 200);
+    const want = name === 'retrieved' ? 'retrieved' : name === 'none' ? 'none' : 'failed';
+    assert.equal(r.body.retrieval.status, want);
+    if (want === 'retrieved') {
+      assert.equal(r.body.retrieval.passages.length, 1, 'only this book file'); assert.equal(r.body.solution.equations[0].source, 'Ch 1');
+    } else {
+      assert.deepEqual(r.body.retrieval.passages, []);
+      assert.ok(r.body.solution.equations.every(e => e.source === ''), 'no equation citation without retrieval');
+      assert.equal(r.body.solution.fromTextbook, ''); assert.equal(r.body.solution.sourceNote, '');
+      assert.match(r.body.solution.additionalExplanation, /Fourier law for 1-D/, 'model text kept as additional explanation');
+    }
+  });
+}

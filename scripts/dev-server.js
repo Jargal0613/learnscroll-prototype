@@ -8,6 +8,7 @@ const types = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'applic
 http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/api/tutor') return handler(req, res);
+  if (url === '/api/solve') return require('../api/solve')(req, res);
   const rel = path.normalize(url === '/' ? '/index.html' : url).replace(/^(\.\.[/\\])+/, '');
   if (/^[/\\](private|api|scripts|test|\.git)([/\\]|$)/.test(rel)) { res.statusCode = 404; return res.end('Not found'); }
   fs.readFile(path.join(root, rel), (err, buf) => {

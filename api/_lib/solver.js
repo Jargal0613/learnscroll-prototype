@@ -66,6 +66,27 @@ async function solve(req, { env = process.env, provider, store, ip, book, knowle
   const lim = await limit(store, { ip }); if (!lim.ok) throw Object.assign(new Error('Too many problems right now. Try again later.'), { code: 'rate_limited', status: 429, retryAfter: lim.retryAfter });
   const { instructions, input } = buildPrompt({ book, problem: req.problem });
   const out = await provider.respond({ instructions, input, vectorStoreId: kb.vectorStoreId, format: { type: 'json_schema', name: 'solution', strict: true, schema: SCHEMA } });
-  return { solution: parse(out.text), usage: out.usage || null };
+  const solution = parse(out.text);
+  return { solution: enforceSources(solution, retrievalOf(out, kb, req.problem)), retrieval: retrievalOf(out, kb, req.problem), usage: out.usage || null };
 }
-module.exports = { limitKeys, enabled, validate, buildPrompt, parse, limit, solve, LIMITS, SCHEMA };
+// Three distinct retrieval states, decided on the server from the File Search call itself (never from the model):
+//  - 'retrieved': the search ran and returned passages from THIS book's file (excerpts are passed to the UI);
+//  - 'none':      the search ran and returned nothing usable from this book;
+//  - 'failed':    the search did not run or reported failed/incomplete.
+function retrievalOf(out, kb, problem) {
+  const { excerpt, verifiedChapter } = require('./tutor');
+  const searched = !!out.searched, failed = !searched || !!out.searchFailed;
+  const passages = (out.passages || []).filter(x => x.fileId === kb.fileId).sort((a, b) => b.score - a.score)
+    .map(x => ({ excerpt: excerpt(x.text, problem), chapter: verifiedChapter(x.text) }))
+    .filter(x => x.excerpt.length >= 40).filter((x, i, a) => a.findIndex(y => y.excerpt === x.excerpt) === i).slice(0, 3);
+  const status = failed ? 'failed' : passages.length ? 'retrieved' : 'none';
+  return { status, searched, results: Number(out.results) || 0, passages: status === 'retrieved' ? passages : [] };
+}
+// Never show a textbook citation the retrieval can't back: without retrieved passages, equation sources and the
+// "From the textbook" paragraph are cleared (the text moves to "Additional explanation" so nothing is lost).
+function enforceSources(sol, r) {
+  if (r.status === 'retrieved') return sol;
+  const moved = sol.fromTextbook ? [sol.fromTextbook, sol.additionalExplanation].filter(Boolean).join(' ') : sol.additionalExplanation;
+  return { ...sol, equations: sol.equations.map(e => ({ ...e, source: '' })), fromTextbook: '', additionalExplanation: moved, sourceNote: '' };
+}
+module.exports = { retrievalOf, enforceSources, limitKeys, enabled, validate, buildPrompt, parse, limit, solve, LIMITS, SCHEMA };

@@ -222,7 +222,15 @@
     setBusy(false); input.focus();
   }
   const mathText = t => esc(t); // steps may contain \( \) math; KaTeX auto-render handles it after insert
-  function solutionHTML(x) {
+  // Where the solution's textbook support came from, decided by the server from the File Search call itself.
+  function retrievalHTML(r) {
+    if (!r || typeof r !== 'object') return '';
+    if (r.status === 'retrieved' && (r.passages || []).length) return `<details class="t-src sv-ret" data-ret="retrieved"><summary>Source retrieved from the textbook (${r.passages.length} passage${r.passages.length === 1 ? '' : 's'})</summary>${r.passages.map(x => `<div class="t-pass"><div class="t-pass-h">Retrieved passage <span>· ${esc(ctx ? ctx.book.short : '')}${x.chapter ? ` · Ch ${esc(x.chapter)}` : ''}</span></div><p>${esc(x.excerpt)}</p></div>`).join('')}<div class="t-pass-note">Page number unavailable. Retrieved as relevant context; not a sentence-by-sentence citation.</div></details>`;
+    if (r.status === 'none') return '<div class="t-src sv-ret none" data-ret="none"><b>No relevant textbook passage found.</b> The search ran but found nothing from this book for this problem, so nothing below is marked “From the textbook”. Check the steps against your notes.</div>';
+    if (r.status === 'failed') return '<div class="t-src sv-ret none" data-ret="failed"><b>Textbook search failed.</b> The book couldn’t be searched for this problem, so nothing below is marked “From the textbook”. Try again later if you need the textbook source.</div>';
+    return '';
+  }
+  function solutionHTML(x, r) {
     const row = (h, body) => body ? `<div class="sv-row"><div class="sv-h">${h}</div><div class="sv-b">${body}</div></div>` : '';
     const list = a => (a || []).length ? `<ul>${a.map(t => `<li>${mathText(t)}</li>`).join('')}</ul>` : '';
     const eqs = (x.equations || []).map(e => `<div class="sv-eq">${esc('\\[' + e.tex + '\\]')}<span class="sv-src">${e.source ? 'From the textbook · ' + esc(e.source) : 'Additional explanation (not stated in a retrieved passage)'}</span></div>`).join('');
@@ -231,10 +239,10 @@
     const ans = x.result ? `<b class="sv-ans">${esc(x.result.value)} ${esc(x.result.unit)}</b>` : '';
     const book = x.fromTextbook ? `<div class="sv-part"><h4>From the textbook</h4><p>${mathText(x.fromTextbook)}</p></div>` : '';
     const more = x.additionalExplanation ? `<div class="sv-part extra"><h4>Additional explanation</h4><p>${mathText(x.additionalExplanation)}</p></div>` : '';
-    return `<div class="sv">${row('Given', given)}${row('Find', x.unknown ? mathText(x.unknown) : '')}${row('Assumptions', list(x.assumptions))}${row('Equation', eqs)}${row('Substitution', steps)}${row('Units', x.unitCheck ? mathText(x.unitCheck) : '')}${row('Answer', ans)}${row('Sanity check', x.sanityCheck ? mathText(x.sanityCheck) : '')}</div>${book}${more}${x.sourceNote ? `<div class="t-src"><div class="t-src-h">Sources</div><p>${mathText(x.sourceNote)}</p></div>` : ''}`;
+    return `<div class="sv">${row('Given', given)}${row('Find', x.unknown ? mathText(x.unknown) : '')}${row('Assumptions', list(x.assumptions))}${row('Equation', eqs)}${row('Substitution', steps)}${row('Units', x.unitCheck ? mathText(x.unitCheck) : '')}${row('Answer', ans)}${row('Sanity check', x.sanityCheck ? mathText(x.sanityCheck) : '')}</div>${book}${more}${x.sourceNote ? `<div class="t-src"><div class="t-src-h">Sources</div><p>${mathText(x.sourceNote)}</p></div>` : ''}${retrievalHTML(r)}`;
   }
   function msgHTML(m, idx) {
-    if (m.role === 'assistant' && m.solution && typeof m.solution === 'object') return `<div class="t-msg bot solve" data-i="${idx}"><div class="t-who">Problem solver</div><div class="t-body">${solutionHTML(m.solution)}</div></div>`;
+    if (m.role === 'assistant' && m.solution && typeof m.solution === 'object') return `<div class="t-msg bot solve" data-i="${idx}"><div class="t-who">Problem solver</div><div class="t-body">${solutionHTML(m.solution, m.retrieval)}</div></div>`;
     if (m.role === 'user') return `<div class="t-msg user"><div class="t-who">You${m.where ? ` · ${esc(m.where)}` : ''}</div><div class="t-body">${esc(m.content).replace(/\n/g, '<br>')}</div></div>`;
     let src = '';
     if ((m.passages || []).length) {
@@ -340,7 +348,7 @@
       }
       const fresh = conv();
       if (!fresh.messages.length || !fresh.origin) fresh.origin = o;
-      fresh.messages.push({ role: 'user', content: q, where: 'Problem', kind: 'solve', at: Date.now() }, { role: 'assistant', content: solutionSummary(data.solution), solution: data.solution, kind: 'solve', at: Date.now() });
+      fresh.messages.push({ role: 'user', content: q, where: 'Problem', kind: 'solve', at: Date.now() }, { role: 'assistant', content: solutionSummary(data.solution), solution: data.solution, retrieval: data.retrieval && typeof data.retrieval === 'object' ? { status: data.retrieval.status, passages: (data.retrieval.passages || []).slice(0, 3) } : null, kind: 'solve', at: Date.now() });
       fresh.messages = fresh.messages.slice(-60); fresh.draft = '';
       store(fresh);
       ctx.busy = false; setBusy(false); paintAll();

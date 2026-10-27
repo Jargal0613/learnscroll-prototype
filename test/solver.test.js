@@ -81,3 +81,10 @@ test('upstash store: null when unconfigured; throws on HTTP error', async () => 
   const s2 = upstashStore({ KV_REST_API_URL: 'https://x', KV_REST_API_TOKEN: 't' }, async () => ({ ok: true, json: async () => [{ result: 3 }, { result: 1 }] }));
   assert.equal(await s2.incr('k', 60), 3);
 });
+test('route GET: status + own counters, read-only, works while disabled', async () => {
+  const m = new Map(); const st = { incr: async k => { m.set(k, (m.get(k) || 0) + 1); return m.get(k); }, peek: async ks => ks.map(k => m.get(k) || 0) };
+  await S.limit(st, { ip: '9.9.9.9' });
+  const r = await call('GET', undefined, { env: {}, store: st, provider: prov(), knowledge: kb });
+  assert.equal(r.status, 200); assert.equal(r.body.enabled, false); assert.deepEqual(r.body.usage, { ip: '9.9.9.9', minute: 1, day: 1, global: 1 });
+  assert.equal(m.size, 3, 'GET does not increment');
+});

@@ -47,6 +47,10 @@ function parse(text) {
 
 // Fixed-window limiter over an injected store (Upstash/KV in production; Map in tests). Keys never contain the
 // problem text. Returns { ok, retryAfter } and never throws for a store error: on store failure it refuses (fail closed).
+function limitKeys(ip, now = Date.now()) {
+  const day = new Date(now).toISOString().slice(0, 10), min = Math.floor(now / 60000);
+  return { minute: `solve:ip:${ip}:m:${min}`, day: `solve:ip:${ip}:d:${day}`, global: `solve:all:d:${day}` };
+}
 async function limit(store, { ip, now = Date.now(), limits = LIMITS }) {
   const day = new Date(now).toISOString().slice(0, 10), min = Math.floor(now / 60000);
   const keys = [[`solve:ip:${ip}:m:${min}`, limits.perMinute, 60], [`solve:ip:${ip}:d:${day}`, limits.perDay, 86400], [`solve:all:d:${day}`, limits.globalPerDay, 86400]];
@@ -64,4 +68,4 @@ async function solve(req, { env = process.env, provider, store, ip, book, knowle
   const out = await provider.respond({ instructions, input, vectorStoreId: kb.vectorStoreId, format: { type: 'json_schema', name: 'solution', strict: true, schema: SCHEMA } });
   return { solution: parse(out.text), usage: out.usage || null };
 }
-module.exports = { enabled, validate, buildPrompt, parse, limit, solve, LIMITS, SCHEMA };
+module.exports = { limitKeys, enabled, validate, buildPrompt, parse, limit, solve, LIMITS, SCHEMA };

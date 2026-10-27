@@ -3,7 +3,17 @@
 function upstashStore(env = process.env, fetchImpl = globalThis.fetch) {
   const url = env.KV_REST_API_URL || env.UPSTASH_REDIS_REST_URL, token = env.KV_REST_API_TOKEN || env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null;
+  const post = async (path, body) => {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 3000);
+    try {
+      const r = await fetchImpl(url.replace(/\/$/, '') + path, { method: 'POST', signal: ctl.signal, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) throw new Error('limiter http ' + r.status);
+      return await r.json();
+    } finally { clearTimeout(t); }
+  };
   return {
+    // Read-only: current counter values (0 when absent). Used by GET /api/solve to show the caller its own usage.
+    async peek(keys) { const j = await post('/pipeline', keys.map(k => ['GET', k])); return keys.map((k, i) => Number((j[i] || {}).result) || 0); },
     async incr(key, ttl) {
       const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 3000);
       try {

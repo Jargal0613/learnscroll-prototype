@@ -19,9 +19,16 @@ function clientIp(req) { return String(req.headers['x-real-ip'] || (req.headers[
 module.exports = async function handler(req, res, deps = {}) {
   res.setHeader('Cache-Control', 'no-store'); res.setHeader('Content-Type', 'application/json; charset=utf-8');
   const env = deps.env || process.env;
-  if (!S.enabled(env)) return send(res, 404, { error: { code: 'not_found', message: 'Not available.' } });
   const store = deps.store !== undefined ? deps.store : upstashStore(env);
-  if (req.method === 'GET') return send(res, 200, { enabled: true, limiter: !!store, limits: S.LIMITS });
+  if (req.method === 'GET') { // read-only status + the caller's own counters (no problem text, no OpenAI call)
+    const out = { enabled: S.enabled(env), limiter: !!store, limits: S.LIMITS };
+    if (store && store.peek) {
+      const ip = clientIp(req), k = S.limitKeys(ip);
+      try { const [minute, day, global] = await store.peek([k.minute, k.day, k.global]); out.usage = { ip, minute, day, global }; } catch (e) { out.usage = null; out.limiterError = true; }
+    }
+    return send(res, 200, out);
+  }
+  if (!S.enabled(env)) return send(res, 404, { error: { code: 'not_found', message: 'Not available.' } });
   if (req.method !== 'POST') { res.setHeader('Allow', 'GET, POST'); return send(res, 405, { error: { code: 'method_not_allowed', message: 'Use POST.' } }); }
   if (!store) return send(res, 503, { error: { code: 'limiter_unavailable', message: 'The problem solver is temporarily unavailable.' } });
   const body = await readBody(req);

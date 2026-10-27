@@ -140,6 +140,7 @@ function route() {
   if (parts[0] === 'sheets') return Sheets.route(parts);
   if (parts[0] === 'calc') return Calc.route(parts);
   if (parts[0] === 'practice') return Practice.route(parts);
+  if (parts[0] === 'progress') return Progress.render(parts[1]);
   if (parts[0] === 'revision') return renderRevision(books[parts[1]] ? books[parts[1]] : null);
   if (parts[0] === 'usability' && USABILITY_DEV) return renderUsability();
   if (parts[0] === 'mistakes' && books[parts[1]]) { const ch = books[parts[1]].chapters.find(c => c.n === Number(parts[2])); if (ch && ready(ch)) return renderMistakes(books[parts[1]], ch); }
@@ -240,7 +241,7 @@ function renderHome() {
     ${attentionHTML()}
     ${sessionHomeHTML()}
     ${reviewHomeHTML(ids)}
-    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span><span aria-hidden="true">·</span><a href="#/sheets">Study sheets</a><span>${plural(Sheets.count(), 'sheet')}</span><span aria-hidden="true">·</span><a href="#/revision">Revision plan</a><span aria-hidden="true">·</span><a href="#/practice">Problem practice</a></p>
+    <p class="tools-line"><a href="#/formulas">Formula notebook</a><span>${plural(Formulas.count(), 'formula')}</span><span aria-hidden="true">·</span><a href="#/sheets">Study sheets</a><span>${plural(Sheets.count(), 'sheet')}</span><span aria-hidden="true">·</span><a href="#/revision">Revision plan</a><span aria-hidden="true">·</span><a href="#/practice">Problem practice</a><span aria-hidden="true">·</span><a href="#/progress">My progress</a></p>
     <div class="section-h"><span>Library</span><span>${plural(ids.length, 'book')}</span></div>
     <div class="grid">${ids.map(id => {
       const b = books[id], p = bookProgress(b);

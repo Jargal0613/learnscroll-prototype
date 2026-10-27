@@ -729,6 +729,21 @@
   .rc-kind { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg-2); }
   .rc-kind.k-prereq { border-color: var(--accent-line); }
   .rc-add { margin-left: auto; }
+  /* My progress */
+  .pg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; max-width: 900px; margin-top: 16px; }
+  .pg-box, .pg-sec { padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); }
+  .pg-box h2, .pg-sec h2 { font-size: 14px; margin: 0 0 8px; color: var(--fg-2); font-weight: 500; }
+  .pg-num { font-size: 26px; margin: 0; } .pg-num span { font-size: 13px; color: var(--fg-2); }
+  .pg-nd { display: block; color: var(--fg-2); font-style: italic; }
+  .pg-sec { max-width: 900px; margin-top: 12px; box-sizing: border-box; }
+  .pg-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  .pg-days { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+  .pg-days li { display: grid; grid-template-columns: 40px 1fr 28px; align-items: center; gap: 8px; font-size: 13px; }
+  .pg-days i { display: block; height: 6px; width: var(--w); background: var(--accent-line); border-radius: 3px; }
+  .pg-days b { font-weight: 400; text-align: right; color: var(--fg-2); }
+  .pg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pg-table th, .pg-table td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line-strong); }
+  .pg-table th { color: var(--fg-2); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -744,5 +759,6 @@
 <script defer src="practicecore.js"></script>
 <script defer src="practice.js"></script>
 <script defer src="connections.js"></script>
+<script defer src="progress.js"></script>
 </body>
 </html>

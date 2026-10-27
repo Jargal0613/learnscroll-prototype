@@ -1,8 +1,8 @@
 // LearnScroll study data export / import: pure, testable logic (browser global StudyData + CommonJS).
 // Nothing here touches the network; the app reads/writes localStorage and calls these functions.
 (function (root) {
-  const APP = 'learnscroll', VERSION = 4, VERSIONS = [1, 2, 3, 4]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
-  const SCHEMA = 4, JOURNAL_KEY = 'learnscroll-write-journal';
+  const APP = 'learnscroll', VERSION = 5, VERSIONS = [1, 2, 3, 4, 5]; // VERSION: export-file format. SCHEMA: saved-data (localStorage) layout.
+  const SCHEMA = 5, JOURNAL_KEY = 'learnscroll-write-journal';
   const STUDY_KEY = 'learnscroll-study-v1', TUTOR_KEY = 'learnscroll-tutor-v1', SESSION_KEY = 'learnscroll-session-v1';
   const STYLES = ['default', 'simple', 'math', 'example'];
   const TEXT_SIZES = ['small', 'default', 'large'];
@@ -140,9 +140,28 @@
     });
     return { target: r.target || 10, log };
   }
+  // Guided problem practice (schema 5, optional): per textbook problem, the student's attempts per step (what they
+  // entered, whether the local check accepted it), hints used, steps revealed, steps they struggled with, solved.
+  const PRACTICE_RE = /^ex\d{1,2}-\d{1,2}$/, PSTEPS = ['knowns', 'equation', 'substitution', 'calculation', 'units'], MAX_P_ATTEMPTS = 100;
+  function validPracticeOne(x, w) {
+    if (!isObj(x)) fail(`${w} must be an object.`); onlyKeys(x, ['attempts', 'hints', 'revealed', 'struggled', 'solved', 'updated'], w);
+    if (!Array.isArray(x.attempts) || x.attempts.length > MAX_P_ATTEMPTS) fail(`${w}.attempts must be a list (max ${MAX_P_ATTEMPTS}).`);
+    const attempts = x.attempts.map((a, i) => {
+      const aw = `${w}.attempts[${i}]`; if (!isObj(a)) fail(`${aw} must be an object.`); onlyKeys(a, ['step', 'v', 'ok', 'at'], aw);
+      if (!PSTEPS.includes(a.step) || !isTime(a.at) || !(a.ok === true || a.ok === false || a.ok === null) || (a.v !== undefined && (typeof a.v !== 'string' || a.v.length > 2000))) fail(`${aw} is invalid.`);
+      return { step: a.step, ...(a.v !== undefined ? { v: a.v } : {}), ok: a.ok, at: a.at };
+    });
+    const hints = {}; if (!isObj(x.hints || {})) fail(`${w}.hints must be an object.`);
+    for (const [k, n] of Object.entries(x.hints || {})) { if (!PSTEPS.includes(k) || !Number.isInteger(n) || n < 0 || n > 9) fail(`${w}.hints.${k} is invalid.`); hints[k] = n; }
+    const steps = (v, nm) => { if (v === undefined) return []; if (!Array.isArray(v) || v.some(s => !PSTEPS.includes(s)) || new Set(v).size !== v.length) fail(`${w}.${nm} must list distinct steps.`); return v.slice(); };
+    if (x.solved !== undefined && typeof x.solved !== 'boolean') fail(`${w}.solved must be true or false.`);
+    if (!isTime(x.updated)) fail(`${w}.updated must be a timestamp.`);
+    return { attempts, hints, revealed: steps(x.revealed, 'revealed'), struggled: steps(x.struggled, 'struggled'), solved: !!x.solved, updated: x.updated };
+  }
+  const validPractice = o => mapOf(o, PRACTICE_RE, 'study.practice', validPracticeOne);
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets', 'revision'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets', 'revision', 'practice'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -181,6 +200,7 @@
     if (s.formulas !== undefined) out.formulas = validFormulas(s.formulas, bookIds); // absent in files before format 3
     if (s.sheets !== undefined) out.sheets = validSheets(s.sheets, bookIds);
     if (s.revision !== undefined) out.revision = validRevision(s.revision);
+    if (s.practice !== undefined) out.practice = validPractice(s.practice);
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -304,6 +324,7 @@
     study.formulas = isObj(s.formulas) ? s.formulas : {};
     study.sheets = isObj(s.sheets) ? s.sheets : {};
     if (isObj(s.revision)) study.revision = s.revision;
+    if (isObj(s.practice)) study.practice = s.practice;
     const conversations = {};
     for (const [k, v] of Object.entries(t)) if (k !== '_prefs' && isObj(v)) conversations[k] = v;
     return { study, tutor: { prefs: isObj(t._prefs) ? { ...t._prefs } : {}, conversations }, session };
@@ -387,6 +408,7 @@
     const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
     study.formulas = mergeById(L.formulas, I.formulas);
     study.sheets = mergeById(L.sheets, I.sheets);
+    if (L.practice || I.practice) study.practice = mergeById(L.practice, I.practice); // same problem: most recently worked copy kept
     if (L.revision || I.revision) { // histories combined (deduplicated, oldest first); this browser's target kept
       const log = {}, a = (L.revision || {}).log || {}, b = (I.revision || {}).log || {};
       for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const seen = new Set(); log[k] = [...(a[k] || []), ...(b[k] || [])].filter(e => { const x = e.a + e.at; if (seen.has(x)) return false; seen.add(x); return true; }).sort((x, y) => x.at - y.at).slice(-MAX_REV_LOG); }
@@ -422,6 +444,10 @@
         file: incoming.study.revision === undefined ? 'Not in the file' : 'Included',
         merge: incoming.study.revision === undefined ? 'Kept as it is' : 'History combined; this browser\u2019s target kept',
         replace: incoming.study.revision === undefined ? 'Kept (the file has none)' : 'Replaced by the file' },
+      { key: 'practice', label: 'Problem practice (attempts, hints used, steps you struggled with)',
+        file: incoming.study.practice === undefined ? 'Not in the file' : n(Object.keys(incoming.study.practice).length, 'problem'),
+        merge: incoming.study.practice === undefined ? 'Kept as it is' : 'Combined (same problem: most recently worked copy kept)',
+        replace: incoming.study.practice === undefined ? 'Kept (the file has none)' : 'Replaced by the file' },
       { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
         file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
         merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
@@ -440,6 +466,7 @@
     if (study.formulas === undefined) study.formulas = local.study.formulas || {}; // older file: not part of it, kept
     if (study.sheets === undefined) study.sheets = local.study.sheets || {};
     if (study.revision === undefined && local.study.revision) study.revision = local.study.revision;
+    if (study.practice === undefined && local.study.practice) study.practice = local.study.practice;
     return {
       study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
@@ -462,6 +489,7 @@
     } },
     { from: 2, note: 'Add the formula notebook (empty); nothing else changes.', run(s) { if (!isObj(s.formulas)) s.formulas = {}; } },
     { from: 3, note: 'Study sheets may now hold calculation results (new item type); existing data is unchanged.', run() {} },
+    { from: 4, note: 'Adds optional guided-practice progress (study.practice); existing data is unchanged.', run() {} },
   ];
   // Returns { data, from, migrated, future }. `future` means the data came from a newer app version: it is returned
   // unchanged so the caller can back it up before reading what it can.
@@ -530,6 +558,7 @@
     if (s.sheets !== undefined && !isObj(s.sheets)) repaired = true;
     study.sheets = objOr(s.sheets, (k, v) => { try { return SHEET_RE.test(k) && !!validSheet(v, k); } catch (e) { return false; } });
     if (s.revision !== undefined) { try { study.revision = validRevision(s.revision); } catch (e) { repaired = true; } }
+    if (s.practice !== undefined) { if (!isObj(s.practice)) repaired = true; else { const p = objOr(s.practice, (k, v) => { try { return PRACTICE_RE.test(k) && !!validPracticeOne(v, k); } catch (e) { return false; } }); if (Object.keys(p).length !== Object.keys(s.practice).length) repaired = true; study.practice = p; } }
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
     if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
@@ -648,6 +677,6 @@
     const active = items.filter(x => !x.postponed).map(({ order: _o, ...x }) => x), postponed = items.filter(x => x.postponed).map(({ order: _o, ...x }) => x);
     return { target: t, today: active.slice(0, t), later: active.slice(t), postponed };
   }
-  const api = { revisionPlan, TARGETS, validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  const api = { PSTEPS, PRACTICE_RE, validPractice, revisionPlan, TARGETS, validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

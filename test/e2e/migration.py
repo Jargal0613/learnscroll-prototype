@@ -21,7 +21,7 @@ with sync_playwright() as p:
         ctx = b.new_context(viewport={'width': W, 'height': H}, accept_downloads=True); pg = ctx.new_page(); watch(pg, errs)
         # 1. legacy -> current schema
         seed(pg, LEGACY, TUT); st = S(pg)
-        ok(st.get('schema') == 4, f'{W}: legacy data migrated to schema 4 on load')
+        ok(st.get('schema') == 5, f'{W}: legacy data migrated to schema 5 on load')
         h = st['books'][B]
         ok(h['notes'] == LEGACY['books'][B]['notes'] and h['review'] == LEGACY['books'][B]['review'] and h['attempts'] == LEGACY['books'][B]['attempts'] and st['sessionPrefs'] == LEGACY['sessionPrefs'], f'{W}: notes, reviews, attempts, prefs preserved')
         ok(h['marks'] == {'c1-2': {'b': True}}, f'{W}: marks normalised ({h["marks"]})')

@@ -67,7 +67,7 @@ with sync_playwright() as p:
         pg.goto(BASE + '/#/'); pg.wait_for_selector('#exp')
         with pg.expect_download() as d: pg.click('#exp')
         ex = json.load(open(d.value.path()))
-        ok(ex['version'] == 4 and any(i.get('t') == 'calc' for s in ex['study']['sheets'].values() for i in s['items']), f'{W}: calculation exported (format 4)')
+        ok(ex['version'] >= 4 and any(i.get('t') == 'calc' for s in ex['study']['sheets'].values() for i in s['items']), f'{W}: calculation exported (format 4)')
         # notebook: a saved card formula with three calculators (c2-19) lists all three; workspace link
         pg.goto(BASE + f'/#/read/{B}/2/19'); pg.wait_for_timeout(600); pg.locator('.card').nth(18).locator('.f-save').click(); pg.wait_for_timeout(100)
         pg.goto(BASE + '/#/formulas'); pg.wait_for_selector('.f-list')

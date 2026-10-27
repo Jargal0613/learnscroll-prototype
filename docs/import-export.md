@@ -3,7 +3,7 @@
 Everything LearnScroll stores lives in this browser's `localStorage`. **Export study data** (library footer)
 downloads one JSON file; **Import study data** reads one back. Nothing is uploaded anywhere.
 
-## What a backup contains (export format version 4)
+## What a backup contains (export format version 5)
 
 | Category | Included | Notes |
 |---|---|---|
@@ -20,6 +20,7 @@ downloads one JSON file; **Import study data** reads one back. Nothing is upload
 | Revision plan (daily target, Postpone / Understood history) | always, when set | since format 3 |
 | Study sheets (title and the ordered list of picked items; the items themselves are referenced, not copied) | always | since format 3 |
 | Calculation results added to a study sheet (calculator, solved variable, inputs with units, result) | always, inside sheets | since format 4 |
+| Problem practice (per textbook example: your attempts per step, hints used, steps revealed, steps you struggled with, solved) | always, when you have practised | since format 5 |
 
 **Never exported or imported (intentionally):** copies of unreadable data kept for recovery
 (`*-corrupt-backup`), pre-upgrade copies (`*-pre-schema-N`), the interrupted-import journal, whether the getting-started guide was dismissed, and anything on the

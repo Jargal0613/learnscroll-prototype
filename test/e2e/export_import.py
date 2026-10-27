@@ -28,7 +28,7 @@ with sync_playwright() as p:
     pg.check('#exp-conv')
     with pg.expect_download() as dl: pg.click('#exp')
     path=tempfile.gettempdir()+f'/exp-{TAG}-{W}.json'; dl.value.save_as(path); d=json.load(open(path))
-    ok(d['app']=='learnscroll' and d['version']==4 and 'exportedAt' in d and d['tutor']['prefs'].get('style')=='simple' and 'conversations' in d['tutor'], 'export file versioned, has prefs+conversations '+dl.value.suggested_filename)
+    ok(d['app']=='learnscroll' and d['version']==5 and 'exportedAt' in d and d['tutor']['prefs'].get('style')=='simple' and 'conversations' in d['tutor'], 'export file versioned, has prefs+conversations '+dl.value.suggested_filename)
     ok(d['study']['books']['heat-mass-transfer']['notes']['c1-13']['text'].startswith('Fourier'), 'export has note')
     # clear + import (round-trip)
     pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(600)

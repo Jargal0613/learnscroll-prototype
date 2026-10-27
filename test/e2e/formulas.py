@@ -55,7 +55,7 @@ with sync_playwright() as p:
         # export/import
         pg.goto(BASE + '/#/'); pg.wait_for_selector('#exp'); ok('2 formulas' in pg.inner_text('.tools-line'), f'{W}: library links to the notebook with a count')
         with pg.expect_download() as d: pg.click('#exp')
-        ex = json.load(open(d.value.path())); ok(ex['version'] == 4 and len(ex['study']['formulas']) == 2, f'{W}: formulas in export (format 4)')
+        ex = json.load(open(d.value.path())); ok(ex['version'] == 5 and len(ex['study']['formulas']) == 2, f'{W}: formulas in export (format 5)')
         pg.evaluate('localStorage.clear()'); pg.reload(); pg.wait_for_selector('#imp')
         pg.set_input_files('#imp-file', d.value.path()); pg.wait_for_selector('#imp-over'); ok('Formula notebook' in pg.inner_text('.imp-plan'), f'{W}: import plan lists formulas')
         pg.uncheck('#imp-backup'); pg.click('#imp-over'); pg.wait_for_timeout(400); ok(len(F(pg)) == 2, f'{W}: formulas restored by import')

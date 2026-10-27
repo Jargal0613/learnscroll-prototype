@@ -117,10 +117,10 @@ test('quota: journal start reports failure instead of throwing; recovery that hi
 test('tutor + session stores share the schema: legacy upgraded, future/invalid flagged, data untouched', () => {
   const t = SD.migrateTutor(clone(TUTOR)); assert.equal(t.migrated, true); assert.equal(t.data._schema, SD.SCHEMA);
   const { _schema, ...rest } = t.data; assert.deepEqual(rest, TUTOR);
-  assert.equal(SD.migrateTutor({ ...TUTOR, _schema: 9 }).future, true);
+  assert.equal(SD.migrateTutor({ ...TUTOR, _schema: 99 }).future, true);
   const sess = { book: 'heat-mass-transfer', minutes: 20, start: T1, ids: ['c1-1', 'c1-q1'], pos: 1, viewed: { 'c1-1': true }, marked: {}, active: 30, visibleSince: null, lastSeen: T2 };
   const s = SD.migrateSession(clone(sess)); assert.equal(s.migrated, true); assert.equal(s.data.schema, SD.SCHEMA); assert.equal(s.data.active, 30);
-  assert.equal(SD.migrateSession({ ...sess, schema: 5 }).future, true);
+  assert.equal(SD.migrateSession({ ...sess, schema: 99 }).future, true);
   assert.equal(SD.migrateSession('x').invalid, true);
 });
 test('export v2 carries the session in progress; round trip, merge and replace semantics; v1 files still import', () => {
@@ -250,13 +250,13 @@ test('revision plan: deterministic ranking, reasons, target, Postpone/Understood
 // Schema 4: study sheets can hold calculation results. Added BEFORE the calculator stores anything.
 test('schema 3 -> 4 keeps everything; calc sheet items round-trip through export/import', () => {
   const v3 = { schema: 3, books: {}, recent: [], sessions: [], formulas: {}, sheets: { 's-abcd': { title: 'Old', items: [{ t: 'bookmark', book: 'heat-mass-transfer', card: 'c1-2' }], at: T1 } } };
-  const m = SD.migrateStudy(clone(v3)); assert.equal(m.migrated, true); assert.equal(m.from, 3); assert.equal(m.data.schema, 4);
+  const m = SD.migrateStudy(clone(v3)); assert.equal(m.migrated, true); assert.equal(m.from, 3); assert.equal(m.data.schema, SD.SCHEMA);
   assert.deepEqual(m.data.sheets, v3.sheets, 'v3 sheets untouched');
   const calc = { t: 'calc', calc: 'convection', solve: 'h', inputs: { Q: [1200, 'W'], A: [2, 'm²'], Ts: [80, '°C'], Tinf: [20, '°C'] }, result: [10, 'W/m²·K'], at: T2 };
   const sheets = { 's-calc1': { title: 'Calcs', items: [calc], at: T2, updated: T2 } };
-  const study = { ...SD.sanitizeStudy({ schema: 4, books: {}, recent: [], sessions: [] }).study, sheets };
+  const study = { ...SD.sanitizeStudy({ schema: SD.SCHEMA, books: {}, recent: [], sessions: [] }).study, sheets };
   const f = SD.build(SD.fromStorage(JSON.stringify(study), '{}', null), { conversations: true, now: new Date(T2) });
-  assert.equal(f.version, 4);
+  assert.equal(f.version, SD.VERSION);
   const back = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(back.ok, back.error);
   assert.deepEqual(back.data.study.sheets['s-calc1'].items[0], calc);
   const v3file = { ...f, version: 3 }; assert.ok(SD.parse(JSON.stringify({ ...v3file, study: { ...f.study, sheets: {} } }), { bookIds: IDS }).ok, 'format 3 files still import');
@@ -266,4 +266,34 @@ test('calc sheet items: bad shapes are rejected, never stored', () => {
   for (const bad of [{ ...base, calc: 'Bad Id!' }, { ...base, solve: '' }, { ...base, inputs: { Q: [NaN, 'W'] } }, { ...base, inputs: { Q: ['1', 'W'] } }, { ...base, result: [1, ''] }, { ...base, extra: 1 }, { ...base, inputs: { h: [1, 'W'] } }])
     assert.throws(() => SD.validSheet({ title: 'x', items: [bad], at: T1 }, 's', IDS), undefined, JSON.stringify(bad).slice(0, 80));
   assert.deepEqual(SD.validSheet({ title: 'x', items: [base], at: T1 }, 's', IDS).items[0], base);
+});
+
+// Schema 5: guided practice progress. Added BEFORE the practice page stores anything.
+const PR = { 'ex1-8': { attempts: [{ step: 'equation', v: 'convection', ok: true, at: T1 }, { step: 'calculation', v: '30 W/m²·K', ok: false, at: T1 + 1 }, { step: 'calculation', v: '34.9 W/m²·K', ok: true, at: T1 + 2 }], hints: { calculation: 1 }, revealed: [], struggled: ['calculation'], solved: true, updated: T1 + 2 } };
+test('schema 4 -> 5 keeps everything; practice round-trips through export/import', () => {
+  const v4 = { schema: 4, books: {}, recent: [], sessions: [], formulas: {}, sheets: {} };
+  const m = SD.migrateStudy(clone(v4)); assert.equal(m.migrated, true); assert.equal(m.from, 4); assert.equal(m.data.schema, 5);
+  assert.equal(m.data.practice, undefined, 'nothing invented on upgrade');
+  const study = { ...SD.sanitizeStudy({ schema: 5, books: {}, recent: [], sessions: [] }).study, practice: clone(PR) };
+  const f = SD.build(SD.fromStorage(JSON.stringify(study), '{}', null), { conversations: true, now: new Date(T2) });
+  assert.equal(f.version, 5); assert.deepEqual(f.study.practice, PR);
+  const back = SD.parse(JSON.stringify(f), { bookIds: IDS }); assert.ok(back.ok, back.error); assert.deepEqual(back.data.study.practice, PR);
+  const { practice: _p, ...noP } = f.study; assert.ok(SD.parse(JSON.stringify({ ...f, version: 4, study: noP }), { bookIds: IDS }).ok, 'format 4 files still import');
+});
+test('practice: merge keeps the most recently worked copy; replace keeps local when the file has none', () => {
+  const newer = { ...clone(PR['ex1-8']), attempts: [], solved: false, updated: T2 };
+  const local = SD.fromStorage(JSON.stringify({ books: {}, practice: clone(PR) }), '{}', null);
+  const inc = SD.parse(JSON.stringify({ app: 'learnscroll', version: 5, exportedAt: new Date(T2).toISOString(), study: { books: {}, practice: { 'ex1-8': newer, 'ex2-15': { ...newer } } }, tutor: { prefs: {} } }), { bookIds: IDS }).data;
+  const mg = SD.merge(local, inc); assert.equal(mg.study.practice['ex1-8'].updated, T2); assert.ok(mg.study.practice['ex2-15']);
+  const older = SD.merge(SD.fromStorage(JSON.stringify({ books: {}, practice: { 'ex1-8': newer } }), '{}', null), SD.parse(JSON.stringify({ app: 'learnscroll', version: 5, exportedAt: new Date(T2).toISOString(), study: { books: {}, practice: clone(PR) }, tutor: { prefs: {} } }), { bookIds: IDS }).data);
+  assert.equal(older.study.practice['ex1-8'].updated, T2, 'older file copy does not win');
+  const v4 = SD.parse(JSON.stringify({ app: 'learnscroll', version: 4, exportedAt: new Date(T2).toISOString(), study: { books: {} }, tutor: { prefs: {} } }), { bookIds: IDS }).data;
+  assert.deepEqual(SD.overwrite(local, v4).study.practice, PR, 'replace with an older file keeps practice');
+  assert.ok(SD.importPlan(local, inc).some(r => r.key === 'practice'));
+});
+test('practice: bad shapes rejected on import, dropped (with repair) on load', () => {
+  const bads = [{ 'bad id': PR['ex1-8'] }, { 'ex1-8': { ...PR['ex1-8'], attempts: [{ step: 'magic', ok: true, at: T1 }] } }, { 'ex1-8': { ...PR['ex1-8'], hints: { calculation: -1 } } }, { 'ex1-8': { ...PR['ex1-8'], struggled: ['units', 'units'] } }, { 'ex1-8': { ...PR['ex1-8'], extra: 1 } }];
+  for (const p of bads) assert.equal(SD.parse(JSON.stringify({ app: 'learnscroll', version: 5, exportedAt: new Date(T2).toISOString(), study: { books: {}, practice: p }, tutor: { prefs: {} } }), { bookIds: IDS }).ok, false, JSON.stringify(p).slice(0, 60));
+  const s = SD.sanitizeStudy({ schema: 5, books: {}, practice: { ...clone(PR), 'ex2-1': { nonsense: true } } });
+  assert.equal(s.repaired, true); assert.deepEqual(Object.keys(s.study.practice), ['ex1-8']);
 });

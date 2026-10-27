@@ -15,19 +15,21 @@ with sync_playwright() as p:
         low = t.lower(); ok(not any(w in low for w in ['mastery', 'streak', 'rank', 'score']), f'{W}: no score, streak or ranking words')
         if W != 1728: pg.screenshot(path=f'{OUT}/{W}-empty.png', full_page=True)
         # seed realistic activity
+        pg.wait_for_load_state('networkidle'); pg.wait_for_timeout(300)
         now = pg.evaluate('Date.now()'); D = 86400000
         pg.evaluate("""([k, now, D]) => { const s = JSON.parse(localStorage[k] || '{}'); s.books = s.books || {}; const bs = s.books['heat-mass-transfer'] = s.books['heat-mass-transfer'] || {};
           Object.assign(bs, { chapter: 1, card: 0, done: {}, seen: { 1: 9 }, marks: { 'c1-5': { d: true } }, notes: {}, review: { 'c1-4': { r: 'got', at: now - D } },
             attempts: { 'c1-q1': [{ k: 0, ok: false, at: now - D }, { k: 1, ok: true, at: now - D }], 'c1-q2': [{ k: 0, ok: false, at: now }, { k: 0, ok: false, at: now }], 'c1-q3': [{ k: 1, ok: true, at: now }] } });
           localStorage[k] = JSON.stringify(s); }""", [SK, now, D])
-        pg.reload(); pg.wait_for_selector('.pgpage')
+        pg.reload(); pg.wait_for_selector('.pgpage'); pg.wait_for_load_state('networkidle')
         ok('10 of' in pg.inner_text('#pg-cards') and 'isn’t the same as understanding' in pg.inner_text('#pg-cards'), f'{W}: cards opened 10, with the opened≠understood note')
         ok('40%' in pg.inner_text('#pg-quiz') and 'of 5 answers' in pg.inner_text('#pg-quiz'), f'{W}: quiz 2 of 5 answers correct = 40% ({pg.inner_text("#pg-quiz")!r})')
         needs = pg.locator('#pg-needs li'); ok(needs.count() == 2 and 'Marked difficult' in pg.inner_text('#pg-needs') and 'Missed' in pg.inner_text('#pg-needs'), f'{W}: 2 concepts need review with reasons')
         ok(pg.locator('#pg-recent .pg-days li').count() == 7 and 'Not enough data' not in pg.inner_text('#pg-recent'), f'{W}: 7-day activity shown')
         sw = pg.evaluate('[document.documentElement.scrollWidth, innerWidth]'); ok(sw[0] <= sw[1], f'{W}: no sideways scroll {sw}')
         if W != 1728: pg.screenshot(path=f'{OUT}/{W}-data.png', full_page=True)
-        h1 = pg.inner_text('main'); pg.reload(); pg.wait_for_selector('.pgpage'); ok(pg.inner_text('main') == h1, f'{W}: same numbers after reload (deterministic)')
+        h1 = pg.inner_text('main'); pg.reload(); pg.wait_for_selector('.pgpage'); pg.wait_for_load_state('networkidle'); h2 = pg.inner_text('main')
+        ok(h2 == h1, f'{W}: same numbers after reload (deterministic) {[l for l in h2.splitlines() if l not in h1.splitlines()][:3]}')
         pg.locator('#pg-needs li a').first.click(); pg.wait_for_timeout(700)
         ok(pg.evaluate('location.hash').startswith(f'#/read/{B}/1'), f'{W}: weak area opens its card')
         pg.goto(BASE + '/#/progress'); pg.wait_for_selector('#pg-rev'); pg.click('#pg-rev'); pg.wait_for_timeout(500)

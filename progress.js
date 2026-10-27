@@ -32,14 +32,15 @@ const Progress = (() => {
     };
   }
   function render(bookId) {
-    const book = (bookId && books[bookId]) || Object.values(books)[0];
+    // Fixed choice (never "whichever book loaded first"): the one asked for, else Heat and Mass Transfer, else the first id alphabetically.
+    const ids = Object.keys(books).sort(), book = books[bookId] || books['heat-mass-transfer'] || books[ids[0]];
     if (!book) return renderMissing('No book is loaded yet.', '#/', 'Home');
     document.title = `My progress · ${book.short}`;
     const m = compute(state, book), nd = '<span class="pg-nd">Not enough data</span>';
     const cardName = x => { const ch = book.chapters.find(c => c.n === x.chapter); return x.card < ch.cards.length ? stripTags(ch.cards[x.card].h) : `Practice question ${x.card - ch.cards.length + 1}`; };
     const day = t => new Date(t).toLocaleDateString(undefined, { weekday: 'short' });
     app.innerHTML = `<main class="page cpage pgpage"><a class="back" href="#/">← Home</a>
-      <div class="book-head"><div><h1>My progress</h1><p class="meta-line">${esc(book.title)} · from this browser’s saved data only</p></div></div>
+      <div class="book-head"><div><h1>My progress</h1><p class="meta-line">${esc(book.title)} · from this browser’s saved data only</p>${ids.length > 1 ? `<p class="f-tag pg-books">Book: ${ids.map(id => id === book.id ? `<b>${esc(books[id].short)}</b>` : `<a href="#/progress/${id}">${esc(books[id].short)}</a>`).join(' · ')}</p>` : ''}</div></div>
       <div class="pg-grid">
         <section class="pg-box" id="pg-cards"><h2>Cards opened</h2>${m.cards.opened ? `<p class="pg-num">${m.cards.opened} <span>of ${m.cards.total}</span></p><p class="f-tag">Opening a card isn’t the same as understanding it.${m.cards.reviewedGot ? ` You marked ${m.cards.reviewedGot} as “got it” in review.` : ''}</p>` : nd}</section>
         <section class="pg-box" id="pg-quiz"><h2>Quiz answers</h2>${m.quiz ? `<p class="pg-num">${m.quiz.pct}% <span>correct of ${m.quiz.tries} answers</span></p><p class="f-tag">${m.quiz.latestOk} of ${m.quiz.questions} questions right on your latest try.</p>` : `${nd}<p class="f-tag">${m.quizTries ? `${m.quizTries} answer${m.quizTries === 1 ? '' : 's'} so far; shown from ${MIN_QUIZ}.` : 'Answer some practice questions in the reader.'}</p>`}</section>

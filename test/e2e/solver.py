@@ -5,7 +5,8 @@ from common import *
 import json, urllib.request
 H = 'heat-mass-transfer'
 st = json.loads(urllib.request.urlopen(BASE + '/api/tutor').read())
-ok(st.get('solver') is not True, f'real GET status: solver not enabled on this server (solver={st.get("solver")!r})')
+sv = json.loads(urllib.request.urlopen(BASE + '/api/solve').read())  # read-only status; no solver call
+ok(isinstance(st.get('solver'), bool) and (st['solver'] is False or (sv.get('enabled') and sv.get('limiter'))), f'real GET status: solver={st.get("solver")!r} only offered with the limiter configured ({ {k: sv.get(k) for k in ("enabled", "limiter", "limits")} })')
 BOOKS = {H: True, 'koretsky-thermo': False, 'electric-circuits': False, 'university-physics': False, 'chemistry-silberberg': False}
 SOL = {'givens': [{'symbol': 'k', 'value': '0.8', 'unit': 'W/m·K'}, {'symbol': 'L', 'value': '0.2', 'unit': 'm'}, {'symbol': '\\Delta T', 'value': '50', 'unit': 'K'}],
        'unknown': 'Heat flux \\(q\'\'\\)', 'assumptions': ['Steady, one-dimensional conduction', 'Constant k'],

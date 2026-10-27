@@ -865,7 +865,7 @@ function cardHTML(c, i, ch, bookId) {
     <div class="sec"><span>${esc(c.s)}</span>${tags}${markBtns(screenId(ch, i))}</div>
     <h2>${esc(c.h)}</h2>
     <p>${c.t}</p>
-    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i), bookId ? Calc.linksFor(bookId, screenId(ch, i)) : '')}` : ''}${bookId && typeof Practice !== 'undefined' && Practice.linksFor(bookId, screenId(ch, i)) ? `<div class="p-cardlinks">${Practice.linksFor(bookId, screenId(ch, i))}</div>` : ''}
+    ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i), bookId ? Calc.linksFor(bookId, screenId(ch, i)) : '')}` : ''}${bookId && typeof Practice !== 'undefined' && Practice.linksFor(bookId, screenId(ch, i)) ? `<div class="p-cardlinks">${Practice.linksFor(bookId, screenId(ch, i))}</div>` : ''}${bookId && typeof Connections !== 'undefined' ? Connections.htmlFor(bookId, screenId(ch, i)) : ''}
     ${c.def ? `<div class="note"><span class="label">Definition</span>${c.def}</div>` : ''}
     ${c.ex ? `<div class="note example"><span class="label">Example</span>${c.ex}</div>` : ''}
     ${noteEditor(screenId(ch, i))}

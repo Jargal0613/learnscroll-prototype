@@ -721,6 +721,14 @@
   .p-ai.bad { border-left: 2px solid var(--danger); } .p-ai p { margin: 6px 0 0; white-space: pre-wrap; color: var(--fg-2); }
   .p-full h3 { font-size: 14px; margin: 12px 0 0; }
   .p-cardlinks { margin-top: 6px; }
+  /* Related concepts */
+  .rc { margin-top: 10px; font-size: 13px; }
+  .rc summary { cursor: pointer; color: var(--fg-2); }
+  .rc-list { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 4px; }
+  .rc-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+  .rc-kind { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--fg-2); }
+  .rc-kind.k-prereq { border-color: var(--accent-line); }
+  .rc-add { margin-left: auto; }
 </style>
 </head>
 <body>
@@ -735,5 +743,6 @@
 <script defer src="practicedata.js"></script>
 <script defer src="practicecore.js"></script>
 <script defer src="practice.js"></script>
+<script defer src="connections.js"></script>
 </body>
 </html>

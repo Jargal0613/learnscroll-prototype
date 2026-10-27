@@ -4,7 +4,7 @@
 set -u
 BASE="${1:-http://localhost:8787}"; OUT="${2:-/tmp/learnscroll-e2e}"; PY="${3:-python3}"
 cd "$(dirname "$0")"; fail=0
-for t in first_use search equations session session_picker session_time mistakes quiz_feedback notes_markdown attention tutor_check tutor_continuity tutor_feedback tutor_status keyboard phone text_size contrast equations_all notes_review export_import import_semantics formulas sheets revision migration unified_data workflow reliability usability solver solver_sources calc practice; do
+for t in first_use search equations session session_picker session_time mistakes quiz_feedback notes_markdown attention tutor_check tutor_continuity tutor_feedback tutor_status keyboard phone text_size contrast equations_all notes_review export_import import_semantics formulas sheets revision migration unified_data workflow reliability usability solver solver_sources calc practice connections; do
   echo "== $t"; mkdir -p "$OUT/$t"
   "$PY" "$t.py" "$BASE" "$OUT/$t" > "$OUT/$t.log" 2>&1; rc=$?
   grep -v '^PASS' "$OUT/$t.log" | grep -E '^(FAIL|[0-9]+/[0-9]+ passed|Traceback)' ; [ $rc = 0 ] || { fail=1; echo "   exit $rc (see $OUT/$t.log)"; }

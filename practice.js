@@ -144,5 +144,5 @@ const Practice = (() => {
   }
   function forCard(cardId) { return P.filter(p => p.card === cardId); }
   function linksFor(bookId, cardId) { return bookId !== BOOK ? '' : forCard(cardId).map(p => `<a class="t-link p-link" href="#/practice/${p.id}">Practise ${esc(p.ref)}</a>`).join(''); }
-  return { route: parts => (parts[1] ? render(parts[1]) : renderList()), linksFor, count: () => P.length };
+  return { route: parts => (parts[1] ? render(parts[1]) : renderList()), linksFor, count: () => P.length, countFor: (bookId, n) => (bookId === BOOK ? P.filter(p => p.ch === n).length : 0) };
 })();

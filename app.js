@@ -1,4 +1,5 @@
 // LearnScroll — a calm, card-by-card study feed for five textbooks.
+const EXT_IDS = ['heat-mass-transfer']; // books with extra chapters in data/<id>-ext.json
 const BOOK_IDS = ['heat-mass-transfer', 'koretsky-thermo', 'electric-circuits', 'university-physics', 'chemistry-silberberg'];
 const KEY = 'learnscroll-study-v1';
 const app = document.getElementById('app');
@@ -835,7 +836,7 @@ function renderBook(book, filter) {
       const pill = st === 'progress' ? `<span class="pill prog">Card ${bs.card + 1}/${screens(ch)}</span>` : `<span class="pill ${st}">${label[st]}</span>`;
       const seen = bs && bs.seen && bs.seen[ch.n] !== undefined ? Math.min(bs.seen[ch.n] + 1, screens(ch)) : 0;
       const meter = seen && st !== 'done' ? `<span class="cmeter" title="Furthest card reached: ${seen} of ${screens(ch)}"><i style="width:${(seen / screens(ch)) * 100}%"></i></span>` : '';
-      return `<a class="chap" role="listitem" href="#/read/${book.id}/${ch.n}"><span class="num">${ch.n}</span><span class="name">${esc(ch.title)}${meter}</span><span class="counts">${plural(ch.cards.length, 'card')} · ${plural((ch.quiz || []).length, 'question')}</span>${pill}</a>`;
+      return `<a class="chap" role="listitem" href="#/read/${book.id}/${ch.n}"><span class="num">${ch.n}</span><span class="name">${esc(ch.title)}${meter}${ch.desc ? `<span class="chap-desc">${esc(ch.desc)}</span>` : ''}</span><span class="counts">${plural(ch.cards.length, 'card')} · ${plural(ch.cards.filter(c => c.eq).length, 'formula')} · ${plural((ch.quiz || []).length, 'question')}${typeof Practice !== 'undefined' && Practice.countFor(book.id, ch.n) ? ` · ${plural(Practice.countFor(book.id, ch.n), 'example')}` : ''}</span>${pill}</a>`;
     }).join('')}</div>`}
   </main>`;
 }
@@ -863,7 +864,7 @@ const noteEditor = id => `<div class="note-ed" data-note="${id}" hidden><label c
 function cardHTML(c, i, ch, bookId) {
   const tags = [c.eq && '<span class="tag eq-t">Equation</span>', c.def && '<span class="tag def-t">Definition</span>', c.ex && '<span class="tag">Example</span>'].filter(Boolean).join('');
   return `<section class="card" aria-label="${esc(c.h)}"><div class="card-body">
-    <div class="sec"><span>${esc(c.s)}</span>${tags}${markBtns(screenId(ch, i))}</div>
+    <div class="sec"><span>${esc(c.s)}${c.ref ? ` · ${esc(c.ref)}` : ''}</span>${tags}${markBtns(screenId(ch, i))}</div>
     <h2>${esc(c.h)}</h2>
     <p>${c.t}</p>
     ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i), bookId ? Calc.linksFor(bookId, screenId(ch, i)) : '')}` : ''}${bookId && typeof Practice !== 'undefined' && Practice.linksFor(bookId, screenId(ch, i)) ? `<div class="p-cardlinks">${Practice.linksFor(bookId, screenId(ch, i))}</div>` : ''}${bookId && typeof Connections !== 'undefined' ? Connections.htmlFor(bookId, screenId(ch, i)) : ''}
@@ -874,7 +875,7 @@ function cardHTML(c, i, ch, bookId) {
 }
 function quizHTML(q, i, n, ch) {
   return `<section class="card quiz" data-q="${i}" data-ch="${ch.n}"><div class="card-body">
-    <div class="sec"><span class="tag q-t">Practice</span><span>${i + 1} of ${n}</span>${markBtns(`c${ch.n}-q${i + 1}`)}</div>
+    <div class="sec"><span class="tag q-t">Practice</span><span>${i + 1} of ${n}</span>${q.ref ? `<span class="q-src" title="A LearnScroll question written from this section, not a textbook problem">Based on ${esc(q.ref)}</span>` : ''}${markBtns(`c${ch.n}-q${i + 1}`)}</div>
     <h2>${q.q}</h2>
     <div class="opts">${q.options.map((o, k) => `<button class="opt" data-k="${k}">${o}</button>`).join('')}</div>
     <div class="feedback" aria-live="polite"></div>
@@ -1262,7 +1263,7 @@ function renderUsability(msg = '') {
 // readyState is already 'interactive' while deferred scripts run, so it can't be used here; DOMContentLoaded
 // fires only after every deferred script (incl. formulas.js, sheets.js) has executed. 'complete' covers late runs.
 const domReady = new Promise(r => (document.readyState === 'complete' ? r() : document.addEventListener('DOMContentLoaded', r, { once: true })));
-Promise.all([...BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })), domReady])
+Promise.all([...BOOK_IDS.map(id => fetch(`data/${id}.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(b => EXT_IDS.includes(id) ? fetch(`data/${id}-ext.json`).then(r => r.ok ? r.json() : null).catch(() => null).then(x => StudyData.mergeBookExt(b, x)) : b).then(b => { books[id] = b; }).catch(() => { loadFailed.push(id); })), domReady])
   .then(() => { booted = true; route(); });
 
 // ---- Keyboard shortcuts reference ('?') ----

@@ -8,7 +8,13 @@ DATA = os.path.join(os.path.dirname(__file__), '../../data')
 books = {}
 for f in sorted(glob.glob(DATA + '/*.json')):
     d = json.load(open(f))
-    if 'chapters' in d: books[os.path.basename(f)[:-5]] = d
+    if 'chapters' in d and 'extends' not in d: books[os.path.basename(f)[:-5]] = d
+# book extensions (Chapters 3-5 of Heat & Mass Transfer) are merged the same way the app does
+for f in sorted(glob.glob(DATA + '/*-ext.json')):
+    x = json.load(open(f)); bk = books[x['extends']]
+    for e in x['chapters']:
+        ch = next(c for c in bk['chapters'] if c['n'] == e['n'])
+        if not ch.get('cards') and ch['title'] == e['title']: ch.update(cards=e['cards'], quiz=e.get('quiz', []))
 blob = json.dumps(books)
 ok(blob.count('<svg') + blob.count('<img') == 0, 'data contains no diagrams/images (nothing to scale; none invented)')
 FEATURES = {'fraction': '\\\\frac', 'subscript': '_', 'greek': '\\\\(alpha|beta|Delta|delta|varepsilon|epsilon|sigma|rho|theta|mu|lambda|omega|pi|nu)', 'integral': '\\\\int', 'units': '\\\\(mathrm|text)'}

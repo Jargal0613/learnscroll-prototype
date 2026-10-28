@@ -20,12 +20,40 @@ const REF = [
   ['dtmax-cylinder', 'dT', { e: [1e6, 'W/m³'], r: [1, 'cm'], k: [20, 'W/m·K'] }, 1.25, 'K'],
   ['dtmax-wall', 'dT', { e: [1e6, 'W/m³'], r: [1, 'cm'], k: [20, 'W/m·K'] }, 2.5, 'K'],
   ['dtmax-sphere', 'dT', { e: [1e6, 'W/m³'], r: [1, 'cm'], k: [20, 'W/m·K'] }, 1e6 * 1e-4 / 120, 'K'],
+  // Chapters 3-5: values from the textbook's own worked examples where one exists
+  ['r-wall', 'R', { L: [0.3, 'm'], k: [0.9, 'W/m·K'], A: [15, 'm²'] }, 0.3 / 13.5, 'K/W'], // Example 3–1: 0.02222 °C/W
+  ['r-cyl', 'R', { r1: [1.5, 'mm'], r2: [3.5, 'mm'], L: [5, 'm'], k: [0.15, 'W/m·K'] }, Math.log(3.5 / 1.5) / (2 * Math.PI * 0.75), 'K/W'], // Example 3–9: 0.18 °C/W
+  ['r-sph', 'R', { r1: [0.1, 'm'], r2: [0.2, 'm'], k: [1, 'W/m·K'] }, 0.1 / (4 * Math.PI * 0.02), 'K/W'],
+  ['rcr-cylinder', 'r', { k: [0.15, 'W/m·K'], h: [12, 'W/m²·K'] }, 0.0125, 'm'], // Example 3–9: 12.5 mm
+  ['rcr-sphere', 'r', { k: [0.15, 'W/m·K'], h: [12, 'W/m²·K'] }, 0.025, 'm'],
+  ['fin-long', 'Q', { h: [25, 'W/m²·K'], p: [0.0157, 'm'], k: [200, 'W/m·K'], Ac: [1.963e-5, 'm²'], Tb: [100, '°C'], Tinf: [20, '°C'] }, Math.sqrt(25 * 0.0157 * 200 * 1.963e-5) * 80, 'W'],
+  ['fin-adiabatic', 'Q', { h: [25, 'W/m²·K'], p: [0.0157, 'm'], k: [200, 'W/m·K'], Ac: [1.963e-5, 'm²'], Tb: [100, '°C'], Tinf: [20, '°C'], L: [5, 'cm'] }, Math.sqrt(25 * 0.0157 * 200 * 1.963e-5) * 80 * Math.tanh(0.05 * Math.sqrt(25 * 0.0157 / (200 * 1.963e-5))), 'W'],
+  ['fin-efficiency', 'eta', { h: [25, 'W/m²·K'], p: [0.0157, 'm'], k: [200, 'W/m·K'], Ac: [1.963e-5, 'm²'], L: [5, 'cm'] }, (m => Math.tanh(m) / m)(0.05 * Math.sqrt(25 * 0.0157 / (200 * 1.963e-5))), '–'],
+  ['biot', 'bi', { h: [210, 'W/m²·K'], Lc: [0.001 / 6, 'm'], k: [35, 'W/m·K'] }, 0.001, '–'], // Example 4–1: Bi = 0.001
+  ['lumped', 't', { T: [99, '°C'], Ti: [0, '°C'], Tinf: [100, '°C'], h: [210, 'W/m²·K'], A: [Math.PI * 1e-6, 'm²'], rho: [8500, 'kg/m³'], V: [Math.PI * 1e-9 / 6, 'm³'], cp: [320, 'J/kg·K'] }, Math.log(100) * 8500 * 320 * (0.001 / 6) / 210, 's'], // Example 4–1: ≈ 10 s
+  ['mesh-fourier', 'tau', { alpha: [0.45e-6, 'm²/s'], dt: [100, 's'], dx: [1, 'cm'] }, 0.45, '–'],
 ];
+test('Chapter 3–5 calculators reproduce the textbook examples’ printed answers', () => {
+  const r = (id, sv, x) => C.compute(id, sv, inp(x)).si;
+  assert.ok(Math.abs(r('plane-wall', 'Q', { k: [0.9, 'W/m·K'], A: [15, 'm²'], T1: [16, '°C'], T2: [2, '°C'], L: [0.3, 'm'] }) - 630) < 0.5, 'Example 3–1: 630 W');
+  assert.ok(Math.abs(r('r-cyl', 'R', { r1: [1.5, 'mm'], r2: [3.5, 'mm'], L: [5, 'm'], k: [0.15, 'W/m·K'] }) - 0.18) < 0.005, 'Example 3–9: R_plastic ≈ 0.18 °C/W');
+  assert.ok(Math.abs(r('lumped', 't', { T: [99, '°C'], Ti: [0, '°C'], Tinf: [100, '°C'], h: [210, 'W/m²·K'], A: [Math.PI * 1e-6, 'm²'], rho: [8500, 'kg/m³'], V: [Math.PI * 1e-9 / 6, 'm³'], cp: [320, 'J/kg·K'] }) - 10) < 0.5, 'Example 4–1: ≈ 10 s');
+});
+test('lumped and fin calculators refuse impossible requests with a message', () => {
+  const lump = { Ti: [0, '°C'], Tinf: [100, '°C'], h: [210, 'W/m²·K'], A: [1e-6, 'm²'], rho: [8500, 'kg/m³'], V: [1e-9, 'm³'], cp: [320, 'J/kg·K'] };
+  for (const T of [100, 120, -5]) { const x = C.compute('lumped', 't', inp({ ...lump, T: [T, '°C'] })); assert.ok(!x.ok && /between/.test(x.error), `T=${T}: ${x.error}`); }
+  const fin = { h: [25, 'W/m²·K'], p: [0.0157, 'm'], k: [200, 'W/m·K'], Ac: [1.963e-5, 'm²'], Tb: [100, '°C'], Tinf: [20, '°C'] };
+  const y = C.compute('fin-adiabatic', 'L', inp({ ...fin, Q: [1000, 'W'] })); assert.ok(!y.ok && /long-fin limit/.test(y.error), y.error);
+  const z = C.compute('r-sph', 'r2', inp({ r1: [0.1, 'm'], k: [1, 'W/m·K'], R: [10, 'K/W'] })); assert.ok(!z.ok && /infinitely thick/.test(z.error), z.error);
+});
 test('at least 10 curated Heat & Mass Transfer formulas, each with metadata, card, equation number', () => {
   assert.ok(C.F.length >= 10);
   for (const f of C.F) {
-    assert.match(f.ref, /^Eq\. \(\d–\d+\)$/); assert.match(f.card, /^c\d+-\d+$/);
-    for (const [n, m] of Object.entries(f.vars)) { assert.ok(m.sym && m.label && C.UNITS[m.dim], `${f.id}.${n} metadata`); assert.ok(f.solve[n], `${f.id} solves for ${n}`); }
+    assert.match(f.ref, /^Eqs?\. \(\d–\d+\)(, \(\d–\d+\))*$/); assert.match(f.card, /^c\d+-\d+$/);
+    for (const [n, m] of Object.entries(f.vars)) assert.ok(m.sym && m.label && C.UNITS[m.dim], `${f.id}.${n} metadata`);
+    // Chapters 1-2 calculators solve for every variable; later ones solve only where a closed form exists
+    if (f.ch <= 2) for (const n of Object.keys(f.vars)) assert.ok(f.solve[n], `${f.id} solves for ${n}`);
+    for (const n of Object.keys(f.solve)) assert.ok(f.vars[n], `${f.id} solve key ${n} is a variable`);
     assert.ok(REF.some(r => r[0] === f.id), `${f.id} has a reference test`);
   }
 });
@@ -38,7 +66,7 @@ for (const [id, solveFor, inputs, want, unit] of REF) {
   test(`round trip: ${id} every rearrangement gives the inputs back`, () => {
     const f = C.byId[id], r = C.compute(id, solveFor, inp(inputs)); assert.ok(r.ok);
     const all = { ...Object.fromEntries(Object.entries(inputs).map(([k, [v, u]]) => [k, C.toSI(v, f.vars[k].dim, u)])), [solveFor]: r.si };
-    for (const name of Object.keys(f.vars)) {
+    for (const name of Object.keys(f.solve)) {
       const given = Object.fromEntries(Object.keys(f.vars).filter(k => k !== name).map(k => [k, { value: String(all[k]), unit: C.SI[f.vars[k].dim] }]));
       const back = C.compute(id, name, given); assert.ok(back.ok, `${id} -> ${name}: ${back.error}`);
       assert.ok(near(back.si, all[name], 1e-6), `${id} -> ${name}: ${back.si} vs ${all[name]}`);
@@ -79,8 +107,10 @@ test('never NaN: random and hostile inputs give a finite result or a message', (
   }
 });
 test('every calculator points at a real Heat & Mass Transfer card whose equation it implements', () => {
-  const book = require('../data/heat-mass-transfer.json');
-  const KEY = { 'heat-flux': '\\frac{\\dot Q}{A}', 'flow-energy': '\\dot m\\,c_p\\,\\Delta T', diffusivity: '\\frac{k}{\\rho c_p}', 'plane-wall': 'kA\\frac{T_1-T_2}{L}', convection: 'hA_s\\,(T_s - T_\\infty)', emission: '\\varepsilon\\,\\sigma A_s T_s^4', 'net-radiation': '(T_s^4 - T_\\text{surr}^4)', combined: 'h_\\text{combined}\\,A_s\\,(T_s - T_\\infty)', 'wall-profile': '(T_2 - T_1)\\frac{x}{L}', cylinder: '\\frac{T_1-T_2}{\\ln(r_2/r_1)}', 'gen-surface': '\\frac{\\dot e_\\text{gen}\\,V}{h\\,A_s}', 'dtmax-cylinder': '{4k}', 'dtmax-wall': '{2k}', 'dtmax-sphere': '{6k}' };
+  const book = require('../studydata.js').mergeBookExt(require('../data/heat-mass-transfer.json'), require('../data/heat-mass-transfer-ext.json'));
+  const KEY = { 'heat-flux': '\\frac{\\dot Q}{A}', 'flow-energy': '\\dot m\\,c_p\\,\\Delta T', diffusivity: '\\frac{k}{\\rho c_p}', 'plane-wall': 'kA\\frac{T_1-T_2}{L}', convection: 'hA_s\\,(T_s - T_\\infty)', emission: '\\varepsilon\\,\\sigma A_s T_s^4', 'net-radiation': '(T_s^4 - T_\\text{surr}^4)', combined: 'h_\\text{combined}\\,A_s\\,(T_s - T_\\infty)', 'wall-profile': '(T_2 - T_1)\\frac{x}{L}', cylinder: '\\frac{T_1-T_2}{\\ln(r_2/r_1)}', 'gen-surface': '\\frac{\\dot e_\\text{gen}\\,V}{h\\,A_s}', 'dtmax-cylinder': '{4k}', 'dtmax-wall': '{2k}', 'dtmax-sphere': '{6k}',
+    'r-wall': 'R_\\text{wall} = \\frac{L}{kA}', 'r-cyl': '\\frac{\\ln(r_2/r_1)}{2\\pi Lk}', 'r-sph': '\\frac{r_2 - r_1}{4\\pi r_1 r_2 k}', 'rcr-cylinder': 'r_\\text{cr,cylinder} = \\frac{k}{h}', 'rcr-sphere': 'r_\\text{cr,sphere} = \\frac{2k}{h}',
+    'fin-long': '\\dot Q_\\text{long} = \\sqrt{hpkA_c}', 'fin-adiabatic': '\\tanh mL', 'fin-efficiency': '\\frac{\\tanh mL}{mL}', biot: '\\frac{hL_c}{k}', lumped: 'e^{-bt}', 'mesh-fourier': '\\frac{\\alpha\\,\\Delta t}{\\Delta x^2}' };
   for (const f of C.F) {
     const m = /^c(\d+)-(\d+)$/.exec(f.card), ch = book.chapters.find(c => c.n === Number(m[1])), card = ch.cards[Number(m[2]) - 1];
     assert.equal(ch.n, f.ch); assert.ok(card && card.eq, `${f.id}: card ${f.card} has an equation`);

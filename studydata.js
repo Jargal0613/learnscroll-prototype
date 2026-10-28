@@ -677,6 +677,18 @@
     const active = items.filter(x => !x.postponed).map(({ order: _o, ...x }) => x), postponed = items.filter(x => x.postponed).map(({ order: _o, ...x }) => x);
     return { target: t, today: active.slice(0, t), later: active.slice(t), postponed };
   }
-  const api = { PSTEPS, PRACTICE_RE, validPractice, revisionPlan, TARGETS, validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
+  // Book extensions (data/<id>-ext.json): add chapters that have no cards yet. Never replaces existing cards,
+  // so Chapter 1-2 ids, progress and bookmarks are untouched. Returns the same book object.
+  function mergeBookExt(book, ext) {
+    if (!book || !ext || ext.extends !== book.id || !Array.isArray(ext.chapters)) return book;
+    for (const e of ext.chapters) {
+      const ch = book.chapters.find(c => c.n === e.n);
+      if (!ch || (Array.isArray(ch.cards) && ch.cards.length) || !Array.isArray(e.cards) || !e.cards.length) continue;
+      if (e.title !== ch.title) continue; // chapter titles must agree with the book's own list
+      ch.cards = e.cards; ch.quiz = Array.isArray(e.quiz) ? e.quiz : []; if (e.desc) ch.desc = e.desc;
+    }
+    return book;
+  }
+  const api = { PSTEPS, mergeBookExt, PRACTICE_RE, validPractice, revisionPlan, TARGETS, validSheet, mergeById, FORMULA_RE, validFormula, importPlan, EXCLUDED, TEXT_SIZES, SESSION_KEY, VERSIONS, validSession, migrateTutor, migrateSession, SCHEMA, MIGRATIONS, JOURNAL_KEY, migrateStudy, journalStart, journalEnd, journalRecover, needsAttention, notesMarkdown, sanitizeStudy, APP, VERSION, STUDY_KEY, TUTOR_KEY, parse, fromStorage, toStorage, build, counts, merge, overwrite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudyData = api;
 })(typeof window !== 'undefined' ? window : globalThis);

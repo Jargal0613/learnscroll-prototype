@@ -1,7 +1,7 @@
 // Guided practice: data integrity against the textbook-checked values, and the local checks.
 const test = require('node:test'), assert = require('node:assert');
 const P = require('../practicedata.js'), PC = require('../practicecore.js'), C = require('../calccore.js'), SD = require('../studydata.js');
-const book = require('../data/heat-mass-transfer.json');
+const book = SD.mergeBookExt(require('../data/heat-mass-transfer.json'), require('../data/heat-mass-transfer-ext.json'));
 test('problems: textbook examples only, real cards, valid equations, ids match the stored-data pattern', () => {
   const ids = new Set();
   for (const p of P) {
@@ -42,4 +42,17 @@ test('unit and equation checks; struggled steps', () => {
   const q = P.find(x => x.id === 'ex1-10');
   assert.equal(PC.checkEquation(q, ['net-radiation', 'convection']).ok, true); assert.equal(PC.checkEquation(q, ['convection']).ok, false); assert.match(PC.checkEquation(q, ['convection']).msg, /Partly/);
   assert.deepEqual(PC.struggled({ attempts: [{ step: 'calculation', ok: false }, { step: 'calculation', ok: false }, { step: 'equation', ok: false }], hints: { units: 1 }, revealed: ['substitution'] }), ['substitution', 'calculation', 'units']);
+});
+
+test('Chapter 3–4 examples: answers agree with the calculators and the textbook', () => {
+  const r = (id, sv, inp) => C.compute(id, sv, Object.fromEntries(Object.entries(inp).map(([k, [v, u]]) => [k, { value: String(v), unit: u }])));
+  const by = Object.fromEntries(P.map(p => [p.id, p]));
+  assert.ok(Math.abs(r('plane-wall', 'Q', { k: [0.9, 'W/m·K'], A: [15, 'm²'], T1: [16, '°C'], T2: [2, '°C'], L: [0.3, 'm'] }).si - by['ex3-1'].answer.value) < 1);
+  const Rp = r('r-cyl', 'R', { r1: [1.5, 'mm'], r2: [3.5, 'mm'], L: [5, 'm'], k: [0.15, 'W/m·K'] }).si, Rc = 1 / (12 * 2 * Math.PI * 0.0035 * 5);
+  assert.ok(Math.abs(303.15 + 80 * (Rp + Rc) - by['ex3-9'].answer.value) <= 1, 'Example 3–9: about 105 °C');
+  assert.ok(PC.checkCalc(by['ex3-9'], '105', '°C').ok && !PC.checkCalc(by['ex3-9'], '110', '°C').ok);
+  const t = r('lumped', 't', { T: [99, '°C'], Ti: [0, '°C'], Tinf: [100, '°C'], h: [210, 'W/m²·K'], A: [Math.PI * 1e-6, 'm²'], rho: [8500, 'kg/m³'], V: [Math.PI * 1e-9 / 6, 'm³'], cp: [320, 'J/kg·K'] }).si;
+  assert.ok(Math.abs(t - 10) / 10 < by['ex4-1'].answer.rel, `Example 4–1: ${t}`);
+  assert.ok(PC.checkCalc(by['ex4-1'], '10', 's').ok && PC.checkCalc(by['ex4-1'], '0.166', 'min').ok && !PC.checkCalc(by['ex4-1'], '1', 's').ok);
+  assert.ok(PC.checkUnits(by['ex4-1'], 's').ok && PC.checkUnits(by['ex3-1'], 'W').ok);
 });

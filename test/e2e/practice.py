@@ -24,7 +24,7 @@ with sync_playwright() as p:
         pg.goto(BASE + '/#/'); pg.evaluate('localStorage.clear()'); pg.reload(); pg.wait_for_selector('#q')
         ok(pg.locator('.tools-line a[href="#/practice"]').count() == 1, f'{W}: home links to problem practice')
         pg.click('.tools-line a[href="#/practice"]'); pg.wait_for_selector('.p-list')
-        items = pg.locator('.p-list .f-item'); ok(items.count() == 6 and all('Example' in t for t in items.locator('.f-tag').first.all_inner_texts()), f'{W}: 6 textbook examples listed')
+        items = pg.locator('.p-list .f-item'); ok(items.count() == 9 and all('Example' in t for t in items.locator('.f-tag').first.all_inner_texts()), f'{W}: 9 textbook examples listed')
         ok(pg.locator('.p-stat').first.inner_text() == 'Not started', f'{W}: status before trying')
         if W != 1728: pg.screenshot(path=f'{OUT}/{W}-list.png', full_page=True)
         # reader card links to its example

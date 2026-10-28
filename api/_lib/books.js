@@ -9,7 +9,11 @@ const cache = {};
 
 function getBook(id) {
   if (!BOOK_IDS.includes(id)) return null;
-  if (!cache[id]) cache[id] = JSON.parse(fs.readFileSync(path.join(DATA_DIR, id + '.json'), 'utf8'));
+  if (!cache[id]) {
+    const b = JSON.parse(fs.readFileSync(path.join(DATA_DIR, id + '.json'), 'utf8'));
+    let ext = null; try { ext = JSON.parse(fs.readFileSync(path.join(DATA_DIR, id + '-ext.json'), 'utf8')); } catch (e) { ext = null; }
+    cache[id] = require('../../studydata.js').mergeBookExt(b, ext);
+  }
   return cache[id];
 }
 // Stable card ids derived from chapter + position: c<chapter>-<n> for cards, c<chapter>-q<n> for questions.

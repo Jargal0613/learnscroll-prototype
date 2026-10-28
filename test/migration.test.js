@@ -297,3 +297,15 @@ test('practice: bad shapes rejected on import, dropped (with repair) on load', (
   const s = SD.sanitizeStudy({ schema: 5, books: {}, practice: { ...clone(PR), 'ex2-1': { nonsense: true } } });
   assert.equal(s.repaired, true); assert.deepEqual(Object.keys(s.study.practice), ['ex1-8']);
 });
+
+// Round 12: Chapters 3-5 add no new stored shapes. Existing data plus new-chapter entries validate unchanged.
+test('Chapter 3–5 progress fits the current schema; existing Chapter 1–2 data is untouched', () => {
+  const s = { schema: SD.SCHEMA, books: { 'heat-mass-transfer': { chapter: 3, card: 4, done: { 1: true }, seen: { 1: 29, 3: 4 }, marks: { 'c1-5': { b: true }, 'c3-12': { d: true } }, notes: { 'c4-1': { text: 'Bi first', at: T1 } }, review: { 'c5-10': { r: 'again', at: T1 } }, attempts: { 'c4-q1': [{ k: 1, ok: true, at: T1 }] } } },
+    practice: { 'ex3-9': { attempts: [{ step: 'calculation', v: '105 °C', ok: true, at: T1 }], hints: {}, revealed: [], struggled: [], solved: true, updated: T1 } } };
+  const before = clone(s), m = SD.migrateStudy(clone(s));
+  assert.ok(!m.invalid && !m.future, JSON.stringify(m.errors || ''));
+  assert.deepEqual(m.data.books['heat-mass-transfer'], before.books['heat-mass-transfer']);
+  assert.deepEqual(m.data.practice, before.practice);
+  const z = SD.sanitizeStudy(clone(s)); assert.ok(!z.repaired, 'nothing dropped by the sanitizer');
+  assert.deepEqual((z.study || z.data || z).books['heat-mass-transfer'], before.books['heat-mass-transfer']);
+});

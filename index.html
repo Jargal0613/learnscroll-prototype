@@ -646,7 +646,7 @@
     .page { padding: 40px 24px 72px; }
     h1 { font-size: 30px; margin-top: 32px; }
     .chap { grid-template-columns: 36px 1fr auto; }
-    .chap .counts { display: none; }
+    .chap .counts { grid-column: 2 / -1; grid-row: 2; white-space: normal; font-size: 12px; margin-top: -10px; }
     .bar { grid-template-columns: auto minmax(0,1fr) auto; padding: 0 12px; }
     .card { padding: 76px 22px 76px; }
     .card h2 { font-size: 26px; }
@@ -744,6 +744,8 @@
   .pg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .pg-table th, .pg-table td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line-strong); }
   .pg-table th { color: var(--fg-2); font-weight: 500; }
+  .chap-desc { display: block; font-size: 12px; color: var(--fg-2); margin-top: 2px; line-height: 1.4; }
+  .rc-why { flex-basis: 100%; font-size: 12px; color: var(--fg-2); padding-left: 2px; }
 </style>
 </head>
 <body>

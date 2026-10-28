@@ -14,7 +14,7 @@ const Calc = (() => {
   // links shown in the reader and notebook for a card that has calculators
   function linksFor(bookId, cardId) {
     const fs = C.forCard(bookId, cardId); if (!fs.length) return '';
-    return fs.map(f => `<a class="t-link c-calc" href="#/calc/${f.id}">${fs.length > 1 ? `Calculate: ${esc(f.title.replace(/^Maximum temperature rise: /, ''))}` : 'Calculate'}</a>`).join('');
+    return fs.map(f => `<a class="t-link c-calc" href="#/calc/${f.id}">${fs.length > 1 ? `Calculate: ${esc(f.short || f.title.replace(/^Maximum temperature rise: /, ''))}` : 'Calculate'}</a>`).join('');
   }
   function renderList() {
     document.title = 'Calculation workspace · LearnScroll';
@@ -26,8 +26,8 @@ const Calc = (() => {
   function render(id) {
     const f = C.byId[id]; if (!f) return renderMissing('That calculator doesn’t exist.', '#/calc', 'All calculators');
     const u = ui[id] || (ui[id] = state0());
-    const names = Object.keys(f.vars);
-    if (!u.solve || !f.solve[u.solve]) u.solve = names[0];
+    const names = Object.keys(f.vars), solvable = names.filter(n => f.solve[n]);
+    if (!u.solve || !f.solve[u.solve]) u.solve = solvable[0];
     for (const n of names) if (!u.units[n]) u.units[n] = C.SI[f.vars[n].dim];
     const target = f.vars[u.solve];
     if (!C.UNITS[target.dim][u.out]) u.out = C.SI[target.dim];
@@ -37,9 +37,9 @@ const Calc = (() => {
     const res = u.res;
     app.innerHTML = `<main class="page cpage"><a class="back" href="#/calc">← All calculators</a>
       <div class="book-head"><div><h1>${esc(f.title)}</h1><p class="meta-line">${esc(f.ref)} · ${cardLink(f)}</p></div></div>
-      <div class="c-eq">${tex(f.tex)}</div>
+      <div class="c-eq">${tex(f.tex)}</div>${f.note ? `<p class="f-tag c-cond">${esc(f.note)}</p>` : ''}
       <form class="c-form" id="c-form" novalidate>
-        <fieldset class="c-solve"><legend>Solve for</legend>${names.map(n => `<label class="c-pill"><input type="radio" name="c-solve" value="${n}"${n === u.solve ? ' checked' : ''}> ${sym(f.vars[n].sym)} <span>${esc(f.vars[n].label)}</span></label>`).join('')}</fieldset>
+        <fieldset class="c-solve"><legend>Solve for</legend>${solvable.map(n => `<label class="c-pill"><input type="radio" name="c-solve" value="${n}"${n === u.solve ? ' checked' : ''}> ${sym(f.vars[n].sym)} <span>${esc(f.vars[n].label)}</span></label>`).join('')}</fieldset>
         <div class="c-inputs">${names.filter(n => n !== u.solve).map(n => `<div class="c-row${res && res.field === n ? ' bad' : ''}"><label for="c-v-${n}"><span class="c-sym">${sym(f.vars[n].sym)}</span> ${esc(f.vars[n].label)}${range(n) ? ` <span class="f-tag">(${esc(range(n))})</span>` : ''}</label>
           <span class="c-in"><input id="c-v-${n}" data-val="${n}" inputmode="decimal" autocomplete="off" value="${esc(u.vals[n] ?? '')}"${res && res.field === n ? ' aria-invalid="true" aria-describedby="c-msg"' : ''}>${unitSel(n, `c-u-${n}`, u.units[n])}</span></div>`).join('')}</div>
         <div class="c-row c-outrow"><label for="c-out">Show ${sym(target.sym)} in</label><span class="c-in">${unitSel(u.solve, 'c-out', u.out)}</span></div>

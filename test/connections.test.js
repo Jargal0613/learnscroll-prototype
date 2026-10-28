@@ -1,11 +1,12 @@
 // Concept connections: every id is a real card, kinds are known, no duplicates or self-links, and no cycles.
 const test = require('node:test'), assert = require('node:assert');
 global.document = { addEventListener() {} };
-const CONN = require('../connections.js'), book = require('../data/heat-mass-transfer.json');
+const CONN = require('../connections.js'), book = require('../studydata.js').mergeBookExt(require('../data/heat-mass-transfer.json'), require('../data/heat-mass-transfer-ext.json'));
 const card = id => { const m = /^c(\d+)-(\d+)$/.exec(id); const ch = m && book.chapters.find(c => c.n === Number(m[1])); return ch && Array.isArray(ch.cards) && ch.cards[Number(m[2]) - 1]; };
-test('20–30 curated links between real cards', () => {
+test('curated links between real cards (Ch 1–2: 30; Ch 3–5 each with a reason)', () => {
   assert.equal(CONN.book, 'heat-mass-transfer');
-  assert.ok(CONN.links.length >= 20 && CONN.links.length <= 30, `${CONN.links.length}`);
+  assert.equal(CONN.links.filter(l => /^c[12]-/.test(l.from)).length, 30); assert.ok(CONN.links.length <= 80, `${CONN.links.length}`);
+  for (const l of CONN.links.filter(l => !/^c[12]-/.test(l.from))) assert.ok(l.why && l.why.length >= 20 && l.why.length <= 140, `${l.from} why`);
   const seen = new Set();
   for (const l of CONN.links) {
     assert.ok(card(l.from), `from ${l.from}`); assert.ok(card(l.to), `to ${l.to}`);

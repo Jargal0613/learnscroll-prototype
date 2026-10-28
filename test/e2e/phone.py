@@ -39,7 +39,7 @@ with sync_playwright() as p:
         pg.screenshot(path=f'{OUT}/{W}-session-setup.png'); ok(hscroll(pg) <= 0, f'{W}: session setup fits')
         pg.tap('#sessGo'); pg.wait_for_selector('#left'); pg.wait_for_timeout(800)
         steps = bad_cov = bad_eq = bad_h = 0
-        while not at_end(pg) and steps < 150:
+        while not at_end(pg) and steps < 300:  # queue grew with Chapters 3-5
             if covered(pg): bad_cov += 1
             if not eq_ok(pg): bad_eq += 1
             if hscroll(pg) > 0: bad_h += 1

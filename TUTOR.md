@@ -106,3 +106,39 @@ computed on the server from the provider settings and `api/_lib/knowledge.json` 
 "Tutor connected", "Tutor unavailable for this book" (input disabled, with an explanation before anything is
 typed; nothing is sent and no other book is searched) or, if the status check itself fails, a separate red
 "Couldn't check the tutor" state. A `book_not_available` reply from the server is shown as unavailable, not as an error.
+
+## One tutor on every page, one limiter (round 12)
+
+- **Where:** the reader keeps its docked panel. Formula notebook, Calculation workspace, Guided practice, My progress,
+  Study sheets and the quiz review pages share ONE global panel (`Ask tutor` in each page header). It's the same
+  conversation store (per book), the same `/api/tutor` endpoint, model and File Search store.
+- **Page context** (`tutorctx.js`, schema version 1): `{schemaVersion, pageType, bookId, chapterId, itemId, sectionId,
+  excerpt, sourceRefs, pageState}`. Built in the browser from app data at send time (never by an AI call). Unknown
+  fields are dropped; ids must exist (cards, quiz questions, calculators, practice examples, formula and sheet id
+  formats); excerpt ≤ 600 characters, ≤ 4 refs, ≤ 12 allowlisted state keys of ≤ 160 characters, ≤ 2,500 characters
+  in total. The server runs the same validator again, adds trusted descriptions from its own data (calculator
+  equation, practice example), and puts student-typed page data in the prompt as **untrusted data, never
+  instructions and never textbook evidence**. Opening, closing or navigating sends nothing (the only request is
+  the free, cached `GET /api/tutor` status check).
+- **Retrieval states** for every answer: `retrieved` (passages came back from this book's file), `none` (no search,
+  or nothing from this book), `failed` (the search reported failure). Without `retrieved`, citations and passages
+  are removed and a "From the textbook" heading becomes "Additional explanation (no textbook passage was
+  retrieved)". There is no fallback call and no server retry.
+
+### Accounting policy
+
+- Every tutor message from any page (and every practice hint and solver problem) uses the same Upstash counters:
+  **2 per minute and 10 per day per IP, 200 per day overall** (UTC days). These are the existing solver limits,
+  unchanged; before round 12 ordinary tutor questions were not limited at all.
+- One message = one request. It's counted after it passes validation and before the paid call. Malformed
+  requests, unavailable books and an unconfigured server are rejected first and not counted. A model or network
+  failure after counting still counts, so retrying can't bypass the limits.
+- Counters use atomic `INCR`, so concurrent requests can't exceed a limit. Without the limiter (no Upstash, or it
+  errors), the tutor returns 503 and makes no paid call (fail closed).
+
+### Cost estimate
+
+- Per message ≈ $0.0035 typical (one real round-11 call measured ≈ $0.0035), ≈ $0.0107 high (see
+  `docs/problem-solver.md`, File Search fee dominates).
+- A fully used global cap is 200 × $0.0035–0.0107 ≈ **$0.70–2.14 per day**. A budget of about $5/month covers about
+  1,400 messages a month (≈ 47/day). The infrastructure enforces the daily cap, **not** a monthly dollar budget.

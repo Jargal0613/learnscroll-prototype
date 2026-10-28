@@ -18,6 +18,7 @@ const Calc = (() => {
   }
   function renderList() {
     document.title = 'Calculation workspace · LearnScroll';
+    window.lsPageCtx = () => ({ label: 'All calculators', ctx: { schemaVersion: 1, pageType: 'calculation-workspace', bookId: BOOK, pageState: {} } });
     app.innerHTML = `<main class="page cpage"><a class="back" href="#/formulas">← Formula notebook</a>
       <div class="book-head"><div><h1>Calculation workspace</h1><p class="meta-line">${C.F.length} checked Heat and Mass Transfer equations. Pick one, choose what to solve for, enter values with units.</p></div></div>
       <ol class="f-list c-list">${C.F.map(f => `<li class="f-item"><div class="f-top"><h2><a href="#/calc/${f.id}">${esc(f.title)}</a></h2><span class="f-tag">${esc(f.ref)} · Ch ${f.ch}</span></div><div class="c-eq">${tex(f.tex)}</div></li>`).join('')}</ol>
@@ -48,6 +49,9 @@ const Calc = (() => {
       <div class="c-msg" id="c-msg" role="status" aria-live="polite">${res && !res.ok ? `<b>Can’t calculate yet.</b> ${esc(res.error)}` : ''}</div>
       ${res && res.ok ? resultHTML(f, u) : ''}
       <p class="f-tag c-note">Checked against ${esc(f.ref)} in ${esc(books[BOOK] ? books[BOOK].title : 'the textbook')}. Values are converted to SI before substituting; σ = 5.67×10⁻⁸ W/m²·K⁴ where it appears. Runs in your browser.</p></main>`;
+    window.lsPageCtx = () => { const r = u.res; return { label: f.title, ctx: { schemaVersion: 1, pageType: 'calculation-workspace', bookId: BOOK, chapterId: f.ch, itemId: f.id, sourceRefs: [f.ref], pageState: {
+      calculator: f.title, solveFor: `${f.vars[u.solve].label} (${u.solve})`, inputs: names.filter(n => n !== u.solve).map(n => { const el = app.querySelector(`[data-val="${n}"]`); return [n, el ? el.value : u.vals[n]]; }).map(([n, v]) => `${n}=${String(v ?? '').slice(0, 20) || '?'} ${u.units[n] || ''}`).join('; '),
+      ...(r && r.ok ? { result: `${C.fmt(r.value, 4)} ${r.unit}` } : {}), ...(r && !r.ok ? { error: r.error } : {}) } } }; };
     renderMath(app.querySelector('.cpage'));
     wire(f, u);
   }

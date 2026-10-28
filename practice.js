@@ -24,6 +24,7 @@ const Practice = (() => {
   }
   function status(r) { return r.solved ? 'Solved' : r.attempts.length ? 'In progress' : 'Not started'; }
   function renderList() {
+    window.lsPageCtx = () => ({ label: 'All problems', ctx: { schemaVersion: 1, pageType: 'guided-practice', bookId: 'heat-mass-transfer', pageState: {} } });
     document.title = 'Problem practice · LearnScroll';
     app.innerHTML = `<main class="page cpage ppage"><a class="back" href="#/">← Home</a>
       <div class="book-head"><div><h1>Problem practice</h1><p class="meta-line">${P.length} worked examples from Heat and Mass Transfer, solved one step at a time. Try each step first; hints and the solution open up after you try.</p></div></div>
@@ -72,6 +73,10 @@ const Practice = (() => {
     const u = ui[id] || (ui[id] = { draft: {}, msg: {}, pick: [], unit: null, ai: null, aiBusy: false, full: false });
     const r = recOf(id), calcTried = r.attempts.some(a => a.step === 'calculation' && a.ok !== null);
     document.title = `${p.title} · Practice · LearnScroll`;
+    window.lsPageCtx = () => { const rr = recOf(id), cur = STEPS.find(([st]) => !okStep(rr, st)), uu = ui[id];
+      return { label: `${p.ref}${cur ? ` · step: ${cur[1]}` : ' · solved'}`, ctx: { schemaVersion: 1, pageType: 'guided-practice', bookId: 'heat-mass-transfer', chapterId: p.ch, itemId: p.id, sourceRefs: [p.ref], pageState: {
+        example: p.title, step: cur ? cur[1] : 'all steps done', stepsDone: STEPS.filter(([st]) => okStep(rr, st)).length, solved: !!rr.solved,
+        hintsUsed: Object.values(rr.hints || {}).reduce((a, n) => a + (Number(n) || 0), 0), ...(cur && uu.draft[cur[0]] ? { attempt: String(uu.draft[cur[0]]).slice(0, 120) } : {}) } } }; };
     app.innerHTML = `<main class="page cpage ppage" data-pid="${id}"><a class="back" href="#/practice">← All problems</a>
       <div class="book-head"><div><h1>${esc(p.title)}</h1><p class="meta-line">${esc(p.ref)} · ${cardLink(p)}</p></div></div>
       <p class="p-statement">${esc(p.statement)}</p>

@@ -56,7 +56,22 @@ function validate(body) {
   });
   // Titles come from server data only; any client-sent bookTitle/chapterTitle/card content is ignored.
   const titles = { book: book.title, chapter: `Chapter ${chapter.n}: ${chapter.title}`, card: card ? cardTitle(card) : null };
-  return { book, chapter, card, scope, style, titles, question, conversationId, messages: mode === 'check' ? [] : messages, mode, explanation };
+  const pageContext = mode === 'check' ? null : pageContextOf(body.pageContext, book);
+  return { book, chapter, card, scope, style, titles, question, conversationId, messages: mode === 'check' ? [] : messages, mode, explanation, pageContext };
+}
+// Optional page context (see tutorctx.js). Re-validated here against server data; never trusted as instructions.
+// Invalid or oversized context is dropped rather than failing the question.
+function pageContextOf(raw, book) {
+  if (raw === undefined || raw === null) return null;
+  let size = 0; try { size = JSON.stringify(raw).length; } catch (e) { return null; }
+  if (size > 8000) return null;
+  const T = require('../../tutorctx.js'), C = require('../../calccore.js'), P = require('../../practicedata.js');
+  const { ctx } = T.sanitize(raw, book, { calcIds: new Set(C.F.map(f => f.id)), practiceIds: new Set(P.map(p => p.id)) });
+  if (!ctx) return null;
+  // trusted descriptions from the app's own data (not from the client)
+  if (ctx.pageType === 'calculation-workspace' && ctx.itemId) { const f = C.byId[ctx.itemId]; ctx.trusted = `Calculator: ${f.title}, textbook ${f.ref}: ${f.tex}`; }
+  if (ctx.pageType === 'guided-practice' && ctx.itemId) { const p = P.find(x => x.id === ctx.itemId); ctx.trusted = `Textbook ${p.ref} (${p.title}), as restated in LearnScroll: ${p.statement}`; }
+  return ctx;
 }
 function cardTitle(card) {
   return card.kind === 'quiz' ? `Practice question ${card.index + 1}: ${card.q}` : `Card ${card.index + 1}: ${card.h}`;

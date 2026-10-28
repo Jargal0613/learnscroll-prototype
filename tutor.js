@@ -52,6 +52,7 @@
 
   function cardAt(i) {
     const ch = ctx.ch, nc = ch.cards.length, nq = (ch.quiz || []).length;
+    if (!(i >= 0)) return null; // pages other than the reader have no current card
     if (i < nc) return { id: `c${ch.n}-${i + 1}`, label: `Card ${i + 1}: ${ch.cards[i].h}`, data: ch.cards[i] };
     if (i < nc + nq) return { id: `c${ch.n}-q${i - nc + 1}`, label: `Practice ${i - nc + 1}`, data: ch.quiz[i - nc] };
     return null;
@@ -66,7 +67,7 @@
   // Where a conversation started: follow-ups keep this book/chapter/card/scope so the history stays on topic.
   function originNow() {
     const card = cardAt(ctx.index), scope = effectiveScope();
-    return { chapter: ctx.ch.n, chapterTitle: ctx.ch.title, index: ctx.index, cardId: card ? card.id : null, label: card ? card.label : 'End of chapter', scope, at: Date.now() };
+    return { chapter: ctx.ch.n, chapterTitle: ctx.ch.title, index: ctx.index, cardId: card ? card.id : null, label: card ? card.label : ctx.global ? pageLabel() : 'End of chapter', scope, at: Date.now() };
   }
   const scopeLabel = s => (s === 'book' ? 'Whole book' : s === 'chapter' ? 'This chapter' : 'This card');
   function archive(c) { // keep a finished conversation so it can be reopened
@@ -75,10 +76,32 @@
     return saved.slice(0, MAX_SAVED);
   }
 
-  function mount(reader, book, ch, index) {
-    ctx = { reader, book, ch, index, open: false, busy: false };
+  // Page context (tutorctx.js), read fresh at send time. The reader builds it from the current card; other pages
+  // register window.lsPageCtx = () => ({ ctx, label }). Building it never calls the API.
+  function pageInfo() {
+    if (!ctx) return null;
+    if (!ctx.global) {
+      const card = cardAt(ctx.index); if (!card) return null;
+      const quiz = /-q\d/.test(card.id), d = card.data || {};
+      const refs = [quiz ? d.ref : d.ref || null].filter(Boolean);
+      return { label: card.label, ctx: { schemaVersion: 1, pageType: quiz ? 'quiz' : 'reader', bookId: ctx.book.id, chapterId: ctx.ch.n, itemId: card.id, sectionId: d.s || null, sourceRefs: refs, pageState: quiz ? { question: String(d.q || '').slice(0, 160) } : { cardTitle: d.h || '', cardIndex: ctx.index + 1, cards: ctx.ch.cards.length } } };
+    }
+    try { return typeof window.lsPageCtx === 'function' ? window.lsPageCtx() : null; } catch (e) { return null; }
+  }
+  function pageContext() {
+    const p = pageInfo(); if (!p || !p.ctx || !window.TutorCtx) return null;
+    const pc = window.TutorCtx.sanitize(p.ctx, ctx.book).ctx; // same validator the server runs
+    if (pc && ctx.global && pc.chapterId && pc.chapterId !== ctx.ch.n) ctx.ch = ctx.book.chapters.find(c => c.n === pc.chapterId) || ctx.ch;
+    return pc;
+  }
+  function pageLabel() {
+    const p = pageInfo(), c = p && p.ctx, T = window.TutorCtx;
+    return c && T ? [T.LABEL[c.pageType], p.label].filter(Boolean).join(' · ') : 'This page';
+  }
+  function mount(reader, book, ch, index, opts = {}) {
+    ctx = { reader, book, ch, index, open: false, busy: false, global: !!opts.global };
     const panel = document.createElement('aside');
-    panel.className = 'tutor'; panel.id = 'tutor'; panel.hidden = true;
+    panel.className = 'tutor' + (ctx.global ? ' g' : ''); panel.id = 'tutor'; panel.hidden = true;
     panel.setAttribute('aria-label', 'Ask your tutor');
     panel.innerHTML = `
       <div class="t-head"><div><h2>Ask your tutor</h2><div class="t-ctx" id="t-ctx"></div><div class="t-status" id="t-status" data-state="checking" aria-live="polite">Checking tutor…</div></div>
@@ -95,6 +118,7 @@
         <textarea id="t-input" rows="3" maxlength="2000" placeholder="Ask a question about this card, chapter or book, e.g. “Why is the minus sign in Fourier’s law?” or “Work a numeric example with SI units.”" aria-label="Your question"></textarea>
         <div class="t-row"><span class="t-tip">Enter to send · Shift+Enter for a new line</span><button type="submit" class="t-send" id="t-send">Send</button></div>
       </form>`;
+    if (ctx.global) panel.querySelector('#t-input').placeholder = 'Ask about this page, its chapter or the book, e.g. “When can I use this equation?”';
     reader.appendChild(panel);
     const $ = id => panel.querySelector('#' + id);
     const input = $('t-input');
@@ -120,6 +144,8 @@
         if (fb.dataset.fb !== undefined) { const v = fb.dataset.v; return setFeedback(i, f => (f && f.rating === v ? null : { rating: v, reasons: v === 'needs_work' && f ? f.reasons : [], at: Date.now() }), `[data-v="${v}"]`); }
         const r = fb.dataset.r; return setFeedback(i, f => f && { ...f, reasons: f.reasons.includes(r) ? f.reasons.filter(x => x !== r) : [...f.reasons, r], at: Date.now() }, `[data-r="${r}"]`);
       }
+      const sg = e.target.closest('[data-suggest]');
+      if (sg) { const i = document.getElementById('t-input'); i.value = sg.dataset.suggest; const c = conv(); c.draft = i.value; store(c); i.focus(); return; }
       const b = e.target.closest('[data-check],[data-hint],[data-reveal]'); if (!b) return;
       if (b.dataset.check !== undefined) return runCheck(Number(b.dataset.check), b);
       const el = document.getElementById(b.getAttribute('aria-controls'));
@@ -201,6 +227,11 @@
   function paintCtx() {
     const el = document.getElementById('t-ctx'); if (!el) return;
     const card = cardAt(ctx.index), c = conv(), o = c.messages.length && c.origin;
+    if (ctx.global) { // the current page always; plus where an ongoing conversation started
+      pageContext();
+      el.innerHTML = `<span data-page-ctx>Context: ${esc(pageLabel())}</span><br><span>${esc(ctx.book.short)} · Ch ${ctx.ch.n}: ${esc(ctx.ch.title)}</span>${o ? `<br><span class="t-orig">Conversation started on: ${esc(o.label)} · ${scopeLabel(o.scope)}</span>` : ''}`;
+      return;
+    }
     if (o) { // a reopened or ongoing conversation shows where it started, not where the reader is now
       el.innerHTML = `<span class="t-orig">Conversation from ${esc(ctx.book.short)} · Ch ${o.chapter}: ${esc(o.chapterTitle || '')}</span><br><span>${esc(o.label)} · ${scopeLabel(o.scope)}</span>`;
       return;
@@ -249,7 +280,9 @@
       src = `<details class="t-src"><summary>Sources retrieved from the textbook (${m.passages.length})</summary>${m.passages.map(x => `<div class="t-pass"><div class="t-pass-h">Retrieved passage <span>· ${esc(x.book)}${x.chapter ? ` · Ch ${x.chapter}` : ''}</span></div><p>${esc(x.excerpt)}</p></div>`).join('')}<div class="t-pass-note">Page number unavailable. This passage was retrieved as relevant context; it is not a sentence-by-sentence citation.</div></details>`;
     } else if ((m.sources || []).length) {
       src = `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`;
-    } else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
+    } else if (m.retrieval && m.retrieval.status === 'failed') src = '<div class="t-src none" data-ret="failed"><b>Textbook search failed.</b> This answer is supplementary explanation, not taken from the textbook.</div>';
+    else if (m.retrieval && m.retrieval.status === 'none') src = '<div class="t-src none" data-ret="none"><b>No relevant textbook passage found.</b> This answer is supplementary explanation; check it against your notes.</div>';
+    else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
     const canCheck = typeof idx === 'number' && m.retrieval && !/^#{0,4}\s*$/.test(m.content);
     return `<div class="t-msg bot" data-i="${idx}"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}${canCheck ? checkHTML(m, idx) : ''}${typeof idx === 'number' && m.retrieval ? fbHTML(m, idx) : ''}</div>`;
   }
@@ -316,12 +349,29 @@
       return `<li><button class="t-saved-item" data-open="${esc(x.conversationId)}"><span class="t-saved-q">${esc(q.slice(0, 90))}</span><span class="t-saved-m">${o ? `Ch ${o.chapter} · ${esc(o.label)} · ${scopeLabel(o.scope)}` : 'Started before origins were saved'}${when ? ` · ${new Date(when).toLocaleDateString()}` : ''} · ${x.messages.length} messages</span></button></li>`;
     }).join('')}</ul>` : '<p class="t-saved-h">No earlier conversations yet.</p>';
   }
+  // Suggested questions from the current page's context (generic ones without context). Clicking fills the box;
+  // nothing is sent until you press Send.
+  const SUGGEST = {
+    reader: ['Explain this card in simpler words', 'Work a short numeric example with SI units'],
+    quiz: ['Why is the correct answer right?', 'Which idea does this question test?'],
+    'formula-notebook': ['When can I use this formula, and when not?', 'What does each symbol mean, with units?'],
+    'calculation-workspace': ['What does each quantity in this equation mean?', 'Is my result physically reasonable?'],
+    'guided-practice': ['Give me a hint for my current step, not the answer', 'Which assumptions does this example make?'],
+    progress: ['What should I review next in this chapter?', 'Quiz me on a weak topic'],
+    'study-sheets': ['Quiz me on the items in this sheet', 'How do these items connect?'],
+  };
+  function suggestHTML() {
+    if (!ctx) return '';
+    const p = pageInfo(), t = p && p.ctx && p.ctx.pageType;
+    const list = SUGGEST[t] || ['Summarize the main ideas of this chapter', 'Explain a key equation of this chapter'];
+    return `<div class="t-sugg" aria-label="Suggested questions">${list.map(x => `<button type="button" class="t-chip" data-suggest="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
+  }
   function paintLog(extra = '') {
     const log = document.getElementById('t-log'); if (!log) return;
     const c = conv();
     log.innerHTML = c.messages.length || extra
       ? c.messages.map((m, i) => msgHTML(m, i)).join('') + extra
-      : `<div class="t-empty"><p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope and an answer style above, then type your question below.</p></div>`;
+      : `<div class="t-empty">${suggestHTML()}<p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope and an answer style above, then type your question below.</p></div>`;
     renderMath(log);
     log.scrollTop = log.scrollHeight;
   }
@@ -373,7 +423,7 @@
     const input = document.getElementById('t-input');
     const q = input.value.trim(); if (!q) { input.focus(); return; }
     const c = conv(), o = (c.messages.length && c.origin) || originNow(), scope = o.scope;
-    const where0 = scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${o.chapter}` : o.label;
+    const where0 = [ctx.global ? pageLabel() : '', scope === 'book' ? 'Whole book' : scope === 'chapter' ? `Ch ${o.chapter}` : o.label].filter(Boolean).join(' · ');
     const style = getStyle();
     const styleLabel = style === 'default' ? '' : STYLES.find(x => x[0] === style)[1];
     const where = [where0, styleLabel].filter(Boolean).join(' · ');
@@ -383,6 +433,7 @@
       conversationId: c.conversationId, scope, style, question: q,
       messages: c.messages.slice(-MAX_HISTORY).map(m => ({ role: m.role, content: m.content })),
     };
+    const pc = pageContext(); if (pc) payload.pageContext = pc; // current at send time
     ctx.busy = true; setBusy(true);
     input.value = '';
     paintLog(msgHTML({ role: 'user', content: q, where }) + '<div class="t-msg bot loading"><div class="t-who">Tutor</div><div class="t-dots" aria-label="Generating answer"><i></i><i></i><i></i></div></div>');
@@ -394,7 +445,7 @@
       try { data = await res.json(); } catch (e) { data = null; }
       if (!res.ok || !data || typeof data.answer !== 'string') {
         const err = data && data.error;
-        throw Object.assign(new Error(err && err.message || `The tutor service is unavailable (HTTP ${res.status}).`), { code: err && err.code });
+        throw Object.assign(new Error(err && err.message || `The tutor service is unavailable (HTTP ${res.status}).`), { code: err && err.code, reason: err && err.reason });
       }
       const fresh = conv(); // re-read in case another tab changed it
       if (!fresh.messages.length || !fresh.origin) fresh.origin = o;
@@ -407,11 +458,12 @@
       ctx.busy = false; setBusy(false);
       // Keep the user's question: put it back in the box (and the saved draft) so nothing is lost.
       input.value = q; const d = conv(); d.draft = q; store(d);
-      const msg = e.name === 'AbortError' ? 'The request timed out.' : e.message === 'Failed to fetch' ? 'Could not reach the tutor service. Check your connection.' : e.message;
+      const net = e.name === 'TypeError' || e.message === 'Failed to fetch' || /NetworkError|Load failed/.test(e.message || '');
+      const msg = e.name === 'AbortError' ? 'The request timed out. Your question is kept in the box.' : net ? 'Could not reach the tutor service. Check your connection; your question is kept in the box.' : e.message;
       if (e.code === 'book_not_available' || e.code === 'not_configured') { // the server says this book isn't connected: that's "unavailable", not an error
         paintLog(); return applyUnavailable(e.code);
       }
-      paintLog(`<div class="t-err" role="alert"><b>${e.code === 'not_configured' ? 'Tutor not configured' : e.code === 'book_not_available' ? 'Tutor not available for this book yet' : e.code === 'rate_limited' ? 'Too many requests' : 'Couldn’t get an answer'}</b><p>${esc(msg)}</p><button class="t-retry" id="t-retry">Retry</button></div>`);
+      paintLog(`<div class="t-err" role="alert"><b>${e.code === 'not_configured' ? 'Tutor not configured' : e.code === 'book_not_available' ? 'Tutor not available for this book yet' : e.code === 'rate_limited' ? (e.reason === 'minute' ? 'Minute limit reached' : e.reason === 'day' ? 'Daily limit reached' : e.reason === 'global' ? 'Tutor’s daily limit reached' : 'Too many requests') : e.code === 'limiter_unavailable' ? 'Tutor temporarily unavailable' : 'Couldn’t get an answer'}</b><p>${esc(msg)}</p><button class="t-retry" id="t-retry">Retry</button></div>`);
       document.getElementById('t-retry').addEventListener('click', send);
     }
   }
@@ -427,9 +479,10 @@
     const panel = document.getElementById('tutor');
     const had = panel.contains(document.activeElement);
     panel.hidden = !open;
-    ctx.reader.classList.toggle('with-tutor', open);
-    const btn = document.getElementById('tutorBtn');
-    if (btn) { btn.setAttribute('aria-expanded', String(open)); btn.classList.toggle('on', open); }
+    if (ctx.global) document.body.classList.toggle('g-tutor-open', open); else ctx.reader.classList.toggle('with-tutor', open);
+    if (open) paintCtx();
+    document.querySelectorAll('#tutorBtn, [data-tutor-open]').forEach(b => { b.setAttribute('aria-expanded', String(open)); b.classList.toggle('on', open); });
+    const btn = ctx.opener && document.contains(ctx.opener) ? ctx.opener : document.getElementById('tutorBtn');
     if (open) { paintLog(); document.getElementById('t-input').focus(); }
     else if (btn && had) btn.focus({ preventScroll: true }); // return focus to the opener
     else { const f = document.getElementById('feed'); if (f && !f.contains(document.activeElement)) f.focus({ preventScroll: true }); }
@@ -445,7 +498,13 @@
     const input = document.getElementById('t-input'); input.value = text; paintAll(); input.focus(); input.setSelectionRange(text.length, text.length);
   }
   function setIndex(i, ch) { if (!ctx) return; if (ch) ctx.ch = ch; ctx.index = i; paintCtx(); paintScope(); }
-  function unmount() { ctx = null; }
+  function unmount() { if (ctx && ctx.global) document.body.classList.remove('g-tutor-open'); ctx = null; }
+  // Draft text from a page's "Ask tutor" button: filled in, never sent automatically. Keeps the current conversation.
+  function draft(text) {
+    if (!ctx || ctx.busy) return; toggle(true);
+    const input = document.getElementById('t-input'); input.value = text; const c = conv(); c.draft = text; store(c); input.focus(); input.setSelectionRange(text.length, text.length);
+  }
+  function refresh() { if (ctx) { paintCtx(); paintScope(); const e = document.querySelector('#t-log .t-empty'); if (e && !ctx.busy) paintLog(); } } // the page's context changed (no API call)
 
-  window.Tutor = { mount, toggle, setIndex, prepare, unmount, isOpen: () => !!(ctx && ctx.open), _md: md };
+  window.Tutor = { mount, toggle, setIndex, prepare, unmount, draft, refresh, setOpener: el => { if (ctx) ctx.opener = el; }, isGlobal: () => !!(ctx && ctx.global), bookId: () => ctx && ctx.book.id, pageContext: () => (ctx ? pageContext() : null), isOpen: () => !!(ctx && ctx.open), _md: md };
 })();

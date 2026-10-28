@@ -36,7 +36,9 @@ const Progress = (() => {
     const ids = Object.keys(books).sort(), book = books[bookId] || books['heat-mass-transfer'] || books[ids[0]];
     if (!book) return renderMissing('No book is loaded yet.', '#/', 'Home');
     document.title = `My progress · ${book.short}`;
-    const m = compute(state, book), nd = '<span class="pg-nd">Not enough data</span>';
+    const m = compute(state, book);
+    window.lsPageCtx = () => ({ label: book.short, ctx: { schemaVersion: 1, pageType: 'progress', bookId: book.id, pageState: { cardsOpened: `${m.cards.opened} of ${m.cards.total}`, quizAnswers: m.quizTries, needsReview: m.needs.length } } });
+    const nd = '<span class="pg-nd">Not enough data</span>';
     const cardName = x => { const ch = book.chapters.find(c => c.n === x.chapter); return x.card < ch.cards.length ? stripTags(ch.cards[x.card].h) : `Practice question ${x.card - ch.cards.length + 1}`; };
     const day = t => new Date(t).toLocaleDateString(undefined, { weekday: 'short' });
     app.innerHTML = `<main class="page cpage pgpage"><a class="back" href="#/">← Home</a>

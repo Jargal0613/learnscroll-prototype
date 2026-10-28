@@ -68,6 +68,7 @@ const Sheets = (() => {
   let ui = {};
   function renderList() {
     document.title = 'Study sheets · LearnScroll';
+    window.lsPageCtx = () => ({ label: '', ctx: { schemaVersion: 1, pageType: 'study-sheets', bookId: 'heat-mass-transfer', pageState: { items: Object.keys(all()).length } } });
     const ids = Object.keys(all()).sort((a, b) => all()[b].updated - all()[a].updated);
     app.innerHTML = `<main class="page shpage"><a class="back" href="#/">← Library</a>
       <div class="book-head"><div><h1>Study sheets</h1><p class="meta-line">Your own pick of saved formulas, notes, bookmarks and difficult cards, ready to print.</p></div></div>
@@ -92,6 +93,9 @@ const Sheets = (() => {
   function render(id) {
     const s = all()[id]; if (!s) return renderMissing('That study sheet doesn’t exist (it may have been deleted).', '#/sheets', 'All study sheets');
     document.title = `${s.title} · LearnScroll`;
+    window.lsPageCtx = () => { const sh = all()[id]; if (!sh) return null; const b = ui.book && books[ui.book] ? ui.book : 'heat-mass-transfer';
+      return { label: sh.title.slice(0, 60), ctx: { schemaVersion: 1, pageType: 'study-sheets', bookId: b, chapterId: ui.ch || null, itemId: id, excerpt: sh.items.slice(0, 12).map(it => { try { return label(it); } catch (e) { return it.t; } }).join(' | '),
+        pageState: { sheetTitle: sh.title, items: sh.items.length } } }; };
     const inSheet = new Set(s.items.map(key));
     const cands = candidates(ui.book || '', ui.ch || 0), bookOpts = BOOK_IDS.filter(b => books[b]);
     const chOpts = ui.book ? books[ui.book].chapters.filter(ready) : [];

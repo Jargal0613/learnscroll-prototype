@@ -1,6 +1,8 @@
 // POST /api/tutor — Vercel Node serverless function (no framework).
 const { answer, status } = require('./_lib/tutor');
 const { toResponse, E } = require('./_lib/errors');
+const { validate } = require('./_lib/validate');
+const { getProvider } = require('./_lib/providers');
 const solver = require('./_lib/solver');
 const { upstashStore } = require('./_lib/upstash');
 // The problem solver is offered only when it is switched on AND its rate limiter is configured (fail closed).
@@ -22,15 +24,18 @@ async function readBody(req) {
 
 function clientIp(req) { const h = req.headers || {}; return String(h['x-real-ip'] || (h['x-forwarded-for'] || '').split(',')[0] || 'unknown').trim().slice(0, 64); }
 
-// Practice hints are ordinary tutor answers, but they count against the problem solver's limits (same Redis
-// counters, same 2/min, 10/day per IP and 200/day overall), so they add no new spending allowance. Fail closed.
-async function practiceGate(req, deps) {
+// Every tutor message (reader, quizzes, formulas, calculator, practice, progress, sheets, practice hints) goes through
+// ONE limiter: the problem solver's Redis counters (2/min and 10/day per IP, 200/day overall). One message = one
+// request. A message is counted after it passes validation and before the paid call; a model or network failure
+// after that still counts (no free retries), and the server never retries. Fail closed without the limiter.
+async function gate(req, deps) {
   const env = deps.env || process.env;
-  if (!solver.enabled(env)) throw Object.assign(new Error('Tutor hints for practice aren’t available right now.'), { status: 404, code: 'not_available' });
   const store = deps.store !== undefined ? deps.store : upstashStore(env);
-  if (!store) throw Object.assign(new Error('Tutor hints are temporarily unavailable.'), { status: 503, code: 'limiter_unavailable' });
+  if (!store) throw Object.assign(new Error('The tutor is temporarily unavailable.'), { status: 503, code: 'limiter_unavailable' });
   const lim = await solver.limit(store, { ip: clientIp(req) });
-  if (!lim.ok) throw Object.assign(new Error(lim.reason === 'limiter_unavailable' ? 'Tutor hints are temporarily unavailable.' : 'Hint limit reached for now.'), { status: lim.reason === 'limiter_unavailable' ? 503 : 429, code: lim.reason === 'limiter_unavailable' ? 'limiter_unavailable' : 'rate_limited', retryAfter: lim.retryAfter });
+  if (lim.ok) return;
+  const msg = { minute: 'You’ve sent 2 questions this minute. Wait a minute and try again.', day: 'You’ve reached today’s 10-question limit for this device. It resets at midnight UTC.', global: 'The tutor has reached its daily limit for all users. Try again tomorrow (UTC).', limiter_unavailable: 'The tutor is temporarily unavailable.' }[lim.reason];
+  throw Object.assign(new Error(msg), { status: lim.reason === 'limiter_unavailable' ? 503 : 429, code: lim.reason === 'limiter_unavailable' ? 'limiter_unavailable' : 'rate_limited', reason: lim.reason, retryAfter: lim.retryAfter });
 }
 
 module.exports = async function handler(req, res, deps = {}) {
@@ -44,12 +49,16 @@ module.exports = async function handler(req, res, deps = {}) {
   }
   try {
     let body = await readBody(req);
-    if (body && typeof body === 'object' && body.practiceHint === true) {
-      const { practiceHint: _h, ...rest } = body; body = rest;
-      try { await practiceGate(req, deps); } catch (g) {
-        if (g.retryAfter) res.setHeader('Retry-After', String(g.retryAfter));
-        res.statusCode = g.status; return res.end(JSON.stringify({ error: { code: g.code, message: g.message } }));
-      }
+    let hint = false;
+    if (body && typeof body === 'object' && body.practiceHint === true) { const { practiceHint: _h, ...rest } = body; body = rest; hint = true; }
+    try {
+      if (hint && !solver.enabled(deps.env || process.env)) throw Object.assign(new Error('Tutor hints for practice aren’t available right now.'), { status: 404, code: 'not_available' });
+      if (!deps.answer) { validate(body); getProvider(deps.env || process.env); } // bad or unconfigured: rejected before counting
+      await gate(req, deps);
+    } catch (g) {
+      if (!g.status) throw g;
+      if (g.retryAfter) res.setHeader('Retry-After', String(g.retryAfter));
+      res.statusCode = g.status; return res.end(JSON.stringify({ error: { code: g.code, reason: g.reason || g.code, message: g.message } }));
     }
     const out = await (deps.answer || answer)(body);
     res.statusCode = 200;

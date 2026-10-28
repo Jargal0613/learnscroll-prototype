@@ -94,7 +94,7 @@ async function answerFileSearch(req, p) {
   // Retrieved passages: only from this book's file, only when the answer cites the book or has a
   // "From the textbook" section (off-topic refusals show none).
   const usesBook = sources.length > 0 || /^#{1,4}\s*\**from the textbook/im.test(out.text);
-  const passages = !usesBook ? [] : (out.passages || [])
+  let passages = !usesBook ? [] : (out.passages || [])
     .filter(x => x.fileId === kb.fileId)
     .sort((a, b) => b.score - a.score)
     .map(x => ({ excerpt: excerpt(x.text, req.question), chapter: verifiedChapter(x.text), score: Math.round(x.score * 1000) / 1000 }))
@@ -102,9 +102,18 @@ async function answerFileSearch(req, p) {
     .filter((x, i, arr) => arr.findIndex(y => y.excerpt === x.excerpt) === i)
     .slice(0, MAX_PASSAGES)
     .map(x => ({ ...x, book: `${req.book.short} (${req.book.edition})`, label: 'Retrieved passage', page: null }));
+  // Retrieval state, decided from the File Search call itself (same rules as the solver):
+  // failed = the search reported failure; none = no search ran or nothing from this book came back; retrieved otherwise.
+  const fromBook = (out.passages || []).some(x => x.fileId === kb.fileId);
+  const state = out.searchFailed ? 'failed' : out.searched && fromBook ? 'retrieved' : 'none';
+  let text = cleanMarkers(out.text).slice(0, MAX_ANSWER).trim();
+  if (state !== 'retrieved') { // nothing to back a textbook claim: no citations, no passages, relabel the heading
+    sources.length = 0; passages.length = 0;
+    text = text.replace(/^(#{1,4}\s*\**)from the textbook\**[^\n]*$/gim, '$1Additional explanation (no textbook passage was retrieved)');
+  }
   return {
-    answer: cleanMarkers(out.text).slice(0, MAX_ANSWER).trim(), sources, passages,
-    retrieval: { provider: 'openai-file-search', model: p.model, searched: out.searched, passages: out.results, usage: out.usage },
+    answer: text, sources, passages,
+    retrieval: { provider: 'openai-file-search', model: p.model, status: state, searched: out.searched, passages: out.results, usage: out.usage },
     conversationId: req.conversationId,
   };
 }

@@ -131,11 +131,12 @@ test('practice hint: solver off -> 404, no limiter -> 503, limiter error -> 503;
   assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: { incr: async () => { throw new Error('x'); } }, answer })).status, 503);
   assert.equal(n, 0);
 });
-test('practice hint shares the solver counters: 2/min per IP then 429; plain tutor questions are not limited', async () => {
+test('practice hint shares the solver counters: 2/min per IP then 429; plain tutor questions share them too', async () => {
   const st = mapStore(); let seen = []; const answer = async b => { seen.push(b); return { answer: 'hint' }; };
   assert.equal((await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: st, answer })).status, 200);
   await S.limit(st, { ip: '7.7.7.7' }); // one solver problem from the same IP uses the same allowance
   const r = await tcall({ practiceHint: true, question: 'q' }, { env: ON, store: st, answer }); assert.equal(r.status, 429); assert.ok(Number(r.headers['Retry-After']) > 0);
   assert.equal(seen.length, 1); assert.equal(seen[0].practiceHint, undefined, 'flag stripped before the tutor sees the request');
-  assert.equal((await tcall({ question: 'q' }, { env: ON, store: st, answer })).status, 200, 'ordinary tutor use unchanged');
+  const q = await tcall({ question: 'q' }, { env: ON, store: st, answer });
+  assert.equal(q.status, 429, 'ordinary tutor questions share the same counters (round 12)'); assert.equal(q.body.error.reason, 'minute');
 });

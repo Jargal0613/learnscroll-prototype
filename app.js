@@ -129,10 +129,55 @@ function go(hash) { if (location.hash === hash) route(); else location.hash = ha
 window.addEventListener('hashchange', route);
 let cleanup = null;
 let booted = false; // hash changes before boot are handled by the boot route()
+// ---------- one global tutor for the non-reader pages ----------
+// The reader keeps its own docked panel; these pages share ONE panel (same conversations, same server limits) that
+// stays mounted while you move between them. Opening, closing and navigating never call the API (only the
+// cached GET status check on first mount, which costs nothing).
+const TUTOR_PAGES = { formulas: 'formula-notebook', calc: 'calculation-workspace', practice: 'guided-practice', progress: 'progress', sheets: 'study-sheets', review: 'quiz', mistakes: 'quiz' };
+function dropGlobalTutor() {
+  if (window.Tutor && Tutor.isGlobal()) Tutor.unmount();
+  const h = document.getElementById('g-tutor-host'); if (h) h.remove();
+  document.body.classList.remove('g-tutor-open');
+}
+function pageBook(parts) { return (['progress', 'review', 'mistakes'].includes(parts[0]) && books[parts[1]]) || books['heat-mass-transfer'] || null; }
+function syncGlobalTutor(parts) {
+  if (!window.Tutor || !TUTOR_PAGES[parts[0]]) return;
+  const main = app.querySelector('main.page'), book = pageBook(parts);
+  if (!main || !book) return dropGlobalTutor();
+  if (!window.lsPageCtx) window.lsPageCtx = () => ({ label: '', ctx: { schemaVersion: 1, pageType: TUTOR_PAGES[parts[0]], bookId: book.id } });
+  if (!(Tutor.isGlobal() && Tutor.bookId() === book.id)) {
+    dropGlobalTutor();
+    const host = document.createElement('div'); host.id = 'g-tutor-host'; document.body.appendChild(host);
+    const first = book.chapters.find(ready);
+    Tutor.mount(host, book, first, -1, { global: true });
+  }
+  addAskButton();
+  Tutor.refresh();
+}
+// "Ask tutor" in the page header (in the flow of the page, never floating over controls)
+function addAskButton() {
+  const main = app.querySelector('main.page'); if (!main || main.querySelector('.g-ask')) return;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'g-ask'; b.setAttribute('data-tutor-open', ''); b.setAttribute('aria-controls', 'tutor');
+  b.setAttribute('aria-expanded', String(Tutor.isOpen())); b.textContent = 'Ask tutor';
+  b.addEventListener('click', () => { Tutor.setOpener(b); Tutor.toggle(); });
+  main.prepend(b);
+}
+new MutationObserver(() => { if (window.Tutor && Tutor.isGlobal()) { addAskButton(); Tutor.refresh(); } }).observe(app, { childList: true });
+// Context for review/mistakes pages (quiz questions): the question on screen.
+function quizPageCtx(book, ch, cardIdx, q, label) {
+  window.lsPageCtx = () => ({ label, ctx: { schemaVersion: 1, pageType: 'quiz', bookId: book.id, chapterId: ch.n, itemId: q ? `c${ch.n}-q${cardIdx + 1}` : null, sourceRefs: q && q.ref ? [q.ref] : [], pageState: q ? { question: stripTags(q.q).slice(0, 160) } : {} } });
+}
 function route() {
   if (!booted) return;
   if (cleanup) { cleanup(); cleanup = null; }
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  window.lsPageCtx = null;
+  if (!TUTOR_PAGES[parts[0]]) dropGlobalTutor();
+  route0(parts);
+  syncGlobalTutor(parts);
+}
+function route0(parts) {
   window.scrollTo(0, 0);
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
@@ -480,6 +525,7 @@ function renderMistakes(book, ch) {
       return;
     }
     const { q, i, id } = list[pos], prev = lastAttempt(bs, id);
+    quizPageCtx(book, ch, i, q, `Mistakes · question ${i + 1}`); if (window.Tutor) Tutor.refresh();
     document.getElementById('mx-count').textContent = `${pos + 1} / ${list.length}`;
     el.innerHTML = `<div class="sec"><span class="tag q-t">Practice</span><span>Question ${i + 1}</span></div><h2>${q.q}</h2>
       ${prev ? `<p class="rv-last">Last time you chose ${String.fromCharCode(65 + prev.k)} · ${esc(fmtWhen(prev.at))}</p>` : ''}
@@ -766,6 +812,9 @@ function renderReview(book, kind) {
     const prompt = isQ ? ch.quiz[i - ch.cards.length].q : esc(ch.cards[i].h);
     const last = bs.review[id];
     const m = bs.marks[id] || {};
+    if (isQ) quizPageCtx(book, ch, i - ch.cards.length, ch.quiz[i - ch.cards.length], `Review · question ${i - ch.cards.length + 1}`);
+    else { const c = ch.cards[i]; window.lsPageCtx = () => ({ label: `Review · ${stripTags(c.h)}`, ctx: { schemaVersion: 1, pageType: 'reader', bookId: book.id, chapterId: ch.n, itemId: `c${ch.n}-${i + 1}`, sectionId: c.s || null, sourceRefs: c.ref ? [c.ref] : [], pageState: { cardTitle: stripTags(c.h) } } }); }
+    if (window.Tutor) Tutor.refresh();
     document.getElementById('rv-count').textContent = `${pos + 1} / ${list.length}`;
     document.getElementById('rv-line').style.width = `${(pos / list.length) * 100}%`;
     el.innerHTML = `<div class="sec"><span>Ch ${ch.n} · card ${i + 1}</span>${isQ ? '<span class="tag q-t">Practice</span>' : `<span>${esc(ch.cards[i].s)}</span>`}${m.b ? '<span class="tag">Bookmarked</span>' : ''}${m.d ? '<span class="tag">Difficult</span>' : ''}</div>

@@ -1,5 +1,5 @@
 {
   "functions": {
-    "api/tutor.js": { "includeFiles": "{data/**,api/_lib/knowledge.json}", "maxDuration": 30 }
+    "api/tutor.js": { "includeFiles": "{data/**,api/_lib/knowledge.json,tutorctx.js,calccore.js,practicedata.js,studydata.js}", "maxDuration": 30 }
   }
 }

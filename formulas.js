@@ -75,6 +75,11 @@ const Formulas = (() => {
   }
   function render(focusId) {
     document.title = 'Formula notebook · LearnScroll';
+    // Tutor context: the highlighted (or being edited) formula, if any; custom LaTeX/notes are the student's own text.
+    window.lsPageCtx = () => { const id = ui.edit && all()[ui.edit] ? ui.edit : ui.focus && all()[ui.focus] ? ui.focus : null, f = id && all()[id];
+      const fb = f && books[f.book] ? f.book : 'heat-mass-transfer', ids = list();
+      return { label: f ? stripTags(f.title) : '', ctx: { schemaVersion: 1, pageType: 'formula-notebook', bookId: fb, chapterId: f && f.chapter || null, itemId: id, excerpt: f ? `${f.tex}${f.notes ? ` | notes: ${f.notes}` : ''}` : null,
+        pageState: { saved: ids.length, custom: ids.filter(x => all()[x].kind !== 'card').length, ...(f ? { formulaTitle: stripTags(f.title) } : {}) } } }; };
     if (focusId && all()[focusId]) ui.focus = focusId;
     const ids = list(), shown = ids.filter(matches);
     const bookOpts = BOOK_IDS.filter(id => books[id] && ids.some(x => all()[x].book === id));

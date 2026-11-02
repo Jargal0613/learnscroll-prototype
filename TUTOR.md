@@ -142,3 +142,15 @@ typed; nothing is sent and no other book is searched) or, if the status check it
   `docs/problem-solver.md`, File Search fee dominates).
 - A fully used global cap is 200 × $0.0035–0.0107 ≈ **$0.70–2.14 per day**. A budget of about $5/month covers about
   1,400 messages a month (≈ 47/day). The infrastructure enforces the daily cap, **not** a monthly dollar budget.
+
+## Reading-book tutor (Round 13)
+
+Books: `ai-history` and `neuro-history` (B's own books, under `data/books/`).
+
+- It uses the same `/api/tutor` endpoint and the same rate limiter as the textbook tutor.
+- `api/_lib/reading.js` validates the request. The server then builds an excerpt of at most 6000 characters from the current section, taken from its own `data/books/<id>/<NN_MM>.json`. Client-sent text is never trusted as the source.
+- The excerpt is labelled as the book's own text, not textbook evidence. Answers return `retrieval.status: "section"`.
+- There's no vector store and no File Search: the OpenAI provider omits `tools` when `vectorStoreId` is null. Check mode is refused for reading books.
+- HMT keeps its own store. Reading books have no knowledge entry, so retrieval can't cross between them (unit-tested).
+- Cost: about 1.5k input tokens plus the output per answer, roughly $0.0003–0.0005 at gpt-6-luna prices. There's no tool-call fee.
+- Not done, because of the cost stop: uploading the books to a vector store. Estimate: about 1.5 MB of text plus about 5 MB of embeddings, about 7 MB in total. Pricing (https://developers.openai.com/api/docs/pricing) is $0.10/GB per day after 1 GB free. With the HMT store's 10.26 MB that's about 17 MB, so $0/day inside the free tier and about $0.02/month otherwise. Each File Search call would add $0.0025.

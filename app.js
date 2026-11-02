@@ -133,6 +133,7 @@ let booted = false; // hash changes before boot are handled by the boot route()
 // The reader keeps its own docked panel; these pages share ONE panel (same conversations, same server limits) that
 // stays mounted while you move between them. Opening, closing and navigating never call the API (only the
 // cached GET status check on first mount, which costs nothing).
+const READING_IDS = ['ai-history', 'neuro-history']; // reading books (data/books/index.json); their tutor conversations import too
 const TUTOR_PAGES = { formulas: 'formula-notebook', calc: 'calculation-workspace', practice: 'guided-practice', progress: 'progress', sheets: 'study-sheets', review: 'quiz', mistakes: 'quiz' };
 function dropGlobalTutor() {
   if (window.Tutor && Tutor.isGlobal()) Tutor.unmount();
@@ -154,6 +155,17 @@ function syncGlobalTutor(parts) {
   addAskButton();
   Tutor.refresh();
 }
+// Reading books (shelf.js) mount the same global tutor after their async render, with a book descriptor built from
+// the book's contents (no cards): same panel, conversations stored per book id, same endpoint and limits.
+window.lsMountReadingTutor = (book, chapterN) => {
+  if (!window.Tutor || !app.querySelector('main.page')) return;
+  if (!(Tutor.isGlobal() && Tutor.bookId() === book.id)) {
+    dropGlobalTutor();
+    const host = document.createElement('div'); host.id = 'g-tutor-host'; document.body.appendChild(host);
+    Tutor.mount(host, book, book.chapters.find(c => c.n === chapterN) || book.chapters[0], -1, { global: true });
+  }
+  addAskButton(); Tutor.refresh();
+};
 // "Ask tutor" in the page header (in the flow of the page, never floating over controls)
 function addAskButton() {
   const main = app.querySelector('main.page'); if (!main || main.querySelector('.g-ask')) return;
@@ -161,7 +173,7 @@ function addAskButton() {
   b.type = 'button'; b.className = 'g-ask'; b.setAttribute('data-tutor-open', ''); b.setAttribute('aria-controls', 'tutor');
   b.setAttribute('aria-expanded', String(Tutor.isOpen())); b.textContent = 'Ask tutor';
   b.addEventListener('click', () => { Tutor.setOpener(b); Tutor.toggle(); });
-  main.prepend(b);
+  const bar = main.querySelector('.tb-bar'); if (bar) bar.appendChild(b); else main.prepend(b);
 }
 new MutationObserver(() => { if (window.Tutor && Tutor.isGlobal()) { addAskButton(); Tutor.refresh(); } }).observe(app, { childList: true });
 // Context for review/mistakes pages (quiz questions): the question on screen.
@@ -173,7 +185,7 @@ function route() {
   if (cleanup) { cleanup(); cleanup = null; }
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   window.lsPageCtx = null;
-  if (!TUTOR_PAGES[parts[0]]) dropGlobalTutor();
+  if (!TUTOR_PAGES[parts[0]] && !(parts[0] === 'books' && parts[2])) dropGlobalTutor();
   route0(parts);
   syncGlobalTutor(parts);
 }
@@ -713,7 +725,7 @@ function exportData(conversations, suffix = '') {
   download(`learnscroll-study-${day}${suffix}.json`, JSON.stringify(d, null, 2));
 }
 function readImport(file) {
-  const done = text => { const r = StudyData.parse(text, { bookIds: BOOK_IDS }); pendingImport = { name: file.name, ...r }; go('#/import'); };
+  const done = text => { const r = StudyData.parse(text, { bookIds: [...BOOK_IDS, ...READING_IDS] }); pendingImport = { name: file.name, ...r }; go('#/import'); };
   if (file.size > 5 * 1024 * 1024) return done(null);
   file.text().then(done, () => done(null));
 }

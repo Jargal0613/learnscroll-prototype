@@ -3,7 +3,7 @@
 // with the same function. Anything unknown is dropped; student-typed text is bounded and treated as data.
 (function (root) {
   const SCHEMA_VERSION = 1;
-  const PAGE_TYPES = ['reader', 'quiz', 'formula-notebook', 'calculation-workspace', 'guided-practice', 'progress', 'study-sheets'];
+  const PAGE_TYPES = ['reader', 'quiz', 'formula-notebook', 'calculation-workspace', 'guided-practice', 'progress', 'study-sheets', 'book-section'];
   const LIMITS = { excerpt: 600, refs: 4, ref: 40, stateKeys: 12, stateValue: 160, total: 2500 };
   // allowed pageState keys per page type (values: short strings, finite numbers or booleans)
   const STATE_KEYS = {
@@ -14,6 +14,7 @@
     'guided-practice': ['example', 'step', 'attempt', 'hintsUsed', 'stepsDone', 'solved'],
     progress: ['cardsOpened', 'quizAnswers', 'needsReview', 'chapterViewed'],
     'study-sheets': ['sheetTitle', 'items', 'selectedItem'],
+    'book-section': ['sectionTitle', 'chapterTitle'],
   };
   const CARD_RE = /^c(\d{1,2})-(q?)(\d{1,3})$/, SECTION_RE = /^(\d{1,2}–\d{1,3}|Topic)$/;
   const REF_RE = /^(Eqs?\.|Sec\.|Example)\s[\d–(),\sandto.]{1,30}$/;
@@ -34,8 +35,11 @@
     if (!book || raw.bookId !== book.id) return { ctx: null, dropped: ['all'] };
     const t = raw.pageType, out = { schemaVersion: SCHEMA_VERSION, pageType: t, bookId: book.id, chapterId: null, itemId: null, sectionId: null, excerpt: null, sourceRefs: [], pageState: {} };
     for (const k of Object.keys(raw)) if (!(k in out)) dropped.push(k);
-    if (raw.chapterId !== null && raw.chapterId !== undefined) { if (Number.isInteger(raw.chapterId) && chapterOf(book, raw.chapterId)) out.chapterId = raw.chapterId; else dropped.push('chapterId'); }
-    if (raw.itemId !== null && raw.itemId !== undefined) {
+    const reading = t === 'book-section'; // reading books: chapters have sections, not cards
+    if (reading) { if (Number.isInteger(raw.chapterId) && (book.chapters || []).some(c => c.n === raw.chapterId)) out.chapterId = raw.chapterId; else dropped.push('chapterId'); if (typeof raw.sectionId === 'string' && /^\d{2}_\d{2}$/.test(raw.sectionId)) out.sectionId = raw.sectionId; else dropped.push('sectionId'); }
+    else if (raw.chapterId !== null && raw.chapterId !== undefined) { if (Number.isInteger(raw.chapterId) && chapterOf(book, raw.chapterId)) out.chapterId = raw.chapterId; else dropped.push('chapterId'); }
+    if (raw.itemId !== null && raw.itemId !== undefined && reading) dropped.push('itemId');
+    else if (raw.itemId !== null && raw.itemId !== undefined) {
       const id = typeof raw.itemId === 'string' ? raw.itemId : '';
       let okId = false;
       if (t === 'reader' || t === 'quiz') okId = cardExists(book, id) && (t === 'quiz') === /-q\d/.test(id) && (out.chapterId === null || id.startsWith(`c${out.chapterId}-`));
@@ -45,7 +49,7 @@
       else if (t === 'study-sheets') okId = ITEM_RE[t].test(id);
       if (okId) out.itemId = id; else dropped.push('itemId');
     }
-    if (raw.sectionId !== null && raw.sectionId !== undefined) { if (typeof raw.sectionId === 'string' && SECTION_RE.test(raw.sectionId)) out.sectionId = raw.sectionId; else dropped.push('sectionId'); }
+    if (!reading && raw.sectionId !== null && raw.sectionId !== undefined) { if (typeof raw.sectionId === 'string' && SECTION_RE.test(raw.sectionId)) out.sectionId = raw.sectionId; else dropped.push('sectionId'); }
     if (raw.excerpt !== null && raw.excerpt !== undefined) { if (typeof raw.excerpt === 'string' && raw.excerpt.trim()) out.excerpt = clean(raw.excerpt, LIMITS.excerpt); else dropped.push('excerpt'); }
     if (Array.isArray(raw.sourceRefs)) for (const r of raw.sourceRefs.slice(0, LIMITS.refs)) { if (typeof r === 'string' && r.length <= LIMITS.ref && REF_RE.test(r)) out.sourceRefs.push(r); else dropped.push('sourceRefs'); }
     if (raw.pageState && typeof raw.pageState === 'object' && !Array.isArray(raw.pageState)) {
@@ -61,7 +65,7 @@
     if (JSON.stringify(out).length > LIMITS.total && out.excerpt) out.excerpt = out.excerpt.slice(0, Math.max(0, out.excerpt.length - (JSON.stringify(out).length - LIMITS.total)));
     return { ctx: out, dropped };
   }
-  const LABEL = { reader: 'Reader', quiz: 'Quiz', 'formula-notebook': 'Formula notebook', 'calculation-workspace': 'Calculation workspace', 'guided-practice': 'Guided practice', progress: 'My progress', 'study-sheets': 'Study sheets' };
+  const LABEL = { reader: 'Reader', quiz: 'Quiz', 'formula-notebook': 'Formula notebook', 'calculation-workspace': 'Calculation workspace', 'guided-practice': 'Guided practice', progress: 'My progress', 'study-sheets': 'Study sheets', 'book-section': 'Reading' };
   const api = { SCHEMA_VERSION, PAGE_TYPES, STATE_KEYS, LIMITS, LABEL, sanitize, clean };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.TutorCtx = api;
 })(typeof window !== 'undefined' ? window : globalThis);

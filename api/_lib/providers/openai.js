@@ -23,8 +23,7 @@ module.exports = function openaiProvider({ apiKey, model, timeoutMs = 45000, max
           model, instructions, input, store: false,
           reasoning: { effort: reasoningEffort },
           max_output_tokens: maxOutputTokens,
-          tools: [{ type: 'file_search', vector_store_ids: [vectorStoreId], max_num_results: 8 }],
-          include: ['file_search_call.results'],
+          ...(vectorStoreId ? { tools: [{ type: 'file_search', vector_store_ids: [vectorStoreId], max_num_results: 8 }], include: ['file_search_call.results'] } : {}), // no store: no search
           ...(format ? { text: { format } } : {}),
         });
       } catch (e) { throw mapError(e); }

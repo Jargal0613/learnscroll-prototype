@@ -39,7 +39,7 @@ with sync_playwright() as p:
         pg.click('#tb-next'); pg.wait_for_selector('.tb-art h1:has-text("SECTION 1.2")')
         ok(pg.locator('#tb-prev').count() == 1, f'{W}: Next goes to 1.2; Previous available')
         pg.keyboard.press('ArrowLeft'); pg.wait_for_selector('.tb-art h1:has-text("SECTION 1.1")'); ok(True, f'{W}: ← key goes back')
-        pg.goto(BASE + f'/#/books/{A}/20_02'); pg.wait_for_selector('.tb-art h1')
+        pg.goto(BASE + f'/#/books/{A}/20_02'); pg.wait_for_selector('.tb-art h1:has-text("SECTION 20.2")'); pg.wait_for_timeout(300)
         ok(pg.locator('#tb-next').count() == 0 and 'End of the book' in pg.inner_text('.tb-nav'), f'{W}: last section: no Next at the end')
         # resume + note + reload persistence
         pg.goto(BASE + '/#/'); pg.wait_for_selector('.grid .tb')

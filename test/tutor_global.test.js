@@ -27,7 +27,7 @@ test('context: one valid example per page type survives sanitizing unchanged', (
     C('progress', { pageState: { cardsOpened: '10 of 40', quizAnswers: 4, needsReview: 2 } }),
     C('study-sheets', { itemId: 's-abc12', excerpt: 'Fourier | Newton', pageState: { sheetTitle: 'Exam', items: 2 } }),
   ];
-  assert.deepEqual(T.PAGE_TYPES.slice().sort(), cases.map(c => c.pageType).sort(), 'all 7 page types covered');
+  assert.deepEqual(T.PAGE_TYPES.filter(t => t !== 'book-section').sort(), cases.map(c => c.pageType).sort(), 'all 7 Heat & Mass page types covered (book-section: reading_tutor.test.js)');
   for (const raw of cases) {
     const { ctx, dropped } = T.sanitize(raw, book, { calcIds: new Set(['r-wall']), practiceIds: new Set(['ex3-1']) });
     assert.deepEqual(dropped, [], raw.pageType);

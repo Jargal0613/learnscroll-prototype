@@ -101,7 +101,7 @@
   function mount(reader, book, ch, index, opts = {}) {
     ctx = { reader, book, ch, index, open: false, busy: false, global: !!opts.global };
     const panel = document.createElement('aside');
-    panel.className = 'tutor' + (ctx.global ? ' g' : ''); panel.id = 'tutor'; panel.hidden = true;
+    panel.className = 'tutor' + (ctx.global ? ' g' : '') + (book.reading ? ' reading' : ''); panel.id = 'tutor'; panel.hidden = true;
     panel.setAttribute('aria-label', 'Ask your tutor');
     panel.innerHTML = `
       <div class="t-head"><div><h2>Ask your tutor</h2><div class="t-ctx" id="t-ctx"></div><div class="t-status" id="t-status" data-state="checking" aria-live="polite">Checking tutor…</div></div>
@@ -190,7 +190,7 @@
     if (failed) { state = 'error'; label = 'Couldn’t check the tutor (network or server error). Sending may fail.'; }
     else if (!statusCache.configured) return applyUnavailable('not_configured');
     else if (!statusCache.books[bookId]) return applyUnavailable('book_not_available');
-    else { state = 'on'; label = 'Tutor connected'; const sr = document.getElementById('t-solve-row'); if (sr) sr.hidden = statusCache.solver !== true; }
+    else { state = 'on'; label = 'Tutor connected'; const sr = document.getElementById('t-solve-row'); if (sr) sr.hidden = statusCache.solver !== true || !!ctx.book.reading; }
     st.dataset.state = state; st.textContent = label;
     n.innerHTML = msg; n.hidden = !msg;
     ctx.unavailable = !!msg;
@@ -280,10 +280,11 @@
       src = `<details class="t-src"><summary>Sources retrieved from the textbook (${m.passages.length})</summary>${m.passages.map(x => `<div class="t-pass"><div class="t-pass-h">Retrieved passage <span>· ${esc(x.book)}${x.chapter ? ` · Ch ${x.chapter}` : ''}</span></div><p>${esc(x.excerpt)}</p></div>`).join('')}<div class="t-pass-note">Page number unavailable. This passage was retrieved as relevant context; it is not a sentence-by-sentence citation.</div></details>`;
     } else if ((m.sources || []).length) {
       src = `<div class="t-src"><div class="t-src-h">Sources</div><ol>${m.sources.map(s => `<li><span class="t-kind k-${s.kind}">${s.kind === 'book' ? 'Book' : 'Notes'}</span>${esc(s.label)}</li>`).join('')}</ol></div>`;
-    } else if (m.retrieval && m.retrieval.status === 'failed') src = '<div class="t-src none" data-ret="failed"><b>Textbook search failed.</b> This answer is supplementary explanation, not taken from the textbook.</div>';
+    } else if (m.retrieval && m.retrieval.status === 'section') src = '<div class="t-src none" data-ret="section"><b>Based on this section.</b> The tutor read an excerpt of the section you’re on (the book’s own text). It didn’t search the whole book, and the book’s See also links weren’t opened.</div>';
+    else if (m.retrieval && m.retrieval.status === 'failed') src = '<div class="t-src none" data-ret="failed"><b>Textbook search failed.</b> This answer is supplementary explanation, not taken from the textbook.</div>';
     else if (m.retrieval && m.retrieval.status === 'none') src = '<div class="t-src none" data-ret="none"><b>No relevant textbook passage found.</b> This answer is supplementary explanation; check it against your notes.</div>';
     else if (m.retrieval) src = '<div class="t-src none">No textbook sources for this answer.</div>';
-    const canCheck = typeof idx === 'number' && m.retrieval && !/^#{0,4}\s*$/.test(m.content);
+    const canCheck = typeof idx === 'number' && m.retrieval && m.retrieval.status !== 'section' && !/^#{0,4}\s*$/.test(m.content);
     return `<div class="t-msg bot" data-i="${idx}"><div class="t-who">Tutor</div><div class="t-body md">${md(m.content)}</div>${src}${canCheck ? checkHTML(m, idx) : ''}${typeof idx === 'number' && m.retrieval ? fbHTML(m, idx) : ''}</div>`;
   }
   // Answer feedback: stored only on this message in this browser (and in exports). Nothing is sent anywhere.
@@ -358,6 +359,7 @@
     'calculation-workspace': ['What does each quantity in this equation mean?', 'Is my result physically reasonable?'],
     'guided-practice': ['Give me a hint for my current step, not the answer', 'Which assumptions does this example make?'],
     progress: ['What should I review next in this chapter?', 'Quiz me on a weak topic'],
+    'book-section': ['Summarize this section in a few bullet points', 'Explain the key idea of this section simply', 'How does this connect to modern AI or engineering?'],
     'study-sheets': ['Quiz me on the items in this sheet', 'How do these items connect?'],
   };
   function suggestHTML() {
@@ -371,7 +373,7 @@
     const c = conv();
     log.innerHTML = c.messages.length || extra
       ? c.messages.map((m, i) => msgHTML(m, i)).join('') + extra
-      : `<div class="t-empty">${suggestHTML()}<p>Ask anything about what you're studying. Answers search this book's textbook and list the sources they cite.</p><p>Pick a scope and an answer style above, then type your question below.</p></div>`;
+      : `<div class="t-empty">${suggestHTML()}<p>Ask anything about what you're studying. ${ctx.book.reading ? 'Answers use the section you’re reading (the book’s own text).' : 'Answers search this book\'s textbook and list the sources they cite.'}</p><p>${ctx.book.reading ? 'Pick an answer style above' : 'Pick a scope and an answer style above'}, then type your question below.</p></div>`;
     renderMath(log);
     log.scrollTop = log.scrollHeight;
   }

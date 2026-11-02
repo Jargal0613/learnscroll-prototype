@@ -49,6 +49,7 @@ function cleanMarkers(t) {
 async function answer(body, { provider, env = process.env } = {}) {
   const req = validate(body);
   const p = provider || getProvider(env); // throws not_configured when no credentials
+  if (req.kind === 'reading') return require('./reading').answerReading(req, p);
   if (req.mode === 'check') return answerCheck(req, p);
   if (p.kind === 'file_search') return answerFileSearch(req, p);
   const { sources, bookIndexAvailable } = retrieve(req);
@@ -127,6 +128,7 @@ function status(env = process.env) {
     textbook[id] = !!p && p.kind === 'file_search' && !!knowledge.forBook(id); // file_search mode: this book has its own completed vector-store index
     books[id] = !!p && (p.kind !== 'file_search' || textbook[id]);
   }
+  for (const id of require('./reading').readingBookIds()) { books[id] = !!p; textbook[id] = false; } // section context only
   return { configured: !!p, provider: p ? p.name : null, books, textbook };
 }
 module.exports = { answer, status, excerpt, verifiedChapter, cleanMarkers };

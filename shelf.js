@@ -70,6 +70,8 @@ const Shelf = (() => {
     update(id, x => ({ ...x, section: sid, at: Date.now() }));
     const r = rs(id), b = idx.find(x => x.id === id), p = prog(b, r), marked = ((r && r.marks) || []).some(m => m.section === sid);
     current = { id, sid, toc, section: s, text: t.text };
+    let selection = '';
+    window.lsPageCtx = () => ({ label: `${s.n} ${s.title}${selection ? ' · selected text' : ''}`, ctx: { schemaVersion: 1, pageType: 'book-section', bookId: id, chapterId: s.ch.n, sectionId: sid, ...(selection ? { excerpt: selection } : {}), pageState: { sectionTitle: s.title, chapterTitle: s.ch.title } } });
     const nav = `<nav class="tb-nav" aria-label="Previous and next section">${prev ? `<a class="btn ghost" href="#/books/${id}/${prev.id}" rel="prev" id="tb-prev">← ${esc(prev.n)} ${esc(prev.title)}</a>` : '<span class="f-tag">Start of the book</span>'}${next ? `<a class="btn ghost" href="#/books/${id}/${next.id}" rel="next" id="tb-next">${esc(next.n)} ${esc(next.title)} →</a>` : '<span class="f-tag">End of the book</span>'}</nav>`;
     app.innerHTML = `<main class="page tbpage tbread"><div class="tb-bar"><a class="back" href="#/books/${id}">← Book</a><button class="t-link tb-menu" id="tb-menu" aria-controls="tb-side" aria-expanded="false">Sections</button>${switcher(idx, id)}
         <span class="tb-prog" id="tb-prog">${p.done} of ${p.total} read</span><button class="btn ghost sm" id="tb-mark" aria-pressed="${marked}">${marked ? 'Bookmarked' : 'Bookmark'}</button></div>
@@ -89,9 +91,14 @@ const Shelf = (() => {
     let tm = null;
     const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { tm = setTimeout(() => { update(id, x => ({ ...x, done: { ...(x.done || {}), [sid]: x.done && x.done[sid] || Date.now() } })); const pp = prog(b, rs(id)); const el = document.getElementById('tb-prog'); if (el) el.textContent = `${pp.done} of ${pp.total} read`; const a = side.querySelector('[aria-current]'); if (a) a.className = 'st-done'; }, 800); } else clearTimeout(tm); });
     io.observe(document.getElementById('tb-end'));
+    // Tutor: same global panel; the selected passage (if any, inside the text) is remembered for the next question.
+    const art = app.querySelector('.tb-art');
+    const onSel = () => { const sl = window.getSelection(); if (sl && !sl.isCollapsed && art.contains(sl.anchorNode)) { selection = sl.toString().slice(0, 600); if (window.Tutor) Tutor.refresh(); } };
+    document.addEventListener('selectionchange', onSel);
+    if (window.lsMountReadingTutor) window.lsMountReadingTutor({ id, reading: true, title: toc.title, short: toc.title, chapters: toc.chapters.map(c => ({ n: c.n, title: c.title, cards: [], quiz: [] })) }, s.ch.n);
     const onKey = e => { if (e.target.closest('input,textarea,select') || e.altKey || e.ctrlKey || e.metaKey) return; if (e.key === 'Escape') document.body.classList.remove('tb-nav-open'); if (e.key === 'ArrowLeft' && prev) location.hash = `#/books/${id}/${prev.id}`; if (e.key === 'ArrowRight' && next) location.hash = `#/books/${id}/${next.id}`; };
     document.addEventListener('keydown', onKey);
-    cleanup = () => { document.removeEventListener('keydown', onKey); io.disconnect(); clearTimeout(tm); document.body.classList.remove('tb-nav-open'); current = null; };
+    cleanup = () => { document.removeEventListener('selectionchange', onSel); document.removeEventListener('keydown', onKey); io.disconnect(); clearTimeout(tm); document.body.classList.remove('tb-nav-open'); current = null; };
   }
   function route(parts) { if (!parts[1]) return go('#/'); if (!/^[a-z0-9-]{1,40}$/.test(parts[1])) return fail('Unknown book.'); if (parts[2] && !/^\d{2}_\d{2}$/.test(parts[2])) return fail('That section isn’t in this book.', parts[1]); return parts[2] ? renderSection(parts[1], parts[2]) : renderToc(parts[1]); }
   return { route, mountHome, loadIndex, current: () => current };

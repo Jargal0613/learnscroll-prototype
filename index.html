@@ -87,6 +87,7 @@
   .tb-side a i { margin-left: auto; flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; border: 1px solid var(--line-strong); }
   .tb-side a.st-done i { background: var(--accent); border-color: var(--accent); } .tb-side a.st-reading i { border-color: var(--accent); }
   .tb-n { color: var(--faint); min-width: 36px; font-variant-numeric: tabular-nums; } .tb-todo { color: var(--faint); } .tb-todo em { font-size: 12px; }
+  .tb-bar .g-ask { float: none; margin: 0; }
   .tb-side .tb-close { display: none; } body.tb-nav-open .tb-side .tb-close { display: inline-flex; min-height: 44px; margin-bottom: 12px; }
   .tbread { max-width: 1240px; } .tb-bar { padding-bottom: 12px; border-bottom: 1px solid var(--line); } .tb-prog { color: var(--muted); font-size: 13.5px; margin-left: auto; } .tb-h3 {} .tb-menu { display: none; }
   .tb-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 48px; margin-top: 24px; }
@@ -369,7 +370,7 @@
   .sh-calc-r { margin: 4px 0; }
   @media (max-width: 600px) { .c-row { grid-template-columns: 1fr; gap: 4px; } .c-ws { margin-left: 0; } }
   /* problem solver (inside the tutor panel; hidden unless the server enables it) */
-  .tutor.solving .t-scope, .tutor.solving .t-style { display: none; }
+  .tutor.solving .t-scope, .tutor.solving .t-style, .tutor.reading .t-scope { display: none; }
   .t-solve-row { flex: none; margin: 0 20px 12px; }
   .t-solve-b { width: 100%; padding: 8px 12px; background: none; border: 1px solid var(--line-strong); border-radius: var(--radius); color: var(--fg-2); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
   .t-solve-b:hover { border-color: var(--accent-line); color: var(--fg); }

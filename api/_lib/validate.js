@@ -13,6 +13,8 @@ const str = v => typeof v === 'string';
 // Returns a normalized request built ONLY from server-known data where possible.
 function validate(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw E.bad('Request body must be a JSON object.');
+  const R = require('./reading');
+  if (R.isReadingBook(body.bookId)) return R.validateReading(body); // reading books: section context, no File Search
   const book = str(body.bookId) && getBook(body.bookId);
   if (!book) throw E.bad('Unknown book.');
   const chapterN = Number(body.chapterId);

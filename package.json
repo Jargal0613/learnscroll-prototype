@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "LearnScroll static study feed + /api/tutor Vercel function",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "index-book": "node scripts/index-book.js",
     "dev": "node scripts/dev-server.js 8787"
   },

@@ -1,0 +1,52 @@
+[
+ {
+  "book": "ai-history",
+  "files": 64,
+  "ignored": [
+   "History_of_AI_and_Computing.docx",
+   "ai_history_book_full.txt",
+   "check.sh",
+   "prog.py",
+   "progress.txt"
+  ],
+  "missing": [],
+  "unmatched": [],
+  "duplicates": [],
+  "empty": [],
+  "changed": [],
+  "added": [],
+  "removed": [],
+  "malformedRefs": [],
+  "words": 134021,
+  "chars": 870330,
+  "bytes": 870346,
+  "refs": 608,
+  "sections": 64,
+  "planned": 64,
+  "chapters": 20,
+  "complete": true
+ },
+ {
+  "book": "neuro-history",
+  "files": 52,
+  "ignored": [
+   "progress.txt"
+  ],
+  "missing": [],
+  "unmatched": [],
+  "duplicates": [],
+  "empty": [],
+  "changed": [],
+  "added": [],
+  "removed": [],
+  "malformedRefs": [],
+  "words": 123641,
+  "chars": 820882,
+  "bytes": 820883,
+  "refs": 376,
+  "sections": 52,
+  "planned": 52,
+  "chapters": 15,
+  "complete": true
+ }
+]

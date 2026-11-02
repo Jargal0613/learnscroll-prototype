@@ -1,0 +1,34 @@
+[
+ {
+  "id": "ai-history",
+  "title": "A History of Artificial Intelligence and Computing",
+  "subtitle": "Written for B Jargal, mechatronics engineering student",
+  "category": "Computing history",
+  "features": {
+   "reader": true,
+   "bookmarks": true,
+   "tutor": "section-context"
+  },
+  "complete": true,
+  "chapters": 20,
+  "sections": 64,
+  "planned": 64,
+  "words": 134021
+ },
+ {
+  "id": "neuro-history",
+  "title": "From Papyrus to Processors",
+  "subtitle": "A History of Neuroscience, From Ancient Ideas to Modern Science, With Connections to Artificial Intelligence · Written for B Jargal, mechatronics student",
+  "category": "Neuroscience",
+  "features": {
+   "reader": true,
+   "bookmarks": true,
+   "tutor": "section-context"
+  },
+  "complete": true,
+  "chapters": 15,
+  "sections": 52,
+  "planned": 52,
+  "words": 123641
+ }
+]

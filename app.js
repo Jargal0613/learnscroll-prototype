@@ -181,6 +181,7 @@ function route0(parts) {
   window.scrollTo(0, 0);
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
+  if (parts[0] === 'books') return Shelf.route(parts);
   if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'formulas') return Formulas.render(parts[1]);
   if (parts[0] === 'sheets') return Sheets.route(parts);
@@ -313,6 +314,7 @@ function renderHome() {
       <span class="lib-foot-a"><button class="t-link" id="exp">Export study data</button><label class="exp-conv"><input type="checkbox" id="exp-conv" checked> include tutor conversations</label><span aria-hidden="true">·</span><button class="t-link" id="expMd">Export notes (.md)</button><span aria-hidden="true">·</span><button class="t-link" id="imp">Import study data</button><input type="file" id="imp-file" accept="application/json,.json" hidden></span></footer>
   </main>`;
   flash = '';
+  Shelf.mountHome();
   wireRecovery();
   mountSearch();
   wireHelp();

@@ -1,0 +1,744 @@
+{
+ "id": "neuro-history",
+ "title": "From Papyrus to Processors",
+ "subtitle": "A History of Neuroscience, From Ancient Ideas to Modern Science, With Connections to Artificial Intelligence · Written for B Jargal, mechatronics student",
+ "category": "Neuroscience",
+ "features": {
+  "reader": true,
+  "bookmarks": true,
+  "tutor": "section-context"
+ },
+ "outlineChecksum": "3637cdca0fdfffd18fd13cd37455329978315bd0597865f64ab125666840146c",
+ "complete": true,
+ "chapters": [
+  {
+   "n": 1,
+   "id": "ch01",
+   "title": "Earliest Ideas About the Brain",
+   "sections": [
+    {
+     "id": "01_01",
+     "n": "1.1",
+     "order": 1,
+     "title": "Ancient Egypt and the Edwin Smith papyrus",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_01_edwin_smith_papyrus.txt",
+     "words": 2021,
+     "chars": 12155,
+     "checksum": "060b6225bfd296306263bd17b105b5d77f2d698ea4fc7832c9ee2cad79da9929"
+    },
+    {
+     "id": "01_02",
+     "n": "1.2",
+     "order": 2,
+     "title": "Greece: Alcmaeon, Hippocrates, Aristotle, and the Alexandrian anatomists",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_02_greece.txt",
+     "words": 2203,
+     "chars": 13819,
+     "checksum": "aebe0ce4e73d40268ec00857cbeab041c7ab91e021d50281da21754387e04a52"
+    },
+    {
+     "id": "01_03",
+     "n": "1.3",
+     "order": 3,
+     "title": "Galen: ventricles, nerves, and animal spirits",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_03_galen.txt",
+     "words": 2052,
+     "chars": 12919,
+     "checksum": "c4cec5935cbefd33bdffcb6a6b31c7940857841e2ee5e44d0d041bd744a9d0da"
+    },
+    {
+     "id": "01_04",
+     "n": "1.4",
+     "order": 4,
+     "title": "Vesalius and the Renaissance return to dissection",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_04_vesalius.txt",
+     "words": 1764,
+     "chars": 11321,
+     "checksum": "1316464a58b10f993460d07c9acf04e5c45655f4ba57a8373e9e5248b47a346a"
+    },
+    {
+     "id": "01_05",
+     "n": "1.5",
+     "order": 5,
+     "title": "Descartes, reflexes, and the mechanical body (Bridge to AI: the brain as a machine)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_05_descartes.txt",
+     "words": 2221,
+     "chars": 14070,
+     "checksum": "6dec2ea05c5ee3a5fadfe0eaa2c01406e7701ed4c89282ac1729a91e06d4f908"
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "id": "ch02",
+   "title": "Electricity and the Nerve",
+   "sections": [
+    {
+     "id": "02_01",
+     "n": "2.1",
+     "order": 1,
+     "title": "Galvani, Volta, and animal electricity",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_01_galvani_volta.txt",
+     "words": 2172,
+     "chars": 14286,
+     "checksum": "756cd4e93b502ce69455b7870632f72d9718f103a02183d6fed9d5d71bf64228"
+    },
+    {
+     "id": "02_02",
+     "n": "2.2",
+     "order": 2,
+     "title": "Du Bois-Reymond, Helmholtz, and the speed of the nerve impulse",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_02_nerve_speed.txt",
+     "words": 2478,
+     "chars": 16015,
+     "checksum": "c1ea6424194b35eb93d1fa811c99978173a18557f3f4fbd56962f2b13b1d8602"
+    },
+    {
+     "id": "02_03",
+     "n": "2.3",
+     "order": 3,
+     "title": "The physics of the membrane: Nernst and Goldman equations (Bridge to AI: neurons as analog circuits)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_03_nernst_goldman.txt",
+     "words": 2912,
+     "chars": 18342,
+     "checksum": "46e0bc56f47473e7742273fa93186011d082cfa89f41d3e7792b3120ddd7b815"
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "id": "ch03",
+   "title": "Localizing Function",
+   "sections": [
+    {
+     "id": "03_01",
+     "n": "3.1",
+     "order": 1,
+     "title": "Phrenology and its downfall",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_01_phrenology.txt",
+     "words": 2128,
+     "chars": 14042,
+     "checksum": "529a2c18d0e55d67611e213021b7a11f6ae5346f61fc252dfbb476d508bc7f8b"
+    },
+    {
+     "id": "03_02",
+     "n": "3.2",
+     "order": 2,
+     "title": "Broca, Wernicke, and language areas",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_02_broca_wernicke.txt",
+     "words": 2206,
+     "chars": 14556,
+     "checksum": "4a9aff7507c66d859f0ae2f5b9bc9e49dcf28f579438b68baf0d1a8c586f57ba"
+    },
+    {
+     "id": "03_03",
+     "n": "3.3",
+     "order": 3,
+     "title": "Fritsch, Hitzig, Penfield and brain maps (Bridge to AI: modularity versus distributed representations)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_03_brain_maps.txt",
+     "words": 2503,
+     "chars": 16431,
+     "checksum": "d673db87b23890eb9268549946e8f01447d1c2f165fd129d5507cc5a78154979"
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "id": "ch04",
+   "title": "The Neuron and the Synapse",
+   "sections": [
+    {
+     "id": "04_01",
+     "n": "4.1",
+     "order": 1,
+     "title": "Golgi versus Ramon y Cajal and the neuron doctrine",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_01_neuron_doctrine.txt",
+     "words": 2623,
+     "chars": 16571,
+     "checksum": "6a40afcf6d8b9d72e0a3e47504ad19e702bb9cb6b84e555283552e0202a5478d"
+    },
+    {
+     "id": "04_02",
+     "n": "4.2",
+     "order": 2,
+     "title": "Sherrington, reflexes, and the synapse",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_02_sherrington_synapse.txt",
+     "words": 2410,
+     "chars": 16049,
+     "checksum": "9fe511b1c6f5ae2bb601852a9fbfc78f8934f2ce12b44aea57cab667b047af69"
+    },
+    {
+     "id": "04_03",
+     "n": "4.3",
+     "order": 3,
+     "title": "McCulloch and Pitts: the first artificial neuron (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_03_mcculloch_pitts.txt",
+     "words": 2072,
+     "chars": 13366,
+     "checksum": "c2b4680797d391803ba15350dccc05d20a5282fde7646a08e81cbcb3ef18a3a0"
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "id": "ch05",
+   "title": "The Action Potential",
+   "sections": [
+    {
+     "id": "05_01",
+     "n": "5.1",
+     "order": 1,
+     "title": "Squid axons, voltage clamp, and the experiments of Hodgkin and Huxley",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_01_squid_voltage_clamp.txt",
+     "words": 2527,
+     "chars": 16659,
+     "checksum": "3d3054cceb3462f31e1495d0785e08a7654feda75396085ade1cdc3a8bd925d9"
+    },
+    {
+     "id": "05_02",
+     "n": "5.2",
+     "order": 2,
+     "title": "The Hodgkin-Huxley equations in plain text",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_02_hh_equations.txt",
+     "words": 2804,
+     "chars": 17628,
+     "checksum": "a2178aca3001d27f091f66655044776887422da591d4b4fa15b06881e090852b"
+    },
+    {
+     "id": "05_03",
+     "n": "5.3",
+     "order": 3,
+     "title": "Cable theory and dendrites",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_03_cable_theory.txt",
+     "words": 2697,
+     "chars": 17595,
+     "checksum": "636d9d4dd15cfade324ea9cedb9ce0747c7529eb92386ab70da481db6471cfd8"
+    },
+    {
+     "id": "05_04",
+     "n": "5.4",
+     "order": 4,
+     "title": "Ion channels: patch clamp to structures (Bridge to AI: spiking versus rate neurons)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_04_ion_channels.txt",
+     "words": 2859,
+     "chars": 18923,
+     "checksum": "387116e4147cbb8f4d96c2586599cc818875709cced9ac7fd8c1c189f8bdf6c8"
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "id": "ch06",
+   "title": "Chemical Transmission",
+   "sections": [
+    {
+     "id": "06_01",
+     "n": "6.1",
+     "order": 1,
+     "title": "Loewi, Dale, and the soup versus sparks debate",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_01_soups_and_sparks.txt",
+     "words": 2361,
+     "chars": 15715,
+     "checksum": "a6756aff51de829e752e985bb7eb4a37250c15c2cceed54a71200b4667497ea8"
+    },
+    {
+     "id": "06_02",
+     "n": "6.2",
+     "order": 2,
+     "title": "Katz, quanta, and vesicles",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_02_quanta_vesicles.txt",
+     "words": 2645,
+     "chars": 17597,
+     "checksum": "deb7a33935c807d0d03abf07caa75113abe0db48500850c6097fbb855a75cf7e"
+    },
+    {
+     "id": "06_03",
+     "n": "6.3",
+     "order": 3,
+     "title": "The major neurotransmitters and receptors",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_03_neurotransmitters.txt",
+     "words": 2494,
+     "chars": 17246,
+     "checksum": "87bff9397be6f1c286eb3f16ed5db446ce1dda640c8323605b2f450a3814f89c"
+    },
+    {
+     "id": "06_04",
+     "n": "6.4",
+     "order": 4,
+     "title": "Dopamine, reward prediction error, and reinforcement learning (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_04_dopamine_rpe.txt",
+     "words": 2411,
+     "chars": 15406,
+     "checksum": "6db70e9c488b4fba4fa0535f00e021d75b1cd4b564bd3eff87b96294319d6bb8"
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "id": "ch07",
+   "title": "Learning Rules",
+   "sections": [
+    {
+     "id": "07_01",
+     "n": "7.1",
+     "order": 1,
+     "title": "Hebb's postulate",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_01_hebb.txt",
+     "words": 2375,
+     "chars": 15290,
+     "checksum": "4066eb33445951267cf95f3e7ec3e8afc84e99e5c39b0396bc292b55849906ad"
+    },
+    {
+     "id": "07_02",
+     "n": "7.2",
+     "order": 2,
+     "title": "Long-term potentiation and STDP",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_02_ltp_stdp.txt",
+     "words": 3016,
+     "chars": 20058,
+     "checksum": "67b42b51f47d96851c9a89a3954c5a2bbf9aab3a30a4a33dc8b92d2251db94ef"
+    },
+    {
+     "id": "07_03",
+     "n": "7.3",
+     "order": 3,
+     "title": "Hebb versus backpropagation: the credit assignment problem (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_03_hebb_vs_backprop.txt",
+     "words": 2750,
+     "chars": 18608,
+     "checksum": "5ad7dd797c29b7e7d5b894849207dcffffc96067a424c12febf5842884e1e89b"
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "id": "ch08",
+   "title": "Vision",
+   "sections": [
+    {
+     "id": "08_01",
+     "n": "8.1",
+     "order": 1,
+     "title": "Retina and receptive fields",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_01_retina.txt",
+     "words": 2938,
+     "chars": 19347,
+     "checksum": "9f22415ab3e93bd6168d58e0f56d2d3899bf70b6f7f7a6ca301ed57a065e25b7"
+    },
+    {
+     "id": "08_02",
+     "n": "8.2",
+     "order": 2,
+     "title": "Hubel and Wiesel: simple and complex cells",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_02_hubel_wiesel.txt",
+     "words": 2805,
+     "chars": 18039,
+     "checksum": "2c0d2f1b0c89a97e4c0e3a75f6bdc15d829eae59e49c806871760ea396c01333"
+    },
+    {
+     "id": "08_03",
+     "n": "8.3",
+     "order": 3,
+     "title": "From the Neocognitron to CNNs: comparing deep nets with the ventral stream (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_03_cnns_ventral_stream.txt",
+     "words": 2417,
+     "chars": 16561,
+     "checksum": "9589878ee177f581198e9dd7c2a1fcc255226e4e02fb11de26f667e8b511b5ae"
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "id": "ch09",
+   "title": "Memory",
+   "sections": [
+    {
+     "id": "09_01",
+     "n": "9.1",
+     "order": 1,
+     "title": "H.M. and the hippocampus",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_01_hm_hippocampus.txt",
+     "words": 2497,
+     "chars": 16270,
+     "checksum": "73c671932aa8fb94d30aada3a6645d2c65d8384fac0c468e58448e4b15fd45e7"
+    },
+    {
+     "id": "09_02",
+     "n": "9.2",
+     "order": 2,
+     "title": "Kinds of memory and systems consolidation",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_02_memory_systems_consolidation.txt",
+     "words": 2837,
+     "chars": 20010,
+     "checksum": "9062f129f3cd1093b6f99deec584010f57f9577c08c3c980f20cd177c8fc82a3"
+    },
+    {
+     "id": "09_03",
+     "n": "9.3",
+     "order": 3,
+     "title": "Place cells, grid cells, and cognitive maps",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_03_place_grid_cells.txt",
+     "words": 2751,
+     "chars": 18339,
+     "checksum": "ffb0fbfee2baf986d7e0360348a726b7146d0c61e0ba34f35f649721bf4a7266"
+    },
+    {
+     "id": "09_04",
+     "n": "9.4",
+     "order": 4,
+     "title": "Memory in machines: Hopfield networks, replay, attention and transformers (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_04_memory_in_machines.txt",
+     "words": 2501,
+     "chars": 17059,
+     "checksum": "62842fb4ca867b7918ea229515308378987c5ce91adef49e31bc38320de61e14"
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "id": "ch10",
+   "title": "Recording the Living Brain",
+   "sections": [
+    {
+     "id": "10_01",
+     "n": "10.1",
+     "order": 1,
+     "title": "Berger and the EEG",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_01_eeg.txt",
+     "words": 2697,
+     "chars": 18143,
+     "checksum": "6a7bc9615d25686ee621dfb201f47136c20a67cfcf8f9cf486118020e4ecfeb2"
+    },
+    {
+     "id": "10_02",
+     "n": "10.2",
+     "order": 2,
+     "title": "Single units, multielectrode arrays, and Neuropixels",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_02_electrodes_neuropixels.txt",
+     "words": 2507,
+     "chars": 17184,
+     "checksum": "ff59ec0535e4d6bc941bdb9eed3da92730f095ba87e2ed647a4b75d4e60e254f"
+    },
+    {
+     "id": "10_03",
+     "n": "10.3",
+     "order": 3,
+     "title": "PET, MRI, and fMRI",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_03_pet_mri_fmri.txt",
+     "words": 2991,
+     "chars": 20324,
+     "checksum": "2c3cec1b4186bcfeec5adeca9529b1d79418de36f33203b6619095f102d3f21a"
+    },
+    {
+     "id": "10_04",
+     "n": "10.4",
+     "order": 4,
+     "title": "Signal processing for neural data (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_04_signal_processing.txt",
+     "words": 2581,
+     "chars": 17853,
+     "checksum": "f2370f278e06336c7f1d32ab3a3d0b3ca313389f71e1ef93f1888cf9b38dd7c8"
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "id": "ch11",
+   "title": "Plasticity and Development",
+   "sections": [
+    {
+     "id": "11_01",
+     "n": "11.1",
+     "order": 1,
+     "title": "Critical periods and developmental plasticity",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "11_01_critical_periods.txt",
+     "words": 2274,
+     "chars": 15765,
+     "checksum": "cdb770a8586634db4287bd547f5021361648053f1bd3256b50edb55c867ad177"
+    },
+    {
+     "id": "11_02",
+     "n": "11.2",
+     "order": 2,
+     "title": "Adult plasticity and neurogenesis debates",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "11_02_adult_plasticity.txt",
+     "words": 2203,
+     "chars": 14869,
+     "checksum": "a347a395fbb0f42d013561f3c1c1b71181196d1134d23b8bfafc99e343430927"
+    },
+    {
+     "id": "11_03",
+     "n": "11.3",
+     "order": 3,
+     "title": "Continual learning and catastrophic forgetting (Bridge to AI)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "11_03_continual_learning.txt",
+     "words": 2069,
+     "chars": 13987,
+     "checksum": "fcb5b05250dbb62daebf1875a35677411214e8fcc1fde2e5427293e63c3d1e1e"
+    }
+   ]
+  },
+  {
+   "n": 12,
+   "id": "ch12",
+   "title": "New Tools",
+   "sections": [
+    {
+     "id": "12_01",
+     "n": "12.1",
+     "order": 1,
+     "title": "Optogenetics",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_01_optogenetics.txt",
+     "words": 2636,
+     "chars": 17691,
+     "checksum": "3402f2d68884485783010f1ee14b1170f19ba3d39022e190a6974411cf2319ba"
+    },
+    {
+     "id": "12_02",
+     "n": "12.2",
+     "order": 2,
+     "title": "Calcium imaging and genetically encoded indicators",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_02_calcium_imaging.txt",
+     "words": 2374,
+     "chars": 16059,
+     "checksum": "e6e67f6aa3a2a53fb9894362938005a1a4dff8ee3f288a11d0e64bf0fdad05b9"
+    },
+    {
+     "id": "12_03",
+     "n": "12.3",
+     "order": 3,
+     "title": "Connectomics: from C. elegans to the fly and mouse",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_03_connectomics.txt",
+     "words": 2137,
+     "chars": 14459,
+     "checksum": "481b1b34f086f755d0a30e6a7225993ae6273a2751daacc948109f965e26bdb2"
+    }
+   ]
+  },
+  {
+   "n": 13,
+   "id": "ch13",
+   "title": "Computational Neuroscience",
+   "sections": [
+    {
+     "id": "13_01",
+     "n": "13.1",
+     "order": 1,
+     "title": "Neural coding: rates, timing, populations",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_01_neural_coding.txt",
+     "words": 2255,
+     "chars": 14822,
+     "checksum": "d78ec42a5e1dbd411422c067a51add1b601865d6576de07a2a9adc8a6a562a40"
+    },
+    {
+     "id": "13_02",
+     "n": "13.2",
+     "order": 2,
+     "title": "Models of neurons and networks",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_02_models.txt",
+     "words": 2157,
+     "chars": 14147,
+     "checksum": "c721a6df6512527e5ef4cf61d67b07889a94e4c70c198cc93ce1706e9fd7cfc9"
+    },
+    {
+     "id": "13_03",
+     "n": "13.3",
+     "order": 3,
+     "title": "Predictive coding, Bayesian brain, and the free-energy idea",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_03_predictive_bayesian.txt",
+     "words": 2061,
+     "chars": 13968,
+     "checksum": "a10658cdc41a50ec7dfb423abd09baaa9e5d3884c140b1a3eeba40b62d6b0650"
+    },
+    {
+     "id": "13_04",
+     "n": "13.4",
+     "order": 4,
+     "title": "Neuromorphic engineering",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_04_neuromorphic.txt",
+     "words": 1847,
+     "chars": 12669,
+     "checksum": "aae823a3655cb562b09f7fb65d1e72932f5eed51f427755b9cf69de46c402f9a"
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "id": "ch14",
+   "title": "Brain-Computer Interfaces",
+   "sections": [
+    {
+     "id": "14_01",
+     "n": "14.1",
+     "order": 1,
+     "title": "From early experiments to BrainGate",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_01_bci_history.txt",
+     "words": 2065,
+     "chars": 13759,
+     "checksum": "a42a548f3095d5850c65b22b0a2af8246f868dd2aa09f6fcdb0021d29da5d437"
+    },
+    {
+     "id": "14_02",
+     "n": "14.2",
+     "order": 2,
+     "title": "Decoders, Kalman filters, and deep learning decoders",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_02_decoders.txt",
+     "words": 1914,
+     "chars": 12824,
+     "checksum": "8b600a43e13333184cc3bafd62184b59f5574d0c7647e21bf40bd752f9fea455"
+    },
+    {
+     "id": "14_03",
+     "n": "14.3",
+     "order": 3,
+     "title": "Modern BCI companies, speech neuroprostheses, and ethics",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_03_modern_bci_ethics.txt",
+     "words": 1825,
+     "chars": 12829,
+     "checksum": "da08d9ae7697b036f2d46108b4aba856e122aead399da35ed6f1874dba152123"
+    }
+   ]
+  },
+  {
+   "n": 15,
+   "id": "ch15",
+   "title": "Neuroscience and AI",
+   "sections": [
+    {
+     "id": "15_01",
+     "n": "15.1",
+     "order": 1,
+     "title": "A shared history: perceptron to deep learning",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "15_01_shared_history.txt",
+     "words": 2028,
+     "chars": 14035,
+     "checksum": "7a14fc233100f26112ae071b17e4e85b80a7d289f3fd994ceb184e90a6c26a67"
+    },
+    {
+     "id": "15_02",
+     "n": "15.2",
+     "order": 2,
+     "title": "What AI can learn from brains, and what brains can learn from AI",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "15_02_two_way_street.txt",
+     "words": 1800,
+     "chars": 12891,
+     "checksum": "6035a2959d5966835126810cc7f03bac368dce98614ffbf7a1aaf3ae909fac03"
+    },
+    {
+     "id": "15_03",
+     "n": "15.3",
+     "order": 3,
+     "title": "Today and open questions",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "15_03_today_open_questions.txt",
+     "words": 1770,
+     "chars": 12312,
+     "checksum": "ab0fd24395819b7f27cbc6633eb401159632ea818920556b36adddc039a40339"
+    }
+   ]
+  }
+ ]
+}

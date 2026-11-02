@@ -161,7 +161,7 @@
   const validPractice = o => mapOf(o, PRACTICE_RE, 'study.practice', validPracticeOne);
   function validStudy(s, bookIds) {
     if (!isObj(s)) fail('"study" must be an object.');
-    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'formulas', 'sheets', 'revision', 'practice'], 'study');
+    onlyKeys(s, ['books', 'last', 'recent', 'sessions', 'sessionPrefs', 'readPrefs', 'reading', 'formulas', 'sheets', 'revision', 'practice'], 'study');
     const books = mapOf(s.books || {}, BOOK_RE, 'study.books', (v, w) => validBook(v, w));
     for (const id of Object.keys(books)) if (bookIds && !bookIds.includes(id)) fail(`Unknown book "${id}".`);
     if (!(s.last === null || s.last === undefined || (typeof s.last === 'string' && (!bookIds || bookIds.includes(s.last))))) fail('study.last must be a known book id or null.');
@@ -197,10 +197,25 @@
       if (!TEXT_SIZES.includes(r.textSize)) fail('study.readPrefs.textSize must be small, default or large.');
       out.readPrefs = { textSize: r.textSize };
     }
+    if (s.reading !== undefined) out.reading = validReading(s.reading);
     if (s.formulas !== undefined) out.formulas = validFormulas(s.formulas, bookIds); // absent in files before format 3
     if (s.sheets !== undefined) out.sheets = validSheets(s.sheets, bookIds);
     if (s.revision !== undefined) out.revision = validRevision(s.revision);
     if (s.practice !== undefined) out.practice = validPractice(s.practice);
+    return out;
+  }
+  // Plain-text books (optional, no schema bump): last-read section per book, { [bookId]: { section: 'NN_MM', at } }.
+  const READ_BOOK_RE = /^[a-z0-9-]{1,40}$/, READ_SEC_RE = /^\d{2}_\d{2}$/;
+  // { section, at, done?: { [sectionId]: at }, marks?: [{ section, note?, at }] } — done/marks optional (added round 13).
+  const isT = x => Number.isFinite(x) && x > 0;
+  const validReadingOne = v => isObj(v) && Object.keys(v).every(k => ['section', 'at', 'done', 'marks'].includes(k)) && typeof v.section === 'string' && READ_SEC_RE.test(v.section) && isT(v.at)
+    && (v.done === undefined || (isObj(v.done) && Object.keys(v.done).length <= 500 && Object.entries(v.done).every(([k, t]) => READ_SEC_RE.test(k) && isT(t))))
+    && (v.marks === undefined || (Array.isArray(v.marks) && v.marks.length <= 200 && v.marks.every(m => isObj(m) && Object.keys(m).every(k => ['section', 'note', 'at'].includes(k)) && READ_SEC_RE.test(m.section) && isT(m.at) && (m.note === undefined || (typeof m.note === 'string' && m.note.length <= 1000)))));
+  function validReading(r) {
+    if (!isObj(r)) fail('study.reading must be an object.');
+    const out = {};
+    for (const [k, v] of Object.entries(r)) { if (!READ_BOOK_RE.test(k) || !validReadingOne(v)) fail(`study.reading.${k} is invalid.`); out[k] = JSON.parse(JSON.stringify(v)); }
+    if (Object.keys(out).length > 50) fail('study.reading has too many books.');
     return out;
   }
   // One conversation: id, messages, scope and (optional) where it started.
@@ -321,6 +336,7 @@
     const study = { books: isObj(s.books) ? s.books : {}, last: s.last || null, recent: Array.isArray(s.recent) ? s.recent : [], sessions: Array.isArray(s.sessions) ? s.sessions : [] };
     if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs;
     if (isObj(s.readPrefs)) study.readPrefs = s.readPrefs;
+    if (isObj(s.reading)) study.reading = s.reading;
     study.formulas = isObj(s.formulas) ? s.formulas : {};
     study.sheets = isObj(s.sheets) ? s.sheets : {};
     if (isObj(s.revision)) study.revision = s.revision;
@@ -406,6 +422,15 @@
     const study = { books, last, recent, sessions };
     const sp = L.sessionPrefs || I.sessionPrefs; if (sp) study.sessionPrefs = sp;
     const rp = L.readPrefs || I.readPrefs; if (rp) study.readPrefs = rp; // this browser's choice wins
+    if (L.reading || I.reading) { // per book, the most recent position wins
+      const rd = { ...(I.reading || {}) };
+      for (const [k, v] of Object.entries(L.reading || {})) {
+        const o = rd[k], newer = !o || v.at >= o.at ? v : o, done = { ...((o && o.done) || {}), ...(v.done || {}) };
+        const marks = new Map(); for (const m of [...((o && o.marks) || []), ...(v.marks || [])]) marks.set(m.section + '@' + m.at, m);
+        rd[k] = { section: newer.section, at: newer.at, ...(Object.keys(done).length ? { done } : {}), ...(marks.size ? { marks: [...marks.values()].sort((a, b) => a.at - b.at) } : {}) };
+      }
+      study.reading = rd;
+    }
     study.formulas = mergeById(L.formulas, I.formulas);
     study.sheets = mergeById(L.sheets, I.sheets);
     if (L.practice || I.practice) study.practice = mergeById(L.practice, I.practice); // same problem: most recently worked copy kept
@@ -448,6 +473,10 @@
         file: incoming.study.practice === undefined ? 'Not in the file' : n(Object.keys(incoming.study.practice).length, 'problem'),
         merge: incoming.study.practice === undefined ? 'Kept as it is' : 'Combined (same problem: most recently worked copy kept)',
         replace: incoming.study.practice === undefined ? 'Kept (the file has none)' : 'Replaced by the file' },
+      { key: 'reading', label: 'Books: last-read section per book',
+        file: incoming.study.reading === undefined ? 'Not in the file' : n(Object.keys(incoming.study.reading).length, 'book'),
+        merge: incoming.study.reading === undefined ? 'Kept as it is' : 'Combined (same book: most recent position kept)',
+        replace: incoming.study.reading === undefined ? 'Kept (the file has none)' : 'Replaced by the file' },
       { key: 'conversations', label: 'Tutor conversations (incl. saved ones and answer feedback)',
         file: iconv === undefined ? 'Not in the file' : n(ic.conversations, 'conversation'),
         merge: iconv === undefined ? 'Kept as they are' : 'Combined (newest stays open, others saved)',
@@ -467,6 +496,7 @@
     if (study.sheets === undefined) study.sheets = local.study.sheets || {};
     if (study.revision === undefined && local.study.revision) study.revision = local.study.revision;
     if (study.practice === undefined && local.study.practice) study.practice = local.study.practice;
+    if (study.reading === undefined && local.study.reading) study.reading = local.study.reading; // file without reading positions: kept
     return {
       study,
       tutor: { prefs: { ...(incoming.tutor.prefs || {}) }, conversations: incoming.tutor.conversations ? incoming.tutor.conversations : (local.tutor.conversations || {}) },
@@ -560,6 +590,7 @@
     if (s.revision !== undefined) { try { study.revision = validRevision(s.revision); } catch (e) { repaired = true; } }
     if (s.practice !== undefined) { if (!isObj(s.practice)) repaired = true; else { const p = objOr(s.practice, (k, v) => { try { return PRACTICE_RE.test(k) && !!validPracticeOne(v, k); } catch (e) { return false; } }); if (Object.keys(p).length !== Object.keys(s.practice).length) repaired = true; study.practice = p; } }
     if (s.sessionPrefs !== undefined) { if (isObj(s.sessionPrefs)) study.sessionPrefs = s.sessionPrefs; else repaired = true; }
+    if (s.reading !== undefined) { if (!isObj(s.reading)) repaired = true; else { const r = objOr(s.reading, (k, v) => READ_BOOK_RE.test(k) && validReadingOne(v)); if (Object.keys(r).length !== Object.keys(s.reading).length) repaired = true; study.reading = r; } }
     if (s.readPrefs !== undefined) { if (isObj(s.readPrefs) && TEXT_SIZES.includes(s.readPrefs.textSize)) study.readPrefs = { textSize: s.readPrefs.textSize }; else repaired = true; }
     return { study, repaired };
   }

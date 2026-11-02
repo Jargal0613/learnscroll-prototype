@@ -1,0 +1,923 @@
+{
+ "id": "ai-history",
+ "title": "A History of Artificial Intelligence and Computing",
+ "subtitle": "Written for B Jargal, mechatronics engineering student",
+ "category": "Computing history",
+ "features": {
+  "reader": true,
+  "bookmarks": true,
+  "tutor": "section-context"
+ },
+ "outlineChecksum": "356fa6c04c0bc7386ae1df2a32409098ec7a187008b66deebdc5e051b7c1a2ba",
+ "complete": true,
+ "chapters": [
+  {
+   "n": 1,
+   "id": "ch01",
+   "title": "Logic Before Machines",
+   "sections": [
+    {
+     "id": "01_01",
+     "n": "1.1",
+     "order": 1,
+     "title": "Boole and the algebra of logic",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_01_boole_algebra_of_logic.txt",
+     "words": 2427,
+     "chars": 13572,
+     "checksum": "29a285c67b2fc9dcd0f0f4b645c42a39dca18e430b43b2164826d0c6e4ee8228"
+    },
+    {
+     "id": "01_02",
+     "n": "1.2",
+     "order": 2,
+     "title": "Frege, Hilbert and the question of mechanical proof",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_02_frege_hilbert_mechanical_proof.txt",
+     "words": 2065,
+     "chars": 13082,
+     "checksum": "2abb1f06fd0335687bcf9dc6ba406dbd337673ee4cff01ed0e7587d0a10ce378"
+    },
+    {
+     "id": "01_03",
+     "n": "1.3",
+     "order": 3,
+     "title": "Babbage, Lovelace and the idea of a programmable engine",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "01_03_babbage_lovelace_engines.txt",
+     "words": 2098,
+     "chars": 13626,
+     "checksum": "cdbef904f04bac09733248d0ba761741180189cf6178fc0d5851170fb24cebe2"
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "id": "ch02",
+   "title": "Relays and Electromechanical Computers",
+   "sections": [
+    {
+     "id": "02_01",
+     "n": "2.1",
+     "order": 1,
+     "title": "Shannon's 1937 thesis: relay circuits as Boolean algebra",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_01_shannon_relays.txt",
+     "words": 2057,
+     "chars": 12534,
+     "checksum": "d8a55d3494fd9ac1578dcfcd28c5733a47ec6d7c64b443485a0c9611c45d2743"
+    },
+    {
+     "id": "02_02",
+     "n": "2.2",
+     "order": 2,
+     "title": "Building arithmetic from switches: gates, half adders, full adders",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_02_gates_and_adders.txt",
+     "words": 2004,
+     "chars": 10909,
+     "checksum": "68961fb109790a5607f750fee9e70c53fb0ed994f3d9b3ef606e31c002a3dec2"
+    },
+    {
+     "id": "02_03",
+     "n": "2.3",
+     "order": 3,
+     "title": "Konrad Zuse: Z1, Z3 and binary floating point",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_03_zuse_z1_z3.txt",
+     "words": 1878,
+     "chars": 11879,
+     "checksum": "33802bf95745d462147c423b05745fdc7551a2b2f6c65702dcf41b7cb0918f2d"
+    },
+    {
+     "id": "02_04",
+     "n": "2.4",
+     "order": 4,
+     "title": "Harvard Mark I and the Bell Labs relay computers",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "02_04_harvard_mark1_bell_labs.txt",
+     "words": 2198,
+     "chars": 13910,
+     "checksum": "caa74a7b68bea5e19070bc78c09d1d139801ae68809b5de18b7d7eca1dd28d9b"
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "id": "ch03",
+   "title": "Turing and Computability",
+   "sections": [
+    {
+     "id": "03_01",
+     "n": "3.1",
+     "order": 1,
+     "title": "The 1936 paper: Turing machines and the Entscheidungsproblem",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_01_turing_1936_machines.txt",
+     "words": 2100,
+     "chars": 13259,
+     "checksum": "d9d933f545ba83c6136f561b52c1d5eb4b462cc05296965f08d9c7c3c66077f5"
+    },
+    {
+     "id": "03_02",
+     "n": "3.2",
+     "order": 2,
+     "title": "Universal machines, halting, and Church's lambda calculus",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_02_universal_machines_halting_lambda.txt",
+     "words": 2095,
+     "chars": 13393,
+     "checksum": "7f9dd1ed4d6b049024b4289c922654cad5ff5241327fe90973dd497ec2898756"
+    },
+    {
+     "id": "03_03",
+     "n": "3.3",
+     "order": 3,
+     "title": "Bletchley Park and wartime codebreaking",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "03_03_bletchley_park_codebreaking.txt",
+     "words": 1988,
+     "chars": 13151,
+     "checksum": "edcb11b79787898798e9dd007067a4179eeba01c5de8802b0f145689a297b5ff"
+    }
+   ]
+  },
+  {
+   "n": 4,
+   "id": "ch04",
+   "title": "Vacuum Tubes and the First Electronic Computers",
+   "sections": [
+    {
+     "id": "04_01",
+     "n": "4.1",
+     "order": 1,
+     "title": "How a vacuum tube switches: diodes, triodes and flip-flops",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_01_vacuum_tube_switching.txt",
+     "words": 2230,
+     "chars": 13446,
+     "checksum": "f309530d853a37e2f47d9c23cf23a9dfe4dcf1091ba7d4bb0bc9fb73ff2db84f"
+    },
+    {
+     "id": "04_02",
+     "n": "4.2",
+     "order": 2,
+     "title": "Atanasoff-Berry Computer and Colossus",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_02_abc_and_colossus.txt",
+     "words": 2225,
+     "chars": 14535,
+     "checksum": "ddae3420b6e2be0411d97abf080bf76b71cfddab7ebfdd9b690b0ab8a7e3b171"
+    },
+    {
+     "id": "04_03",
+     "n": "4.3",
+     "order": 3,
+     "title": "ENIAC",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_03_eniac.txt",
+     "words": 2128,
+     "chars": 13545,
+     "checksum": "bfcdd15d390a5375c8cf249edb7489f55888fe53a075df6e3a6a00fc58ee42c9"
+    },
+    {
+     "id": "04_04",
+     "n": "4.4",
+     "order": 4,
+     "title": "The stored-program concept: EDVAC report, Manchester Baby, EDSAC",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "04_04_stored_program_edvac_baby_edsac.txt",
+     "words": 2147,
+     "chars": 13911,
+     "checksum": "bca109261aba2cfaac9a2b8eaaa8b7d0c4e39d2b201c11b78bf927600fe4c3b1"
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "id": "ch05",
+   "title": "The Transistor",
+   "sections": [
+    {
+     "id": "05_01",
+     "n": "5.1",
+     "order": 1,
+     "title": "Semiconductor physics for engineers: doping, p-n junctions",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_01_semiconductor_physics.txt",
+     "words": 2052,
+     "chars": 12746,
+     "checksum": "3d50843d1a404ae9988b0d5881d96c5397e3f7999a419b1e5db8a6d67205c345"
+    },
+    {
+     "id": "05_02",
+     "n": "5.2",
+     "order": 2,
+     "title": "Bell Labs 1947: point-contact and junction transistors",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_02_bell_labs_transistor.txt",
+     "words": 2096,
+     "chars": 14060,
+     "checksum": "b1c40af40c7746cd17a5ee2c343bc965bcf15ce9f5ed4170ad14a6fa12e70dcd"
+    },
+    {
+     "id": "05_03",
+     "n": "5.3",
+     "order": 3,
+     "title": "Transistor switching and logic families (RTL, DTL, TTL, CMOS)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_03_logic_families_rtl_ttl_cmos.txt",
+     "words": 2307,
+     "chars": 14500,
+     "checksum": "d9386cb8ba5103c4a933e5ec83d65ffc98967fbe9fae914527a9ac63e08e8f4b"
+    },
+    {
+     "id": "05_04",
+     "n": "5.4",
+     "order": 4,
+     "title": "Core memory and the transistorized computers",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "05_04_core_memory_transistor_computers.txt",
+     "words": 2025,
+     "chars": 13411,
+     "checksum": "63c925d3baeb9a7b43672dd716c90c77ca932ec2f23f8d30fcebe0a968281ec0"
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "id": "ch06",
+   "title": "Integrated Circuits and Microprocessors",
+   "sections": [
+    {
+     "id": "06_01",
+     "n": "6.1",
+     "order": 1,
+     "title": "Kilby, Noyce and the planar process",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_01_kilby_noyce_planar.txt",
+     "words": 1996,
+     "chars": 13152,
+     "checksum": "5a8996dd1700e239812ef82860ec2fad064ea400b8654bed5344de83eeee6216"
+    },
+    {
+     "id": "06_02",
+     "n": "6.2",
+     "order": 2,
+     "title": "Moore's law and Dennard scaling",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_02_moores_law_dennard_scaling.txt",
+     "words": 2027,
+     "chars": 13396,
+     "checksum": "5099848ff497dbe6fc3dc3231dc5ba425e48ee5544269cd278ce0e371a6d6ea7"
+    },
+    {
+     "id": "06_03",
+     "n": "6.3",
+     "order": 3,
+     "title": "Intel 4004, 8080 and the microprocessor revolution",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_03_microprocessor_revolution.txt",
+     "words": 1930,
+     "chars": 12823,
+     "checksum": "38fef31cac916f31225cb2d4f0dd3e54c997b0ad909a6e80874d26e1ebefb842"
+    },
+    {
+     "id": "06_04",
+     "n": "6.4",
+     "order": 4,
+     "title": "Architecture: pipelines, caches, RISC",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "06_04_pipelines_caches_risc.txt",
+     "words": 2394,
+     "chars": 15927,
+     "checksum": "e90ae3516e0b0879530cefe9968c8efa5f7f4ae0937b31c7c7d1034bad8382be"
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "id": "ch07",
+   "title": "Cybernetics and Neural Beginnings",
+   "sections": [
+    {
+     "id": "07_01",
+     "n": "7.1",
+     "order": 1,
+     "title": "Wiener and feedback control",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_01_wiener_feedback_control.txt",
+     "words": 2152,
+     "chars": 14059,
+     "checksum": "d5a2363bc40f54ab56d178c998099947f4d5f0fdd63208abae6339e6681d3487"
+    },
+    {
+     "id": "07_02",
+     "n": "7.2",
+     "order": 2,
+     "title": "McCulloch-Pitts neurons",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_02_mcculloch_pitts_neurons.txt",
+     "words": 2065,
+     "chars": 12851,
+     "checksum": "6bd09f16f13a160a386ecedb8dfc91237c595fa547172e0b3a3be87dac963270"
+    },
+    {
+     "id": "07_03",
+     "n": "7.3",
+     "order": 3,
+     "title": "Hebb, Walter's tortoises and early learning machines",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "07_03_hebb_walter_early_learning.txt",
+     "words": 2273,
+     "chars": 15570,
+     "checksum": "038cea9143aae7f24474dca2bfd51924fdae4f1d4a777f47440770f610626b11"
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "id": "ch08",
+   "title": "Turing 1950 and the Birth of AI",
+   "sections": [
+    {
+     "id": "08_01",
+     "n": "8.1",
+     "order": 1,
+     "title": "Computing Machinery and Intelligence: the imitation game",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_01_turing_1950_imitation_game.txt",
+     "words": 2119,
+     "chars": 13683,
+     "checksum": "ebe075461441090fedfc6e63614a2f4b6c38121c751ff90183352a69cf2a2097"
+    },
+    {
+     "id": "08_02",
+     "n": "8.2",
+     "order": 2,
+     "title": "The 1956 Dartmouth workshop",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_02_dartmouth_1956.txt",
+     "words": 1988,
+     "chars": 13476,
+     "checksum": "335c6741569cad989489493d6d5b87547f2b437c444797daf371ccfc3feb374d"
+    },
+    {
+     "id": "08_03",
+     "n": "8.3",
+     "order": 3,
+     "title": "Early game programs: checkers and chess",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "08_03_early_game_programs.txt",
+     "words": 2438,
+     "chars": 15482,
+     "checksum": "c1ce3661bbb3d05b8c91b981bf9c62a414861bdc84c3f819b0a7075b0b337a15"
+    }
+   ]
+  },
+  {
+   "n": 9,
+   "id": "ch09",
+   "title": "Symbolic AI",
+   "sections": [
+    {
+     "id": "09_01",
+     "n": "9.1",
+     "order": 1,
+     "title": "Logic Theorist and the General Problem Solver",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_01_logic_theorist_gps.txt",
+     "words": 2296,
+     "chars": 14624,
+     "checksum": "c925a532331041d9c6d0fcd57d080f0d8ae8420eb26b793b0bf0ec8984b3eb49"
+    },
+    {
+     "id": "09_02",
+     "n": "9.2",
+     "order": 2,
+     "title": "LISP and the AI programming tradition",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_02_lisp.txt",
+     "words": 2009,
+     "chars": 13236,
+     "checksum": "35f57224257c3ea013395112c6509be4cbaf565a2b06eca46b8cb58d1423fb32"
+    },
+    {
+     "id": "09_03",
+     "n": "9.3",
+     "order": 3,
+     "title": "Search, heuristics and A*",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_03_search_heuristics_astar.txt",
+     "words": 2071,
+     "chars": 12648,
+     "checksum": "38235ff0cea1f2f4f7124f18199888b561e25f16a67dd7a41db03c1afea523fc"
+    },
+    {
+     "id": "09_04",
+     "n": "9.4",
+     "order": 4,
+     "title": "Microworlds: SHRDLU, ELIZA, Shakey",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "09_04_microworlds_shrdlu_eliza_shakey.txt",
+     "words": 1965,
+     "chars": 12981,
+     "checksum": "88d8ad29631b46d8423ed6254231c03b9f223f755c7b854545e85a1b2569f923"
+    }
+   ]
+  },
+  {
+   "n": 10,
+   "id": "ch10",
+   "title": "Perceptrons and Their Critics",
+   "sections": [
+    {
+     "id": "10_01",
+     "n": "10.1",
+     "order": 1,
+     "title": "Rosenblatt's perceptron: the math of the learning rule",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_01_rosenblatt_perceptron.txt",
+     "words": 2231,
+     "chars": 12845,
+     "checksum": "c1bb98ad4ec956d1022f8f500267b9e4875ad36a82f2b0062030e8488b67226d"
+    },
+    {
+     "id": "10_02",
+     "n": "10.2",
+     "order": 2,
+     "title": "ADALINE and the LMS rule",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_02_adaline_lms.txt",
+     "words": 2269,
+     "chars": 13984,
+     "checksum": "02ae0dfe1ee2363a6c9f0f191290f5e0350b85d10101bc056094796db6e35cb9"
+    },
+    {
+     "id": "10_03",
+     "n": "10.3",
+     "order": 3,
+     "title": "Minsky and Papert's Perceptrons (1969)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "10_03_minsky_papert_perceptrons.txt",
+     "words": 2146,
+     "chars": 13210,
+     "checksum": "1af759d7e5c6633fdf59ade7593d52579092d832eb12a72b3c95157e30afe3b7"
+    }
+   ]
+  },
+  {
+   "n": 11,
+   "id": "ch11",
+   "title": "The AI Winters",
+   "sections": [
+    {
+     "id": "11_01",
+     "n": "11.1",
+     "order": 1,
+     "title": "Overpromising and the Lighthill Report",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "11_01_overpromising_lighthill.txt",
+     "words": 2258,
+     "chars": 15219,
+     "checksum": "96073ce29280d411f4cb7574b3372ec7774812036724786639edec8dd2a6566f"
+    },
+    {
+     "id": "11_02",
+     "n": "11.2",
+     "order": 2,
+     "title": "Funding cuts, the Lisp machine collapse, second winter",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "11_02_second_winter.txt",
+     "words": 2046,
+     "chars": 13977,
+     "checksum": "760073493d3f8acfae5da2cea6a940a9a08a9e95003fca398f8407f1fb544b99"
+    }
+   ]
+  },
+  {
+   "n": 12,
+   "id": "ch12",
+   "title": "Expert Systems",
+   "sections": [
+    {
+     "id": "12_01",
+     "n": "12.1",
+     "order": 1,
+     "title": "Knowledge engineering: DENDRAL and MYCIN",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_01_dendral_mycin.txt",
+     "words": 2135,
+     "chars": 14561,
+     "checksum": "577aacad51a3497290ebeb1a5d189ff316426416832d658ffcbd36d387371a56"
+    },
+    {
+     "id": "12_02",
+     "n": "12.2",
+     "order": 2,
+     "title": "XCON and commercial expert systems",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_02_xcon_commercial_expert_systems.txt",
+     "words": 1962,
+     "chars": 13254,
+     "checksum": "f736fb4b6aa95c43c8c677c96b8aa6ca8049018ba2f2493d80984a08c82b3a06"
+    },
+    {
+     "id": "12_03",
+     "n": "12.3",
+     "order": 3,
+     "title": "Limits: brittleness and the knowledge bottleneck",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "12_03_limits_brittleness_bottleneck.txt",
+     "words": 2028,
+     "chars": 13725,
+     "checksum": "46a2b4a1eecbc72365a41edb5df25700b3c00d8377bdc2e18751f853b55987c4"
+    }
+   ]
+  },
+  {
+   "n": 13,
+   "id": "ch13",
+   "title": "Backpropagation and Connectionism",
+   "sections": [
+    {
+     "id": "13_01",
+     "n": "13.1",
+     "order": 1,
+     "title": "Gradient descent and the chain rule, worked in plain notation",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_01_gradient_descent_chain_rule.txt",
+     "words": 2352,
+     "chars": 14939,
+     "checksum": "33dfea713b47102cbaa431d4a0c709a7126c1ef3c3fc9742f024edb0eb11e275"
+    },
+    {
+     "id": "13_02",
+     "n": "13.2",
+     "order": 2,
+     "title": "Rumelhart, Hinton and Williams 1986",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_02_rumelhart_hinton_williams_1986.txt",
+     "words": 1890,
+     "chars": 13278,
+     "checksum": "e68bddc2c6f9d2dc27d91524e10b4a3221070c1deef205f5ffa343d8d33f2134"
+    },
+    {
+     "id": "13_03",
+     "n": "13.3",
+     "order": 3,
+     "title": "Convolutional networks: Neocognitron, LeNet",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_03_convolutional_networks.txt",
+     "words": 2003,
+     "chars": 12988,
+     "checksum": "71ea7b9abb32a18268fcfb4e4b800498c3c31a95d47e564bbea719866dd261ab"
+    },
+    {
+     "id": "13_04",
+     "n": "13.4",
+     "order": 4,
+     "title": "Recurrent networks and LSTM",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "13_04_recurrent_networks_lstm.txt",
+     "words": 2067,
+     "chars": 13539,
+     "checksum": "93f3359120d4b2780b97c5bf83990341f6f077a5346ca2bf8696d06844ff23b7"
+    }
+   ]
+  },
+  {
+   "n": 14,
+   "id": "ch14",
+   "title": "Statistical Machine Learning",
+   "sections": [
+    {
+     "id": "14_01",
+     "n": "14.1",
+     "order": 1,
+     "title": "Probability enters AI: Bayesian networks, HMMs",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_01_bayesian_networks_hmms.txt",
+     "words": 2492,
+     "chars": 16770,
+     "checksum": "a1e278786f9d571bde4660e9ece8cd9ecf7c63414e4ebe1569ece3e71a4b2425"
+    },
+    {
+     "id": "14_02",
+     "n": "14.2",
+     "order": 2,
+     "title": "Support vector machines and kernels",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_02_svm_kernels.txt",
+     "words": 2295,
+     "chars": 14161,
+     "checksum": "80a3ff8b9a248522e47707e7197ee19bd764615692439114694dffae2e322a23"
+    },
+    {
+     "id": "14_03",
+     "n": "14.3",
+     "order": 3,
+     "title": "Decision trees, boosting, random forests",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "14_03_trees_boosting_forests.txt",
+     "words": 2068,
+     "chars": 13709,
+     "checksum": "4091802ff2e066cc85ac175d46dfec9d1719d7cb6543a05dbf2f5051ff7f5617"
+    }
+   ]
+  },
+  {
+   "n": 15,
+   "id": "ch15",
+   "title": "GPUs and the Compute Revolution",
+   "sections": [
+    {
+     "id": "15_01",
+     "n": "15.1",
+     "order": 1,
+     "title": "From graphics pipelines to GPGPU",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "15_01_graphics_pipelines_to_gpgpu.txt",
+     "words": 2025,
+     "chars": 13540,
+     "checksum": "200462e8360d38cace82e7e89c2d820e0ef238e8984f1e5891ee46bc8aa6e32c"
+    },
+    {
+     "id": "15_02",
+     "n": "15.2",
+     "order": 2,
+     "title": "CUDA and parallel programming",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "15_02_cuda_parallel_programming.txt",
+     "words": 2103,
+     "chars": 13680,
+     "checksum": "ad9ad98845395bd58b7015ef6f8536aa1205b4f79c1f6c5450ae37f5843cab97"
+    }
+   ]
+  },
+  {
+   "n": 16,
+   "id": "ch16",
+   "title": "Deep Learning",
+   "sections": [
+    {
+     "id": "16_01",
+     "n": "16.1",
+     "order": 1,
+     "title": "Deep belief nets and the 2006 revival",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "16_01_deep_belief_nets_2006.txt",
+     "words": 1959,
+     "chars": 13094,
+     "checksum": "776fece647b6fb260a48fd2fc5959a94b6e1bcf48ff305ea3ad5c69514031f52"
+    },
+    {
+     "id": "16_02",
+     "n": "16.2",
+     "order": 2,
+     "title": "ImageNet and AlexNet (2012)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "16_02_imagenet_alexnet.txt",
+     "words": 1912,
+     "chars": 12694,
+     "checksum": "705f7a7ba4a1634eae42fac9b376d870582b4461b4966098b34d9012e46a16ea"
+    },
+    {
+     "id": "16_03",
+     "n": "16.3",
+     "order": 3,
+     "title": "ReLU, dropout, batch norm, ResNets",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "16_03_relu_dropout_batchnorm_resnets.txt",
+     "words": 2129,
+     "chars": 14018,
+     "checksum": "f163a8d138ffa3141008e784acc24fd2de051270858887fc8ed70a31f70b7e33"
+    },
+    {
+     "id": "16_04",
+     "n": "16.4",
+     "order": 4,
+     "title": "Deep reinforcement learning: DQN and AlphaGo",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "16_04_deep_rl_dqn_alphago.txt",
+     "words": 2081,
+     "chars": 13159,
+     "checksum": "d2ef54251d532471df58e126bc5ae991a91d93f5a883e14292fdba94aa871959"
+    }
+   ]
+  },
+  {
+   "n": 17,
+   "id": "ch17",
+   "title": "Language: Embeddings to Attention",
+   "sections": [
+    {
+     "id": "17_01",
+     "n": "17.1",
+     "order": 1,
+     "title": "Word embeddings: word2vec and GloVe",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "17_01_word_embeddings_word2vec_glove.txt",
+     "words": 2082,
+     "chars": 13481,
+     "checksum": "794172ab8a3d3161a68ff7d83ccabdedbf25f243808765f32b024214dfa97b24"
+    },
+    {
+     "id": "17_02",
+     "n": "17.2",
+     "order": 2,
+     "title": "Sequence-to-sequence models",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "17_02_sequence_to_sequence.txt",
+     "words": 1803,
+     "chars": 12078,
+     "checksum": "1031bbe74b90157af1779055ea43b02c8b53c23063efcdc7202465d9a94296ea"
+    },
+    {
+     "id": "17_03",
+     "n": "17.3",
+     "order": 3,
+     "title": "The attention mechanism",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "17_03_attention_mechanism.txt",
+     "words": 1847,
+     "chars": 12022,
+     "checksum": "c30b6e918ee2cd7d8884d97953f129baef454aa3316f60c38bd1470b76e60d4a"
+    }
+   ]
+  },
+  {
+   "n": 18,
+   "id": "ch18",
+   "title": "Transformers",
+   "sections": [
+    {
+     "id": "18_01",
+     "n": "18.1",
+     "order": 1,
+     "title": "Attention Is All You Need (2017): the architecture in detail",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "18_01_attention_is_all_you_need.txt",
+     "words": 2004,
+     "chars": 13289,
+     "checksum": "1bb21fedb2d66d29f54d58856fb3007ada95ebee0ca0f6afed737f55baa795d8"
+    },
+    {
+     "id": "18_02",
+     "n": "18.2",
+     "order": 2,
+     "title": "BERT and pretraining",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "18_02_bert_and_pretraining.txt",
+     "words": 1754,
+     "chars": 11911,
+     "checksum": "7eee6e82e411656aae84d99576c7821bc28c88846a8b0373aaef0b8868a034b9"
+    },
+    {
+     "id": "18_03",
+     "n": "18.3",
+     "order": 3,
+     "title": "GPT series and scaling laws",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "18_03_gpt_series_scaling_laws.txt",
+     "words": 2133,
+     "chars": 14324,
+     "checksum": "277457672d73c97531e973479000ba287bceb8e9d5b31b059293f99cdca8c884"
+    }
+   ]
+  },
+  {
+   "n": 19,
+   "id": "ch19",
+   "title": "Large Language Models",
+   "sections": [
+    {
+     "id": "19_01",
+     "n": "19.1",
+     "order": 1,
+     "title": "Instruction tuning and RLHF",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "19_01_instruction_tuning_rlhf.txt",
+     "words": 1793,
+     "chars": 12160,
+     "checksum": "b9bad5acfd12b26e363e4013687c249dff94cc5992d96d9a753ddfe72f0e3608"
+    },
+    {
+     "id": "19_02",
+     "n": "19.2",
+     "order": 2,
+     "title": "ChatGPT and the public moment",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "19_02_chatgpt_public_moment.txt",
+     "words": 1828,
+     "chars": 12374,
+     "checksum": "a7129f0b6819805ab000597101a13302b8423907f9cc383550a8a2ee81757922"
+    },
+    {
+     "id": "19_03",
+     "n": "19.3",
+     "order": 3,
+     "title": "Multimodal models, reasoning models and agents (to 2026)",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "19_03_multimodal_reasoning_agents.txt",
+     "words": 2314,
+     "chars": 16060,
+     "checksum": "98a1bf4dbbf36320da0fdec4696d0e9ba895486e2b1b840c5f442222b8121170"
+    }
+   ]
+  },
+  {
+   "n": 20,
+   "id": "ch20",
+   "title": "Reflections",
+   "sections": [
+    {
+     "id": "20_01",
+     "n": "20.1",
+     "order": 1,
+     "title": "Hardware and AI: a co-evolution",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "20_01_hardware_and_ai_coevolution.txt",
+     "words": 1871,
+     "chars": 12900,
+     "checksum": "9582a4276810976956709b754b4969b2672edc28facdcac54a9363b1b496df30"
+    },
+    {
+     "id": "20_02",
+     "n": "20.2",
+     "order": 2,
+     "title": "Open problems: alignment, robustness, energy",
+     "inOutline": true,
+     "written": true,
+     "sourceFile": "20_02_open_problems.txt",
+     "words": 2298,
+     "chars": 16010,
+     "checksum": "6f694d4da2162f12780708b18ee1fd9639d47b16b05c8a8770dc19ac708b801b"
+    }
+   ]
+  }
+ ]
+}

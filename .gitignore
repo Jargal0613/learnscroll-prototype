@@ -1,3 +1,9 @@
 private/
 node_modules/
 .vercel
+
+# Never commit textbook files, scans or extracted content (see scripts/check-no-textbook.js)
+*.pdf
+*.epub
+*.djvu
+hmt-private/

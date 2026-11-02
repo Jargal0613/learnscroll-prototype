@@ -90,7 +90,7 @@ test('route GET: status + own counters, read-only, works while disabled', async 
 });
 
 // Retrieval states: decided from the File Search call, never from the model. Citations without passages are cleared.
-const LONG = 'Fourier law states that the rate of heat conduction through a plane layer is proportional to the temperature difference across the layer and the heat transfer area.';
+const LONG = 'Per Fourier, conduction through a flat layer grows with how steeply temperature falls across it and with the area the heat crosses, for any solid layer.';
 const kbF = { forBook: () => ({ vectorStoreId: 'vs_test', fileId: 'f-book' }) };
 const out3 = {
   retrieved: { searched: true, results: 2, passages: [{ fileId: 'f-book', score: 0.9, text: LONG }, { fileId: 'other', score: 0.95, text: LONG + ' other' }] },

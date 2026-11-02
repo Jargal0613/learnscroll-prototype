@@ -1,0 +1,13 @@
+name: no-textbook-content
+on: [push, pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      # File-type and magic-byte checks over the whole history (CI has no copy of the PDF, so the text comparison
+      # runs locally in `npm test` instead).
+      - run: node scripts/check-no-textbook.js --history

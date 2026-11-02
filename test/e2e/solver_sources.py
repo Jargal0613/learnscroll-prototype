@@ -22,7 +22,7 @@ with sync_playwright() as p:
             ok(last.locator(f'[data-ret="{k}"]').count() == 1, f'{W}: {k}: its own state block')
             if k == 'retrieved':
                 ok('source retrieved from the textbook (1 passage)' in txt.lower() and 'From the textbook · Section 1-6' in txt, f'{W}: retrieved: passage + equation citation shown ({txt[-200:]!r})')
-                last.locator('summary').click(); ok('Fourier law states' in last.inner_text(), f'{W}: retrieved passage excerpt visible')
+                last.locator('summary').click(); ok('Per Fourier, conduction' in last.inner_text(), f'{W}: retrieved passage excerpt visible')
             else:
                 head = 'No relevant textbook passage found' if k == 'none' else 'Textbook search failed'
                 ok(head in txt and 'From the textbook ·' not in txt and 'Retrieved passage' not in txt and last.locator('.sv-part:not(.extra)').count() == 0, f'{W}: {k}: "{head}", no citation, no From-the-textbook part')

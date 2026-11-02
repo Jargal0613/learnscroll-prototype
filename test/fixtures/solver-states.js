@@ -1,7 +1,7 @@
 // Prints the real /api/solve handler output for the three retrieval states (fake provider + in-memory limiter;
 // no network). Used by test/e2e/solver_sources.py so the UI is tested against genuine server output.
 const handler = require('../../api/solve');
-const LONG = 'Fourier law states that the rate of heat conduction through a plane layer is proportional to the temperature difference across the layer and the heat transfer area.';
+const LONG = 'Per Fourier, conduction through a flat layer grows with how steeply temperature falls across it and with the area the heat crosses, for any solid layer.';
 const sol = { givens: [{ symbol: 'k', value: '0.8', unit: 'W/m·K' }], unknown: 'q', assumptions: ['Steady'], equations: [{ tex: "q'' = k\\Delta T/L", source: 'Section 1-6' }], steps: ["\\(q'' = 0.8 \\times 50/0.2 = 200\\) W/m²"], result: { value: '200', unit: 'W/m²' }, unitCheck: 'W/m²', sanityCheck: 'Reasonable.', fromTextbook: 'Fourier law for plane walls.', additionalExplanation: '', sourceNote: 'Heat and Mass Transfer, Ch 1' };
 const outs = { retrieved: { searched: true, results: 1, passages: [{ fileId: 'f', score: 0.9, text: LONG }] }, none: { searched: true, results: 0, passages: [] }, failed: { searched: true, searchFailed: true, results: 0, passages: [] } };
 const kb = { forBook: () => ({ vectorStoreId: 'vs', fileId: 'f' }) };

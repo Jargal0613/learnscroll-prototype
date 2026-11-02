@@ -73,7 +73,7 @@ test('prompt: page data is labelled untrusted and never textbook evidence', () =
 
 // ---- retrieval states for ordinary answers ----
 const KB = { 'heat-mass-transfer': { status: 'completed', vectorStoreId: 'vs_test', fileId: 'file-real', filename: 'heat-mass-transfer.pdf' } };
-const PASS = 'Under steady conditions the rate of heat conduction through a plane wall is constant, and the wall behaves like a thermal resistance. '.repeat(3);
+const PASS = 'In a wall held at fixed temperatures the conducted heat rate is the same at every depth, so the wall acts like a resistor. '.repeat(3);
 const resp = ({ results, failed, cite = true, text = '### From the textbook\nWall resistance R = L/(kA).\n\n### Additional explanation\nMore.' }) => ({
   status: 'completed', output_text: text,
   output: [...(results === undefined ? [] : [{ type: 'file_search_call', status: failed ? 'failed' : 'completed', results }]), { type: 'message', content: [{ type: 'output_text', text, annotations: cite ? [{ type: 'file_citation', file_id: 'file-real', filename: 'heat-mass-transfer.pdf' }] : [] }] }],

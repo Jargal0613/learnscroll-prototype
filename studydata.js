@@ -205,7 +205,7 @@
     return out;
   }
   // Plain-text books (optional, no schema bump): last-read section per book, { [bookId]: { section: 'NN_MM', at } }.
-  const READ_BOOK_RE = /^[a-z0-9-]{1,40}$/, READ_SEC_RE = /^\d{2}_\d{2}$/;
+  const READ_BOOK_RE = /^[a-z0-9-]{1,40}$/, READ_SEC_RE = /^(\d{2}_\d{2}|[1-9]\d?-(\d{1,2}|topic|summary))$/; // NN_MM (reading books) or 1-6 / 1-topic (Heat & Mass textbook pages)
   // { section, at, done?: { [sectionId]: at }, marks?: [{ section, note?, at }] } — done/marks optional (added round 13).
   const isT = x => Number.isFinite(x) && x > 0;
   const validReadingOne = v => isObj(v) && Object.keys(v).every(k => ['section', 'at', 'done', 'marks'].includes(k)) && typeof v.section === 'string' && READ_SEC_RE.test(v.section) && isT(v.at)

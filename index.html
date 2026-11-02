@@ -103,6 +103,21 @@
   .tb-see-h { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; } .tb-see ul { list-style: none; padding: 0; margin: 0; }
   .tb-see li { padding: 4px 0; } .tb-see a { display: flex; flex-direction: column; text-decoration: none; } .tb-host { color: var(--fg); font-weight: 600; } .tb-url { color: var(--muted); font-size: 12.5px; text-decoration: underline; } .tb-bad { color: var(--muted); }
   .tb-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 40px; } .tb-nav .btn { max-width: 48%; white-space: normal; text-align: left; line-height: 1.35; }
+  /* My textbook (B's own PDF, shown by the browser's viewer beside the cards) */
+  .tp-link { margin-left: 10px; text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--accent); white-space: nowrap; } .tp-link:hover { text-decoration: underline; }
+  .tp-title { font-weight: 600; color: var(--fg); font-size: 14.5px; } .tp-pg { color: var(--faint); font-style: normal; font-size: 12px; margin-left: 4px; white-space: nowrap; }
+  .tppage.tbread { max-width: 1680px; } .tp-layout { grid-template-columns: 260px minmax(0, 1fr) 360px; gap: 28px; }
+  .tp-where { color: var(--muted); font-size: 13px; margin-bottom: 10px; } .tp-view { min-width: 0; }
+  .tp-frame { width: 100%; height: calc(100vh - 170px); min-height: 520px; border: 1px solid var(--line); border-radius: 8px; background: #fff; display: block; }
+  .tp-open { border: 1px dashed var(--line-strong); border-radius: 10px; padding: 28px; color: var(--fg-2); line-height: 1.55; } .tp-open h2 { font-size: 20px; color: var(--fg); margin-bottom: 8px; } .tp-open p { margin-bottom: 14px; max-width: 60ch; }
+  .tp-status { color: var(--muted); font-size: 14px; } .tp-file { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .tp-ver.ok { color: var(--accent); } .tp-ver.warn { color: #e0b060; } .tp-off input { width: 64px; background: var(--surface); color: var(--fg); border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 6px; font: inherit; }
+  .tp-cards { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; align-self: start; } .tp-cards h2 { font-size: 14px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+  .tp-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; background: var(--surface); font-size: 14.5px; line-height: 1.55; color: var(--fg-2); }
+  .tp-card h3 { font-size: 15.5px; color: var(--fg); margin: 4px 0 6px; } .tp-card p { margin-bottom: 8px; overflow-wrap: anywhere; } .tp-card .eq { overflow-x: auto; } .tp-none { color: var(--muted); font-size: 14px; }
+  .tp-marks li { grid-template-columns: minmax(0, 1fr) auto; } .tp-marks textarea { grid-column: 1 / -1; }
+  @media (max-width: 1280px) { .tp-layout { grid-template-columns: 240px minmax(0, 1fr); } .tp-cards { grid-column: 2; position: static; max-height: none; } }
+  @media (max-width: 900px) { .tp-layout { grid-template-columns: minmax(0, 1fr); } .tp-cards { grid-column: auto; margin-top: 24px; } .tp-frame { height: 75vh; min-height: 420px; } .tp-title { flex: 1 1 100%; order: -1; } #tp-read { min-height: 44px; } }
   @media (max-width: 900px) {
     .tb-layout { grid-template-columns: minmax(0, 1fr); gap: 0; } .tb-menu { display: inline-flex; min-height: 44px; align-items: center; }
     .tb-layout .tb-side { display: none; } body.tb-nav-open .tb-layout .tb-side { display: block; position: fixed; inset: 0; z-index: 9; max-height: none; background: var(--bg); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -802,6 +817,8 @@
 <script defer src="booktext.js"></script>
 <script defer src="shelf.js"></script>
 <script defer src="tutor.js"></script>
+<script defer src="hmtpages.js"></script>
+<script defer src="textbook.js"></script>
 <script defer src="app.js"></script>
 <script defer src="formulas.js"></script>
 <script defer src="sheets.js"></script>

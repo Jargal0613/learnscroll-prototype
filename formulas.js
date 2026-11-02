@@ -53,7 +53,7 @@ const Formulas = (() => {
   function itemHTML(id) {
     const f = all()[id], src = f.kind === 'card' ? cardOf(f) : null;
     const where = f.kind === 'custom' ? '<span class="f-tag">Your formula</span>' : src
-      ? `<a class="f-src-link" href="#/read/${f.book}/${f.chapter}/${src.i + 1}">${esc(src.b.short)} · Ch ${f.chapter} · ${esc(stripTags(src.c.h))} →</a>`
+      ? `<a class="f-src-link" href="#/read/${f.book}/${f.chapter}/${src.i + 1}">${esc(src.b.short)} · Ch ${f.chapter} · ${esc(stripTags(src.c.h))} →</a>${f.book === Textbook.BOOK && Textbook.linkForCard(src.c, f.chapter) ? ` <a class="tp-link" href="${Textbook.linkForCard(src.c, f.chapter).href}">Textbook p.&nbsp;${Textbook.linkForCard(src.c, f.chapter).page}</a>` : ''}`
       : `<span class="f-tag">Source card no longer available (${esc(f.book)} · Ch ${f.chapter})</span>`;
     if (ui.edit === id) return `<li class="f-item editing" id="${id}">${editorHTML(f)}</li>`;
     return `<li class="f-item${ui.focus === id ? ' hl' : ''}" id="${id}"><div class="f-top"><h2>${esc(f.title)}</h2><span class="f-acts">${ui.del === id

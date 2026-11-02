@@ -194,6 +194,7 @@ function route0(parts) {
   if ((parts[0] === 'book' || parts[0] === 'read') && parts[1] && !books[parts[1]]) return renderMissing('That book couldn’t be loaded.', '#/', 'Back to library');
   if (parts[0] === 'book') return renderBook(books[parts[1]], parts[2]);
   if (parts[0] === 'books') return Shelf.route(parts);
+  if (parts[0] === 'text') return parts[1] === Textbook.BOOK && (!parts[2] || /^[1-5]-(\d{1,2}|topic|summary)$/.test(parts[2])) ? Textbook.render(parts[2]) : renderMissing('That textbook page isn’t available.', '#/', 'Library');
   if (parts[0] === 'import') return renderImport();
   if (parts[0] === 'formulas') return Formulas.render(parts[1]);
   if (parts[0] === 'sheets') return Sheets.route(parts);
@@ -891,7 +892,7 @@ function renderBook(book, filter) {
   app.innerHTML = `<main class="page">
     <a class="back" href="#/">← Library</a>
     <div class="book-head"><div><h1>${esc(book.title)}</h1><p class="meta-line">${esc(book.author)} · ${esc(book.edition)}</p></div>
-    <div class="legend"><span>${avail} of ${book.chapters.length} chapters available</span><a class="legend-a" href="#/sheets/new/${book.id}">New study sheet for this book</a></div></div>
+    <div class="legend"><span>${avail} of ${book.chapters.length} chapters available</span>${book.id === Textbook.BOOK ? `<a class="legend-a" id="tp-entry" href="#/text/${book.id}">Read the book (my textbook PDF)</a>` : ''}<a class="legend-a" href="#/sheets/new/${book.id}">New study sheet for this book</a></div></div>
     ${tabs}
     ${view ? markedHTML(book, view) : `<div class="chapters" role="list">${book.chapters.map(ch => {
       const st = chapterState(book, ch);
@@ -924,10 +925,11 @@ function markedHTML(book, kind) {
 // Card kinds come from the existing fields: eq → equation, def → definition, ex → worked example.
 const markBtns = id => `<span class="marks"><button class="mark" data-mark="n" data-id="${id}" aria-expanded="false" title="Add a note to this card">Add note</button><button class="mark" data-mark="b" data-id="${id}" aria-pressed="false" title="Bookmark (B)">Bookmark</button><button class="mark" data-mark="d" data-id="${id}" aria-pressed="false" title="Mark as difficult (D)">Difficult</button></span>`;
 const noteEditor = id => `<div class="note-ed" data-note="${id}" hidden><label class="sr" for="ne-${id}">Your note</label><textarea id="ne-${id}" rows="3" maxlength="4000" placeholder="Your note on this card (plain text, saved in this browser)…"></textarea><div class="note-row"><span class="note-status" aria-live="polite"></span><span><button class="t-link note-del">Delete note</button><button class="t-link note-close">Close <kbd>esc</kbd></button></span></div></div>`;
+const tpLink = (c, ch, bookId) => { const l = bookId === Textbook.BOOK && Textbook.linkForCard(c, ch.n); return l ? `<a class="tp-link" href="${l.href}" data-tp="${l.key}" title="Open this section in your textbook PDF">Textbook p.&nbsp;${l.page}</a>` : ''; };
 function cardHTML(c, i, ch, bookId) {
   const tags = [c.eq && '<span class="tag eq-t">Equation</span>', c.def && '<span class="tag def-t">Definition</span>', c.ex && '<span class="tag">Example</span>'].filter(Boolean).join('');
   return `<section class="card" aria-label="${esc(c.h)}"><div class="card-body">
-    <div class="sec"><span>${esc(c.s)}${c.ref ? ` · ${esc(c.ref)}` : ''}</span>${tags}${markBtns(screenId(ch, i))}</div>
+    <div class="sec"><span>${esc(c.s)}${c.ref ? ` · ${esc(c.ref)}` : ''}</span>${tags}${tpLink(c, ch, bookId)}${markBtns(screenId(ch, i))}</div>
     <h2>${esc(c.h)}</h2>
     <p>${c.t}</p>
     ${c.eq ? `<div class="eq" data-eq="${esc(c.eq)}"></div>${Formulas.saveBtn(screenId(ch, i), bookId ? Calc.linksFor(bookId, screenId(ch, i)) : '')}` : ''}${bookId && typeof Practice !== 'undefined' && Practice.linksFor(bookId, screenId(ch, i)) ? `<div class="p-cardlinks">${Practice.linksFor(bookId, screenId(ch, i))}</div>` : ''}${bookId && typeof Connections !== 'undefined' ? Connections.htmlFor(bookId, screenId(ch, i)) : ''}
@@ -989,6 +991,7 @@ function renderReader(book, ch, at = null, sess = null) {
   const idx = () => { const y = feed.scrollTop + h() / 2, cs = cardEls(); let i = 0; while (i + 1 < cs.length && cs[i + 1].offsetTop <= y) i++; return Math.max(0, Math.min(total, i)); };
   let target = null; // index we are smooth-scrolling toward; prevents double jumps on repeated keys
   function paint(i) {
+    if (!document.getElementById('count')) return; // reader already left (late scroll event)
     document.getElementById('count').textContent = i >= total ? 'Done' : `${i + 1} / ${total}`;
     document.getElementById('line').style.width = `${Math.min(100, (Math.min(i + 1, total) / total) * 100)}%`;
     document.getElementById('track').setAttribute('aria-valuenow', Math.min(i + 1, total));

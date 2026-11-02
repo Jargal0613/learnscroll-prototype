@@ -162,7 +162,7 @@ const openaiProv = require('../api/_lib/providers/openai');
 const knowledge = require('../api/_lib/knowledge');
 const OpenAI = require('openai');
 const KB = { 'heat-mass-transfer': { status: 'completed', vectorStoreId: 'vs_test', fileId: 'file-real', filename: 'heat-mass-transfer.pdf' }, 'koretsky-thermo': { status: 'failed', vectorStoreId: 'vs_x', fileId: 'file-x' } };
-const PASS = 'Fig 3-2\nT1 T2\nUnder steady conditions the rate of heat conduction through a plane wall is constant, and the wall behaves like a thermal resistance to heat flow.\ncen98187_ch03_p142-236.indd 143 14/02/19 9:11 AM\n' + 'More synthetic words follow here to make the passage long enough for trimming purposes. '.repeat(8);
+const PASS = 'Fig 3-2\nT1 T2\nIn a wall held at fixed temperatures the conducted heat rate is the same at every depth, so the wall acts like a resistor to heat flow.\ncen98187_ch03_p142-236.indd 143 14/02/19 9:11 AM\n' + 'More synthetic words follow here to make the passage long enough for trimming purposes. '.repeat(8);
 const fakeResponse = (annotations, extra = {}) => ({
   status: 'completed', output_text: 'Plane wall resistance is \\(R = L/(kA)\\).',
   output: [{ type: 'file_search_call', results: [{ file_id: 'file-real', score: 0.9, text: PASS }, { file_id: 'file-real', score: 0.8, text: 'Short.' }, { file_id: 'file-other', score: 0.99, text: 'Other file text that must never be shown to the student in any case at all.' }] }, { type: 'message', content: [{ type: 'output_text', text: 'x', annotations }] }],
@@ -236,7 +236,7 @@ test('passages: only from this book file, short excerpts, chapter only from prin
   assert.equal(out.passages.length, 1);
   const p = out.passages[0];
   assert.ok(p.excerpt.length <= 301);
-  assert.match(p.excerpt, /^Under steady conditions/);
+  assert.match(p.excerpt, /^In a wall held/);
   assert.doesNotMatch(p.excerpt, /indd|Other file/);
   assert.equal(p.chapter, 3);
   assert.equal(p.page, null);
